@@ -1,0 +1,807 @@
+API Server 
+
+Main component in Control node all instructions will be communicated through api server so no other components communicate without api server involvement
+
+ETCD
+
+Distributted consistent key value stored database - all configurations (metadata like all configurations store like which pod which node and all yms configurations)
+
+control manager 
+
+Ensure mange desire state and current state and it manages number of replicas any one of the pod accidently delete it will create auotmatically as per desired state 
+
+Scheduler 
+
+schedule the pod in which node as per resource aviliablty we can control this procvess by implementing additonal configurations 
+
+Above are control plane components
+-------------------------
+
+Worker node components 
+
+
+Kubelet 
+
+Main component in worker node so all instructions receive from control plane api server and pass to conatiner run time 
+
+
+conatiner run time engine
+
+it will create pods as per kubelet instructions 
+
+kubeproxy 
+
+enable internal external service access 
+
+
+
+---------------------------------
+
+
+Kubernetes diff layers are their - control node and worker node 
+
+KOPS process : control node and worker node we have to take care (on premisies or cloud)
+we can configure any where (on premisies or cloud)
+
+Cloud Managed kubernetes we have concept called -- control node is taken care by AWS AZURE GCP
+
+EKS  elastic kubernete sevrices 
+
+AKS Azure kubernete sevrices 
+
+GKE google kubernete engine
+
+so our responsibilty is worker node 
+
+we do have fully managed ,ecs,gcp, many more
+
+
+
+------------------------------------
+We can focus inside cluster activities 
+
+production ready cluster also we need to learn more on this chatgpt please epxlain this 
+
+
+------------------
+
+
+Container and POD what are the main differences ?
+
+--------------------------------------------
+
+
+[ec2-user@ip-172-31-44-55 ~]$ curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+
+chmod +x ./kubectl  
+sudo mv ./kubectl /usr/local/bin/kubectl
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 55060k 100 55060k   0     0 78031k     0  --:--:-- --:--:-- --:--:-- 78099k
+[ec2-user@ip-172-31-44-55 ~]$ kubectl --version
+error: unknown flag: --version
+See 'kubectl --help' for usage.
+[ec2-user@ip-172-31-44-55 ~]$ kubectl -version
+error: invalid argument "ersion" for "-v, --v" flag: strconv.ParseInt: parsing "ersion": invalid syntax
+See 'kubectl --help' for usage.
+[ec2-user@ip-172-31-44-55 ~]$ kubectl
+kubectl controls the Kubernetes cluster manager.
+
+ Find more information at: https://kubernetes.io/docs/reference/kubectl/
+
+Basic Commands (Beginner):
+  create          Create a resource from a file or from stdin
+  expose          Take a replication controller, service, deployment or pod and expose it as a new Kubernetes service
+  run             Run a particular image on the cluster
+  set             Set specific features on objects
+
+Basic Commands (Intermediate):
+  explain         Get documentation for a resource
+  get             Display one or many resources
+  edit            Edit a resource on the server
+  delete          Delete resources by file names, stdin, resources and names, or by resources and label selector
+
+Deploy Commands:
+  rollout         Manage the rollout of a resource
+  scale           Set a new size for a deployment, replica set, or replication controller
+  autoscale       Auto-scale a deployment, replica set, stateful set, or replication controller
+
+Cluster Management Commands:
+  certificate     Modify certificate resources
+  cluster-info    Display cluster information
+  top             Display resource (CPU/memory) usage
+  cordon          Mark node as unschedulable
+  uncordon        Mark node as schedulable
+  drain           Drain node in preparation for maintenance
+  taint           Update the taints on one or more nodes
+
+Troubleshooting and Debugging Commands:
+  describe        Show details of a specific resource or group of resources
+  logs            Print the logs for a container in a pod
+  attach          Attach to a running container
+  exec            Execute a command in a container
+  port-forward    Forward one or more local ports to a pod
+  proxy           Run a proxy to the Kubernetes API server
+  cp              Copy files and directories to and from containers
+  auth            Inspect authorization
+  debug           Create debugging sessions for troubleshooting workloads and nodes
+  events          List events
+
+Advanced Commands:
+  diff            Diff the live version against a would-be applied version
+  apply           Apply a configuration to a resource by file name or stdin
+  patch           Update fields of a resource
+  replace         Replace a resource by file name or stdin
+  wait            Experimental: Wait for a specific condition on one or many resources
+  kustomize       Build a kustomization target from a directory or URL
+
+Settings Commands:
+  label           Update the labels on a resource
+  annotate        Update the annotations on a resource
+  completion      Output shell completion code for the specified shell (bash, zsh, fish, or powershell)
+
+Subcommands provided by plugins:
+
+Other Commands:
+  api-resources   Print the supported API resources on the server
+  api-versions    Print the supported API versions on the server, in the form of "group/version"
+  config          Modify kubeconfig files
+  plugin          Provides utilities for interacting with plugins
+  version         Print the client and server version information
+
+Usage:
+  kubectl [flags] [options]
+
+Use "kubectl <command> --help" for more information about a given command.
+Use "kubectl options" for a list of global command-line options (applies to all commands).
+[ec2-user@ip-172-31-44-55 ~]$    curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+   sudo mv /tmp/eksctl /usr/local/bin
+   eksctl version
+0.226.0
+[ec2-user@ip-172-31-44-55 ~]$ kubectl version
+Client Version: v1.31.0
+Kustomize Version: v5.4.2
+The connection to the server localhost:8080 was refused - did you specify the right host or port?
+[ec2-user@ip-172-31-44-55 ~]$ history
+    1  kubectl 
+    2  eksctl
+    3  curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+    4  chmod +x ./kubectl  
+    5  sudo mv ./kubectl /usr/local/bin/kubectl
+    6  kubectl --version
+    7  kubectl -version
+    8  kubectl
+    9     curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+   10     sudo mv /tmp/eksctl /usr/local/bin
+   11     eksctl version
+   12  kubectl version
+   13  history
+[ec2-user@ip-172-31-44-55 ~]$ 
+
+--------------------------------------
+
+# EKS cluster Setup Process 
+
+  # Create an IAM Role and attache it to EC2 instance    
+   `Note: create IAM user with programmatic access if your bootstrap system is outside of AWS`   
+   IAM user should have access to   
+   IAM   
+   EC2   
+   VPC    
+   CloudFormation
+
+---
+
+
+
+attach iam role 
+
+  # Create your cluster and nodes 
+   ```sh
+   eksctl create cluster --name cluster-name  \
+   --region region-name \
+   --node-type instance-type \
+   --nodes-min 2 \
+   --nodes-max 2 \ 
+   --zones <AZ-1>,<AZ-2>
+   
+   example:
+   eksctl create cluster --name test \
+      --region us-east-1 \
+   --node-type t2.medium \
+
+
+
+---------------------------------------------------------
+
+[ec2-user@ip-172-31-44-55 ~]$    eksctl create cluster --name test \
+      --region us-east-1 \
+   --node-type t2.medium \
+> 
+  --node-type t2.medium \
+> 
+2026-05-08 18:14:52 [ℹ]  eksctl version 0.226.0
+2026-05-08 18:14:52 [ℹ]  using region us-east-1
+2026-05-08 18:14:52 [ℹ]  setting availability zones to [us-east-1b us-east-1d]
+2026-05-08 18:14:52 [ℹ]  subnets for us-east-1b - public:192.168.0.0/19 private:192.168.64.0/19
+2026-05-08 18:14:52 [ℹ]  subnets for us-east-1d - public:192.168.32.0/19 private:192.168.96.0/19
+2026-05-08 18:14:52 [ℹ]  nodegroup "ng-b2d46311" will use "" [AmazonLinux2023/1.34]
+2026-05-08 18:14:52 [!]  Auto Mode will be enabled by default in an upcoming release of eksctl. This means managed node groups and managed networking add-ons will no longer be created by default. To maintain current behavior, explicitly set 'autoModeConfig.enabled: false' in your cluster configuration. Learn more: https://eksctl.io/usage/auto-mode/
+2026-05-08 18:14:52 [ℹ]  using Kubernetes version 1.34
+2026-05-08 18:14:52 [ℹ]  creating EKS cluster "test" in "us-east-1" region with managed nodes
+2026-05-08 18:14:52 [ℹ]  will create 2 separate CloudFormation stacks for cluster itself and the initial managed nodegroup
+2026-05-08 18:14:52 [ℹ]  if you encounter any issues, check CloudFormation console or try 'eksctl utils describe-stacks --region=us-east-1 --cluster=test'
+2026-05-08 18:14:52 [ℹ]  Kubernetes API endpoint access will use default of {publicAccess=true, privateAccess=false} for cluster "test" in "us-east-1"
+2026-05-08 18:14:52 [ℹ]  CloudWatch logging will not be enabled for cluster "test" in "us-east-1"
+2026-05-08 18:14:52 [ℹ]  you can enable it with 'eksctl utils update-cluster-logging --enable-types={SPECIFY-YOUR-LOG-TYPES-HERE (e.g. all)} --region=us-east-1 --cluster=test'
+2026-05-08 18:14:52 [ℹ]  default addons metrics-server, vpc-cni, kube-proxy, coredns were not specified, will install them as EKS addons
+2026-05-08 18:14:52 [ℹ]  
+2 sequential tasks: { create cluster control plane "test", 
+    2 sequential sub-tasks: { 
+        2 sequential sub-tasks: { 
+            1 task: { create addons },
+            wait for control plane to become ready,
+        },
+        create managed nodegroup "ng-b2d46311",
+    } 
+}
+2026-05-08 18:14:52 [ℹ]  building cluster stack "eksctl-test-cluster"
+2026-05-08 18:14:52 [ℹ]  deploying stack "eksctl-test-cluster"
+2026-05-08 18:15:22 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-08 18:15:52 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-08 18:16:52 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-08 18:17:52 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-08 18:18:52 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-08 18:19:52 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-08 18:20:52 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-08 18:21:53 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-08 18:22:53 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-08 18:23:53 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-08 18:24:53 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-08 18:25:53 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-08 18:25:54 [!]  recommended policies were found for "vpc-cni" addon, but since OIDC is disabled on the cluster, eksctl cannot configure the requested permissions; the recommended way to provide IAM permissions for "vpc-cni" addon is via pod identity associations; after addon creation is completed, add all recommended policies to the config file, under `addon.PodIdentityAssociations`, and run `eksctl update addon`
+2026-05-08 18:25:54 [ℹ]  creating addon: vpc-cni
+2026-05-08 18:25:54 [ℹ]  successfully created addon: vpc-cni
+2026-05-08 18:25:54 [ℹ]  creating addon: kube-proxy
+2026-05-08 18:25:55 [ℹ]  successfully created addon: kube-proxy
+2026-05-08 18:25:55 [ℹ]  creating addon: coredns
+2026-05-08 18:25:56 [ℹ]  successfully created addon: coredns
+2026-05-08 18:27:56 [ℹ]  building managed nodegroup stack "eksctl-test-nodegroup-ng-b2d46311"
+2026-05-08 18:27:56 [ℹ]  deploying stack "eksctl-test-nodegroup-ng-b2d46311"
+2026-05-08 18:27:56 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-b2d46311"
+2026-05-08 18:28:26 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-b2d46311"
+2026-05-08 18:29:20 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-b2d46311"
+2026-05-08 18:30:49 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-b2d46311"
+2026-05-08 18:30:49 [ℹ]  waiting for the control plane to become ready
+2026-05-08 18:30:50 [✔]  saved kubeconfig as "/home/ec2-user/.kube/config"
+2026-05-08 18:30:50 [ℹ]  no tasks
+2026-05-08 18:30:50 [✔]  all EKS cluster resources for "test" have been created
+2026-05-08 18:30:50 [ℹ]  nodegroup "ng-b2d46311" has 2 node(s)
+2026-05-08 18:30:50 [ℹ]  node "ip-192-168-2-225.ec2.internal" is ready
+2026-05-08 18:30:50 [ℹ]  node "ip-192-168-54-222.ec2.internal" is ready
+2026-05-08 18:30:50 [ℹ]  waiting for at least 2 node(s) to become ready in "ng-b2d46311"
+2026-05-08 18:30:50 [ℹ]  nodegroup "ng-b2d46311" has 2 node(s)
+2026-05-08 18:30:50 [ℹ]  node "ip-192-168-2-225.ec2.internal" is ready
+2026-05-08 18:30:50 [ℹ]  node "ip-192-168-54-222.ec2.internal" is ready
+2026-05-08 18:30:50 [✔]  created 1 managed nodegroup(s) in cluster "test"
+2026-05-08 18:30:51 [ℹ]  creating addon: metrics-server
+2026-05-08 18:30:51 [ℹ]  successfully created addon: metrics-server
+2026-05-08 18:30:52 [ℹ]  kubectl command should work with "/home/ec2-user/.kube/config", try 'kubectl get nodes'
+2026-05-08 18:30:52 [✔]  EKS clu
+
+
+---------------------------------------------------------------------------
+
+
+Cluster name
+Status
+Kubernetes version
+Support period
+Upgrade policy
+Created
+Provider
+Cluster selection	
+Cluster name
+Status
+Kubernetes version
+Support period
+Upgrade policy
+Created
+Provider
+test
+Creating
+1.34
+Standard support until December 2, 2026
+Extended support
+a minute ago
+EKS
+
+
+-------------------------
+
+
+With abvove cluster creation AWS will manage control plane and worker node managed by us 
+
+
+
+COre component in kubernetes 
+
+Node : Worker node where we can deploy our workload or deployments 
+
+
+so go and see in cloud formation all will ve created 
+
+Stacks (3)
+
+Delete stack
+Update stack
+Stack actions
+Create stack
+Filter status
+
+Active
+View nested
+
+1
+
+
+Items selection	
+Stack name
+	
+Status
+	
+Created time
+	
+Description
+
+Items selection	
+Stack name
+	
+Status
+	
+Created time
+	
+Description
+
+eksctl-test-nodegroup-ng-b2d46311
+CREATE_COMPLETE
+2026-05-08 23:57:56 UTC+0530
+EKS Managed Nodes (SSH access: false) [created by eksctl]
+eksctl-test-cluster
+CREATE_COMPLETE
+2026-05-08 23:44:52 UTC+0530
+EKS cluster (dedicated VPC: true, dedicated IAM: true) [created and managed by eksctl]
+cfst-1449-dac9bf92ee612db96b58a9ac1f214ed5b83d0aab91dcf657e0249ed44df56646
+CREATE_COMPLETE
+2026-05-08 22:11:15 UTC+0530
+-
+
+---
+
+resources will be cerated
+
+Resources (26)
+
+
+1
+
+
+Logical ID
+	
+Physical ID
+	
+Type
+	
+Status
+	
+Module
+
+Logical ID
+	
+Physical ID
+	
+Type
+	
+Status
+	
+Module
+
+ClusterSharedNodeSecurityGroup
+sg-0f83f40f24f29a37f 
+AWS::EC2::SecurityGroup
+CREATE_COMPLETE
+-
+ControlPlane
+test
+AWS::EKS::Cluster
+CREATE_COMPLETE
+-
+ControlPlaneSecurityGroup
+sg-0181a2f5ccd73dc01 
+AWS::EC2::SecurityGroup
+CREATE_COMPLETE
+-
+IngressDefaultClusterToNodeSG
+sgr-0e3b6ae5bc0b32f1a
+AWS::EC2::SecurityGroupIngress
+CREATE_COMPLETE
+-
+IngressInterNodeGroupSG
+sgr-05205b0c8391e6675
+AWS::EC2::SecurityGroupIngress
+CREATE_COMPLETE
+-
+IngressNodeToDefaultClusterSG
+sgr-0dfe669ff91dca661
+AWS::EC2::SecurityGroupIngress
+CREATE_COMPLETE
+-
+InternetGateway
+igw-0dce670507c20bc86 
+AWS::EC2::InternetGateway
+CREATE_COMPLETE
+-
+NATGateway
+nat-0f2a77dc51542f1bf
+AWS::EC2::NatGateway
+CREATE_COMPLETE
+-
+NATIP
+54.198.194.128 
+AWS::EC2::EIP
+CREATE_COMPLETE
+-
+NATPrivateSubnetRouteUSEAST1B
+rtb-0a1e419dedfd12808|0.0.0.0/0
+AWS::EC2::Route
+CREATE_COMPLETE
+-
+NATPrivateSubnetRouteUSEAST1D
+rtb-0f09b86170115be1b|0.0.0.0/0
+AWS::EC2::Route
+CREATE_COMPLETE
+-
+PrivateRouteTableUSEAST1B
+rtb-0a1e419dedfd12808
+AWS::EC2::RouteTable
+CREATE_COMPLETE
+-
+PrivateRouteTableUSEAST1D
+rtb-0f09b86170115be1b
+AWS::EC2::RouteTable
+CREATE_COMPLETE
+-
+PublicRouteTable
+rtb-0d1ab08265fbeca2f
+AWS::EC2::RouteTable
+CREATE_COMPLETE
+-
+PublicSubnetRoute
+rtb-0d1ab08265fbeca2f|0.0.0.0/0
+AWS::EC2::Route
+CREATE_COMPLETE
+-
+RouteTableAssociationPrivateUSEAST1B
+rtbassoc-022cefe00c2c4a584
+AWS::EC2::SubnetRouteTableAssociation
+CREATE_COMPLETE
+-
+RouteTableAssociationPrivateUSEAST1D
+rtbassoc-0fcffa08502eff544
+AWS::EC2::SubnetRouteTableAssociation
+CREATE_COMPLETE
+-
+RouteTableAssociationPublicUSEAST1B
+rtbassoc-0a950619a949d58be
+AWS::EC2::SubnetRouteTableAssociation
+CREATE_COMPLETE
+-
+RouteTableAssociationPublicUSEAST1D
+rtbassoc-0ffaf0e6f5aaa609f
+AWS::EC2::SubnetRouteTableAssociation
+CREATE_COMPLETE
+-
+ServiceRole
+eksctl-test-cluster-ServiceRole-dplxUf5kQz9w 
+AWS::IAM::Role
+CREATE_COMPLETE
+-
+SubnetPrivateUSEAST1B
+subnet-0bbac37976dd75ae5 
+AWS::EC2::Subnet
+CREATE_COMPLETE
+-
+SubnetPrivateUSEAST1D
+subnet-0c53331a12de7137a 
+AWS::EC2::Subnet
+CREATE_COMPLETE
+-
+SubnetPublicUSEAST1B
+subnet-035334806135974f9 
+AWS::EC2::Subnet
+CREATE_COMPLETE
+-
+SubnetPublicUSEAST1D
+subnet-035c56f260306e3db 
+AWS::EC2::Subnet
+CREATE_COMPLETE
+-
+VPC
+vpc-01a4460f1cd4e1aae 
+AWS::EC2::VPC
+CREATE_COMPLETE
+-
+VPCGatewayAttachment
+IGW|vpc-01a4460f1cd4e1aae
+AWS::EC2::VPCGatewayAttachment
+CREATE_COMPLETE
+-
+
+CloudShell
+Feedback
+
+Console Mobile App
+© 202
+
+
+---
+
+Node groups (1) Info
+Edit
+Delete
+Add
+Node groups implement basic compute scaling through EC2 Auto Scaling groups.
+
+
+1
+
+Node group selection	
+Group name
+Desired size
+AMI release version
+Launch template
+Status
+ng-b2d46311
+2
+1.34.7-20260505
+eksctl-test-nodegroup-ng-b2d46311 (1)
+Active
+
+-------------
+
+ng-b2d46311
+
+Edit
+Delete
+Your current IAM principal doesn’t have access to Kubernetes objects on this cluster.
+This may be due to the current user or role not having Kubernetes RBAC permissions to describe cluster resources or not having an entry in the cluster’s auth config map.Learn more 
+Node group configuration Info
+Kubernetes version
+1.34
+AMI type
+Info
+Amazon Linux 2023 (x86_64) Standard
+Launch template
+eksctl-test-nodegroup-ng-b2d46311 
+Status
+Active
+AMI release version
+Info
+1.34.7-20260505
+Instance types
+t2.medium
+Launch template version
+1
+Disk size
+Specified in launch template
+
+
+Details
+
+Nodes
+
+Health issues
+0
+
+Kubernetes labels
+
+Update config
+
+Kubernetes taints
+
+Update history
+
+Tags
+
+Details
+Node group ARN
+arn:aws:eks:us-east-1:574635351495:nodegroup/test/ng-b2d46311/4ccf046c-7e14-47bc-608d-c0853ecd1d53
+Created
+11 minutes ago
+Autoscaling group name
+eks-ng-b2d46311-4ccf046c-7e14-47bc-608d-c0853ecd1d53 
+Node IAM role ARN
+arn:aws:iam::574635351495:role/eksctl-test-nodegroup-ng-b2d46311-NodeInstanceRole-DozDwF1e85mp
+View in IAM 
+Capacity type
+On-Demand
+Desired size
+2 nodes
+Minimum size
+2 nodes
+Maximum size
+2 nodes
+Subnets
+subnet-035c56f260306e3db 
+subnet-035334806135974f9 
+Configure remote access to nodes
+off
+
+
+-------------
+
+
+2nodes as well cerated 
+
+Kubernetes
+i-0d3f4eafc9717c52a
+Running
+
+t2.medium
+2/2 checks passed
+View alarms
+
+us-east-1b
+ec2-54-81-159-131.compute-1.amazonaws.com
+54.81.159.131
+–
+–
+disabled
+launch-wizard-1
+–
+2026/05/08 23:37 GMT+5:30
+Linux/UNIX
+false
+–
+ip-172-31-44-55.ec2.internal
+172.31.44.55
+vpc-0e31d3404ef96b039
+test-ng-b2d46311-Node
+i-0bc93ed8fc4bfb11b
+Running
+
+t2.medium
+2/2 checks passed
+View alarms
+
+us-east-1b
+ec2-35-175-207-36.compute-1.amazonaws.com
+35.175.207.36
+–
+–
+disabled
+eks-cluster-sg-test-3556498
+–
+2026/05/08 23:59 GMT+5:30
+Linux/UNIX
+false
+–
+ip-192-168-2-225.ec2.internal
+192.168.2.225
+vpc-01a4460f1cd4e1aae
+test-ng-b2d46311-Node
+i-08b3463b9c3b91fc4
+Running
+
+t2.medium
+2/2 checks passed
+View alarms
+
+us-east-1d
+ec2-44-202-69-67.compute-1.amazonaws.com
+44.202.69.67
+–
+–
+disabled
+eks-cluster-sg-test-3556498
+–
+2026/05/08 23:59 GMT+5:30
+Linux/UNIX
+false
+–
+ip-192-168-54-222.ec2.internal
+192.168.54.222
+vpc-01a4460f1cd4e1aae
+Launch instances
+Launch instance from template
+Migrate a server
+Connect
+Stop instance
+Start instance
+Reboot instance
+Hibernate instance
+Terminate (delete) instance
+Instance diagnostics
+Instance settings
+Attach to Auto Scaling Group
+Change stop protection
+Change termination protection
+Change shutdown behavior
+Change auto-recovery behavior
+Change instance migration on reboot
+Protect with Elastic Disaster Recovery
+Change instance type
+Change CPU options
+Modify instance placement
+Modify Capacity Reservation settings
+Change Nitro Enclaves
+Connect RDS database
+Change credit specification
+Change resource based naming options
+Edit user data
+Modify SQL High Availability settings
+Allow tags in instance metadata
+Modify instance metadata options
+Manage tags
+Networking
+Attach network interface
+Detach network interface
+Manage IP addresses
+Disassociate Elastic IP address
+Change source/destination check
+Manage ENA express
+Manage ENA queues
+Manage bandwidth
+Security
+Change security groups
+Modify IAM role
+Get Windows password
+Image and templates
+Create image
+Create template from instance
+Launch more like this
+Storage
+Attach volume
+Detach volume
+Replace root volume
+Monitor and troubleshoot
+Manage detailed monitoring
+Manage CloudWatch alarms
+Configure CloudWatch agent
+Get system log
+Get instance screenshot
+Connect to serial port
+Replace root volume
+Visit SSM Fleet Manager
+Select an instance
+
+
+Pasted above from AWS
+
+
+
+
+-----------------
+
+What is pod
+
+Container inside application will run 
+
+and pod is extra layer pn top of above 
+
+inside pod -- container -- inside container - app will be their 
+
+so pod is abstract layer on top of container 
+
+------------------------
+
+Kubernetes is not usign any conatienration platform it is using CRI native containerxaton platform (container run time interface)
+
+
+CRI --> INterface 
+
+
+
+
+
+
