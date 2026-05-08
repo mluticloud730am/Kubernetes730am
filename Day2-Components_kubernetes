@@ -831,7 +831,75 @@ Fri May  8 18:57:00 UTC 2026
 
 
 -----------------------------------------
+[ec2-user@ip-172-31-44-55 ~]$ cat pod.yaml
+cat: pod.yaml: No such file or directory
+[ec2-user@ip-172-31-44-55 ~]$ cat pod.xml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+  labels:
+      app: webapp
+      type: front-end
+spec:
+  containers:
+  - name: nginx-container 
+    image: nginx
 
+[ec2-user@ip-172-31-44-55 ~]$ kubectl describe pod
+Name:             myapp
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             ip-192-168-2-225.ec2.internal/192.168.2.225
+Start Time:       Fri, 08 May 2026 18:56:28 +0000
+Labels:           app=webapp
+                  type=front-end
+Annotations:      <none>
+Status:           Running
+IP:               192.168.1.248
+IPs:
+  IP:  192.168.1.248
+Containers:
+  nginx-container:
+    Container ID:   containerd://92b040ade9154422653e6db3fb83214b2d316692d032021df3330ac7abdb50cc
+    Image:          nginx
+    Image ID:       docker.io/library/nginx@sha256:6e23479198b998e5e25921dff8455837c7636a67111a04a635cf1bb363d199dc
+    Port:           <none>
+    Host Port:      <none>
+    State:          Running
+      Started:      Fri, 08 May 2026 18:56:32 +0000
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-l48b5 (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       True 
+  ContainersReady             True 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-l48b5:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age    From               Message
+  ----    ------     ----   ----               -------
+  Normal  Scheduled  2m16s  default-scheduler  Successfully assigned default/myapp to ip-192-168-2-225.ec2.internal
+  Normal  Pulling    2m15s  kubelet            Pulling image "nginx"
+  Normal  Pulled     2m12s  kubelet            Successfully pulled image "nginx" in 3.061s (3.061s including waiting). Image size: 62964342 bytes.
+  Normal  Created    2m12s  kubelet            Created container: nginx-container
+  Normal  Started    2m12s  kubelet            Started container nginx-container
 
 
 
