@@ -1,0 +1,251 @@
+Kubernetes :
+
+Orchestration tool - Means Simply container orchestration tool - Logical unit insider server by adding dependencies and librabires we can application as logical as unit and that is called 
+container 
+
+Small unit called container insider server 
+
+These containers can be orchesdtrated by kubrentees 
+
+Kubernetes is devloped by google and opensource tool and alternate tool is openshift some companies are using 
+openshift is not completeing tool just additonal layer which will provide mor eoptions 
+
+need to do full depth analysis what is differnece bvetween openshift and kubernetes 
+
+openshift - REDHAT 
+
+kubernetes some things are difficuly loggiing process ,monitoring ,security process -- these option developed by redhat in their own version but on top of kubernetes redhat developed openshift
+
+Orchestration means what 
+
+Orchestrator means 
+
+for example sserver ec2 instance and one more ec2 and if you take application of flipkart example multuiple services will be running suppose fashions beasuty electronics home like diff services
+diff containers assume like that on conatiner for one application
+
+if end user point of view to supporrt multiple request we need to deploy containers in differnet ec2 machine alone as one more 
+
+load balancer aslo kubernetes willl manage 
+
+if load is going beyond kubenetes will go and create moreand more conatiners based on request 
+basically scale down and scale UP -- like ASG 
+kubernetes is used for conatoneration platform 
+
+Kuberentes reponsasilbilty 
+
+how many contaainers should run it wil orchestrate 
+
+self healing 
+
+1.conatainers count 
+2.self healing option like scalbility  - based on load conatainer countc can increase 
+if any contaainer fails automatically new conatiner wil created in place of old container 
+kubernetes ensure application high aviliablity 
+it will take cares of security also 
+node high aviliablity if node fails automatically one more node will be created 
+
+once your integrated kuberntes iwth applccation - 100 % high aviliabity will be their 
+
+kube also we will write yaml file contains how many copies how many nodes where it required and all 
+
+for suppose you have 6 tgs 6 asgs and complex to find issue if happen but this type of issues will not happen in kubenetes 
+
+
+Sample yaml file 
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: httpd
+        ports:
+        - containerPort: 80 
+
+
+
+pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+  labels:
+      app: webapp
+      type: front-end
+spec:
+  containers:
+  - name: nginx-container 
+    image: nginx
+
+
+replicaset yml
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: web-rs
+spec:
+  replicas: 3 # 3 Pods should exist at all times.
+  selector:  # Pods label should be defined in ReplicaSet label selector
+    matchLabels:
+      app: webapp
+  template:
+    metadata:
+      name: myapp-pod
+      labels:
+        app: webapp
+        type: front-end # Atleast 1 Pod label should match with ReplicaSet Label Selector
+    spec:
+      containers:
+      - name: nginx-container
+        image: httpd
+
+
+------------------------------------------------------------------------
+
+
+if i want to 10 application go with kubernetes with high aviliable 
+
+
+for example inside server we have hardware layer and os layer and if want directly run mobile applocation so it is virtualization if load increase we need launch one more ec2,lb,asg and more 
+
+in similar way on top of os layer we have to integrate kubernetes so that mobile application can create conatienr so it will do everything and all only thing is image ready
+
+
+Once image is ready rest everything is been taken care by kuvbernetes
+
+
+Image build by containersation platform 
+image run by orchestrator tool 
+
+if use orechatrator process to create image then we will not called as caontainer we will call as pod 
+
+Conatiner and pod both are case 
+
+if image created by orchestration it is called pod 
+if image is created by same containeration tool then it called conatiner 
+
+
+Kubernetes Architecture -- Interview question will come for sure - Main important conccept 
+
+
+Kubernetes have 2 nodes 
+
+controller node 
+worker node
+
+so example created 1 controller node and 2 worker nodes 
+controller node or control plane anything is fine 
+
+control node
+Worker node 1
+worker node2
+
+So developer will develop code and push code to github 
+
+then our responsabilty is creating docker file and create image by using code and everything 
+
+and the push image to ecr
+
+so image is ready so we need to write yaml file which conatiners all instruction like which node,replicas and more
+
+so control node is brain 
+
+so first componet in control node is 
+
+API services ( all instructions are feed to api)
+
+again api will connect to multiple things like and other components called ETCD so when ever api ask to etcd first got requirment from yaml can we run this pods
+
+if etcd already have information it will repsond api everything 
+
+next component is scheduler -- reponsbility schedule a pod on whcih node - by looking on resource aviliablty shceudler will deploy pod on availiable resources -balanced option 
+
+if you want any rules we can write for scheduler 
+
+we have one more component in control node called controller 
+
+Suppose if developer do kubectl apply so it will verify api with etcd for exotsing configurations if new requirmenet and the inform api no information and create new pods then controller will check desierd state and cuirrent satet 
+so controller will verify with worker node and check if any pods are runnign and based on that it will inform to scheduler deploy pods and all and then it ewill passed information to etcd to save information
+
+bascially api will be important mediator for everything 
+
+now controler node jobs is done and api will inform worker node 
+lets say replica=2 so in thsi case scheduler decicdde to 1 pod in one and another in one node 
+but worker node insider whcih component it will talk called kubelet and each worker node have kublet component 
+
+now api will inform kubelet we got requirement so again in worker node another components call container run time engine 
+now 1.3 above kubernetes have it their own containerastion polatofrm 
+
+so container run time enegine will create a pod 
+
+so finally pod is created and another component will have inside worker node called kubeproxy and it will services access to end user 
+
+
+so external to LB and then  kube proxy this is how it works 
+
+so kubeproxy will giev avccess to applcoation 
+
+so once pod is created then through container run time engine - kubelet -- api-etcd -data saved as etcd simialr to state config files
+
+
+
+
+
+
+api -etcd -api- controller-api- scheduler- api -etcd- api kubelet- cri -pod created -cri -kubelet - api-api-etcd -api-developer
+flow and reverse flow how it will be their 
+
+
+
+process can be automated by using jenkins/github actions/gitlabcicid/azure devops tool  by using tools we can deploy 
+take code
+build docker 
+create image
+push image ecr 
+apply yaml file 
+
+
+docker file and kubenetes file can be suffice inside github for everything 
+
+So every devops always should have 3 files 
+
+docker file
+kubernetes file 
+cicd files 
+
+mandatory 
+
+
+
+------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
