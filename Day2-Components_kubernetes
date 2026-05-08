@@ -801,6 +801,37 @@ Kubernetes is not usign any conatienration platform it is using CRI native conta
 CRI --> INterface 
 
 
+-----------------------
+
+
+Last login: Fri May  8 18:08:15 2026 from 18.206.107.28
+[ec2-user@ip-172-31-44-55 ~]$ vi pod.xml
+[ec2-user@ip-172-31-44-55 ~]$ kubectl apply -y pod.xml
+error: unknown shorthand flag: 'y' in -y
+See 'kubectl apply --help' for usage.
+[ec2-user@ip-172-31-44-55 ~]$ kubectl apply -f pod.xml
+pod/myapp created
+[ec2-user@ip-172-31-44-55 ~]$ kubectl get pods
+NAME    READY   STATUS    RESTARTS   AGE
+myapp   1/1     Running   0          7s
+[ec2-user@ip-172-31-44-55 ~]$ kuebctl get nodes
+-bash: kuebctl: command not found
+[ec2-user@ip-172-31-44-55 ~]$ kubectl get nodes
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-2-225.ec2.internal    Ready    <none>   26m   v1.34.7-eks-4136f65
+ip-192-168-54-222.ec2.internal   Ready    <none>   27m   v1.34.7-eks-4136f65
+[ec2-user@ip-172-31-44-55 ~]$ kubectl get ns
+NAME              STATUS   AGE
+default           Active   33m
+kube-node-lease   Active   33m
+kube-public       Active   33m
+kube-system       Active   33m
+[ec2-user@ip-172-31-44-55 ~]$ date
+Fri May  8 18:57:00 UTC 2026
+
+
+-----------------------------------------
+
 
 
 
