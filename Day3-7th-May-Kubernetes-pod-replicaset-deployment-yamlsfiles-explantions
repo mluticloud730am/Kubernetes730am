@@ -1,0 +1,756 @@
+Create ec2 t2 medium - assign roles to ec2- install kubectl,eksctl,create cluster prerequisite before class
+
+
+Attach Iam role to ec2
+----------kubectl Installation-----------
+curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+
+chmod +x ./kubectl  
+sudo mv ./kubectl /usr/local/bin/kubectl
+
+
+----------- eksctl  Installation ------------------------ 
+   a. Download and extract the latest release   
+   b. Move the extracted binary to /usr/local/bin   
+   c. Test that your eksclt installation was successful   
+   ```sh
+   curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+   sudo mv /tmp/eksctl /usr/local/bin
+   eksctl version
+
+
+ EKS cluster Setup Process 
+
+  # Create an IAM Role and attache it to EC2 instance    
+   `Note: create IAM user with programmatic access if your bootstrap system is outside of AWS`   
+   IAM user should have access to   
+   IAM   
+   EC2   
+   VPC    
+   CloudFormation
+
+  # Create your cluster and nodes 
+   ```sh
+   eksctl create cluster --name cluster-name  \
+   --region region-name \
+   --node-type instance-type \
+   --nodes-min 2 \
+   --nodes-max 2 \ 
+   --zones <AZ-1>,<AZ-2>
+   
+   example:
+   eksctl create cluster --name test \
+      --region ap-south-1 \
+   --node-type t2.small 
+
+
+-------------------------------------------------------------------------------------------------------------------
+
+Kubernetes WorkLoad :
+
+1.POD 
+apiversion: v1
+kind: Pod 
+Metadata:
+  name: nginx-pod
+  labels:
+    app: nginx
+spec:
+  containers:   
+  - name: nginx-container
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+
+sample file will be having above basic details need to go through indepth explanation of this pod.yaml
+
+2. Replicaset Controller below is yaml basic format 
+
+kind: ReplicaSet
+metadata:
+  name: nginx-replicaset  
+spec:
+  replicas: 3 
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx-container
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+
+See in above 2 yamls files so replicaset sepc is replicas so replica is creting 3 copies which pod have below specifications
+
+so ideally when compared to both pod defination is common and now we are handover to control manager replica set control manger create 3 set of copies 
+
+only thing is selector is difference 
+ we have diffeerent control manager but in replicaset yaml we didnt mentioned any kind of pod 
+
+so mainly between LABLE should match so label will play very important role so replica set unable to control the pod so lable should match
+
+so replica set not support rolling updates actually when code update and new image will be created so we if we update image replica set will not support 
+rollign update
+
+so we only need to terminate and create it 
+
+so lets say your end 2 pods are running so ideally we will down one pod and update version v2 from v1 
+
+so i need a process called delete one and create one if multiple pods are runnign so application will be highly aviliable 
+
+
+so Replica set only support delete first v1 and create version v2 and  not able to handle upgrade the image version on live 
+
+downtime will be their so not recommended for production env 
+
+POD Drawback 
+Pod create without control manager so it wont give any replicas and no high aviliability 
+
+so next process is deployment.yaml or dpeloyment controller which we are using in realtime 
+
+3.Deployment controller 
+
+apiversion: apps/v1
+kind: deployment
+metadata:
+  name: nginx-deployment  
+spec:
+  replicas: 3   
+  selector:
+    matchLabels:
+      app: nginx    
+  template:
+    metadata:
+      labels:
+        app: nginx  
+    spec:
+      containers: 
+      - name: nginx-container
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+
+
+so when using deployment.yaml rolling update is possible benfit is able to upgrade.
+
+We can able to update version without delete all pods so it can handle one by one pods create and delete without any downtime 
+
+Now lets understand this POD and outside it will be replica sets so pod layer and replicaset layer and on top of that deployment layer will be their 
+
+so Deployment(Rolling changes or ugrades ) set inside replicaset(Self Healing) inside pod(main application or executables running ) will be their 
+
+
+
+
+
+also need to know why in pod.yaml only v1 but in replicaset and deployment yaml why we using apps/v1
+
+
+---[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ cat pod.yaml 
+apiVersion: v1
+kind: Pod
+
+metadata:
+  name: nginx-pod
+  labels:
+    app: nginx
+
+spec:
+  containers:
+  - name: nginx-container
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl apply -f pod.yaml 
+pod/nginx-pod created
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-qkhhz   1/1     Running   0          3h14m
+nginx-pod                          1/1     Running   0          9s
+
+-----------------
+
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl describe pod nginx-pod
+Name:             nginx-pod
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             ip-192-168-58-97.ec2.internal/192.168.58.97
+Start Time:       Sat, 09 May 2026 06:24:03 +0000
+Labels:           app=nginx
+Annotations:      <none>
+Status:           Running
+IP:               192.168.45.150
+IPs:
+  IP:  192.168.45.150
+Containers:
+  nginx-container:
+    Container ID:   containerd://cc0458160c06d1b0dbecafa0c094a87975c47beb8ccaad410102347206c0c0b5
+    Image:          nginx:latest
+    Image ID:       docker.io/library/nginx@sha256:a7a9f7e9f549699206cd61c9d14c5434c7ed85e510e837211e0c2d24c9bdb9ac
+    Port:           80/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Sat, 09 May 2026 06:24:04 +0000
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-62b9f (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       True 
+  ContainersReady             True 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-62b9f:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  50s   default-scheduler  Successfully assigned default/nginx-pod to ip-192-168-58-97.ec2.internal
+  Normal  Pulling    50s   kubelet            Pulling image "nginx:latest"
+  Normal  Pulled     50s   kubelet            Successfully pulled image "nginx:latest" in 131ms (131ms including waiting). Image size: 62964090 bytes.
+  Normal  Created    50s   kubelet            Created container: nginx-container
+  Normal  Started    50s   kubelet            Started container nginx-container
+
+----------------------------------
+
+
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-qkhhz   1/1     Running   0          3h15m
+nginx-pod                          1/1     Running   0          114s
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl delete pod my-deployment-np-97bbd86dc-qkhhz nginx-pod
+pod "my-deployment-np-97bbd86dc-qkhhz" deleted
+pod "nginx-pod" deleted
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-6knjf   1/1     Running   0          6s
+
+here ngnix pod will not cretae as we dont have self healing yaml here or deployemnt yaml 
+
+----------------------
+
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl apply -f pod.yaml
+pod/nginx-pod created
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-6knjf   1/1     Running   0          112s
+nginx-pod                          1/1     Running   0          6s
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl delete -f pod.yaml 
+pod "nginx-pod" deleted
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-6knjf   1/1     Running   0          2m12s
+
+
+-----------------------
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ ll
+total 12
+-rw-r--r--. 1 root root 337 May  9 06:17 Deployment.yaml
+-rw-r--r--. 1 root root 185 May  9 06:21 pod.yaml
+-rw-r--r--. 1 root root 328 May  9 06:17 replicaset.yaml
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl apply -f pod.yaml
+pod/nginx-pod created
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl apply -f pod.yaml
+pod/nginx-pod unchanged
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-6knjf   1/1     Running   0          3m18s
+nginx-pod                          1/1     Running   0          8s
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ 
+
+------------------------------
+
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ ll
+total 12
+-rw-r--r--. 1 root root 337 May  9 06:17 Deployment.yaml
+-rw-r--r--. 1 root root 185 May  9 06:21 pod.yaml
+-rw-r--r--. 1 root root 328 May  9 06:17 replicaset.yaml
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ sudo su
+[root@ip-172-31-45-208 May7th-Kubernetes730am]# ll
+total 12
+-rw-r--r--. 1 root root 337 May  9 06:17 Deployment.yaml
+-rw-r--r--. 1 root root 185 May  9 06:21 pod.yaml
+-rw-r--r--. 1 root root 328 May  9 06:17 replicaset.yaml
+[root@ip-172-31-45-208 May7th-Kubernetes730am]# mv pod.yaml pod1.yaml
+[root@ip-172-31-45-208 May7th-Kubernetes730am]# exit
+exit
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl apply -f pod.yaml
+error: the path "pod.yaml" does not exist
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl apply -f pod1.yaml
+pod/nginx-pod unchanged
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-6knjf   1/1     Running   0          6m9s
+nginx-pod                          1/1     Running   0          2m59s
+
+so important thing is etcd understand the configurations present 
+
+------------------------
+
+now other scenario config is changed so pod created 
+
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl apply -f pod1.yaml
+pod/nginx-pod1 created
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ cat pod1.yaml 
+apiVersion: v1
+kind: Pod
+
+metadata:
+  name: nginx-pod1
+  labels:
+    app: nginx
+
+spec:
+  containers:
+  - name: nginx-container
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-6knjf   1/1     Running   0          8m47s
+nginx-pod                          1/1     Running   0          5m37s
+nginx-pod1                         1/1     Running   0          9s
+
+
+------------------------------------------------
+
+if we do rm -rf pod1.xml -- this command will go linux not etcd kubernetes so it will not able to track this information 
+
+ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ cat replicaset.yaml 
+apiVersion: apps/v1 # API version for the ReplicaSet resource
+kind: ReplicaSet # Kubernetes object kind for this manifest
+metadata: # Metadata about the ReplicaSet
+  name: nginx-replicaset  # Name used to identify this ReplicaSet
+spec: # Desired state specification for the ReplicaSet
+  replicas: 3 # Number of pod replicas to maintain
+  selector: # Selector matching pods managed by this ReplicaSet
+    matchLabels:
+      app: nginx # Match pods with label app=nginx
+  template: # Pod template used to create pods
+    metadata:
+      labels:
+        app: nginx # Labels assigned to pods created from this template
+    spec:
+      containers: # List of containers that run in each pod
+      - name: nginx-container # Name of the container inside the pod
+        image: nginx:latest # Container image to deploy
+        ports:
+        - containerPort: 80 # Port exposed by the container[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl apply -f replicaset.yaml 
+replicaset.apps/nginx-replicaset created
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-6knjf   1/1     Running   0          30m
+nginx-replicaset-7tcd7             1/1     Running   0          5s
+nginx-replicaset-f5pr6             1/1     Running   0          5s
+nginx-replicaset-gjlzc             1/1     Running   0          5s
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl delete pod nginx-replicaset-7tcd7
+pod "nginx-replicaset-7tcd7" deleted
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-6knjf   1/1     Running   0          30m
+nginx-replicaset-2qn4r             1/1     Running   0          4s
+nginx-replicaset-f5pr6             1/1     Running   0          25s
+nginx-replicaset-gjlzc             1/1     Running   0          25s
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-6knjf   1/1     Running   0          30m
+nginx-replicaset-2qn4r             1/1     Running   0          9s
+nginx-replicaset-f5pr6             1/1     Running   0          30s
+nginx-replicaset-gjlzc             1/1     Running   0          30s
+
+
+above with replica set 
+
+    - containerPort: 80 # Port number that the container listens on[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ cat replicaset.yaml 
+apiVersion: apps/v1 # API version for the ReplicaSet resource
+kind: ReplicaSet # Kubernetes object kind for this manifest
+metadata: # Metadata about the ReplicaSet
+  name: nginx-replicaset  # Name used to identify this ReplicaSet
+spec: # Desired state specification for the ReplicaSet
+  replicas: 3 # Number of pod replicas to maintain
+  selector: # Selector matching pods managed by this ReplicaSet
+    matchLabels:
+      app: nginx # Match pods with label app=nginx
+  template: # Pod template used to create pods
+    metadata:
+      labels:
+        app: nginx # Labels assigned to pods created from this template
+    spec:
+      containers: # List of containers that run in each pod
+      - name: nginx-container # Name of the container inside the pod
+        image: nginx:latest # Container image to deploy
+        ports:
+        - containerPort: 80 # Port exposed by the container[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ vi replicaset.yaml 
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ cat replicaset.yaml 
+apiVersion: apps/v1 # API version for the ReplicaSet resource
+kind: ReplicaSet # Kubernetes object kind for this manifest
+metadata: # Metadata about the ReplicaSet
+  name: nginx-replicaset  # Name used to identify this ReplicaSet
+spec: # Desired state specification for the ReplicaSet
+  replicas: 3 # Number of pod replicas to maintain
+  selector: # Selector matching pods managed by this ReplicaSet
+    matchLabels:
+      app: nginx # Match pods with label app=nginx
+  template: # Pod template used to create pods
+    metadata:
+      labels:
+        app: nginx # Labels assigned to pods created from this template
+    spec:
+      containers: # List of containers that run in each pod
+      - name: nginx-container # Name of the container inside the pod
+        image: httpd:latest # Container image to deploy
+        ports:
+        - containerPort: 80 # Port exposed by the container
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl apply -f replicaset.yaml 
+replicaset.apps/nginx-replicaset configured
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-6knjf   1/1     Running   0          33m
+nginx-replicaset-2qn4r             1/1     Running   0          3m26s
+nginx-replicaset-f5pr6             1/1     Running   0          3m47s
+nginx-replicaset-gjlzc             1/1     Running   0          3m47s
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl descirbe pod nginx-replicaset-gjlzc
+error: unknown command "descirbe" for "kubectl"
+
+Did you mean this?
+        describe
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl describe pod nginx-replicaset-gjlzc
+Name:             nginx-replicaset-gjlzc
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             ip-192-168-1-109.ec2.internal/192.168.1.109
+Start Time:       Sat, 09 May 2026 06:56:12 +0000
+Labels:           app=nginx
+Annotations:      <none>
+Status:           Running
+IP:               192.168.12.7
+IPs:
+  IP:           192.168.12.7
+Controlled By:  ReplicaSet/nginx-replicaset
+Containers:
+  nginx-container:
+    Container ID:   containerd://c47ea5390556b4c28865ef1cce91fbfeb30a2545568b312665535d64bb401d8e
+    Image:          nginx:latest
+    Image ID:       docker.io/library/nginx@sha256:a7a9f7e9f549699206cd61c9d14c5434c7ed85e510e837211e0c2d24c9bdb9ac
+    Port:           80/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Sat, 09 May 2026 06:56:13 +0000
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-5cgm9 (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       True 
+  ContainersReady             True 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-5cgm9:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age    From               Message
+  ----    ------     ----   ----               -------
+  Normal  Scheduled  4m18s  default-scheduler  Successfully assigned default/nginx-replicaset-gjlzc to ip-192-168-1-109.ec2.internal
+  Normal  Pulling    4m18s  kubelet            Pulling image "nginx:latest"
+  Normal  Pulled     4m17s  kubelet            Successfully pulled image "nginx:latest" in 128ms (128ms including waiting). Image size: 62964090 bytes.
+  Normal  Created    4m17s  kubelet            Created container: nginx-container
+  Normal  Started    4m17s  kubelet            Started container nginx-container
+
+
+when imaged changed from ngnix to httpd does tno reflect so rolling updates will not be supporting the replicaset so we not suppose to use directly the replicas ste for code changes
+
+
+  Type    Reason     Age    From               Message
+  ----    ------     ----   ----               -------
+  Normal  Scheduled  4m18s  default-scheduler  Successfully assigned default/nginx-replicaset-gjlzc to ip-192-168-1-109.ec2.internal
+  Normal  Pulling    4m18s  kubelet            Pulling image "nginx:latest"
+  Normal  Pulled     4m17s  kubelet            Successfully pulled image "nginx:latest" in 128ms (128ms including waiting). Image size: 62964090 bytes.
+  Normal  Created    4m17s  kubelet            Created container: nginx-container
+  Normal  Started    4m17s  kubelet            Started container nginx-container
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl delete  -f replicaset.yaml 
+replicaset.apps "nginx-replicaset" deleted
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl delete ^Cf replicaset.yaml 
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-6knjf   1/1     Running   0          36m
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl apply -f replicaset.yaml 
+replicaset.apps/nginx-replicaset created
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-6knjf   1/1     Running   0          36m
+nginx-replicaset-b8plm             1/1     Running   0          5s
+nginx-replicaset-fncv8             1/1     Running   0          5s
+nginx-replicaset-qbk45             1/1     Running   0          5s
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubect describe pod nginx-replicaset-qbk45
+-bash: kubect: command not found
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl describe pod nginx-replicaset-qbk45
+Name:             nginx-replicaset-qbk45
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             ip-192-168-58-97.ec2.internal/192.168.58.97
+Start Time:       Sat, 09 May 2026 07:02:35 +0000
+Labels:           app=nginx
+Annotations:      <none>
+Status:           Running
+IP:               192.168.63.195
+IPs:
+  IP:           192.168.63.195
+Controlled By:  ReplicaSet/nginx-replicaset
+Containers:
+  nginx-container:
+    Container ID:   containerd://8f44bf4d85735a66e5183db359cf313a9e32f4313904617f0bf019df7ce301fa
+    Image:          httpd:latest
+    Image ID:       docker.io/library/httpd@sha256:65541459bb7b5183228c4dcf6bd489a2dac7b8bc565b8dc58bce100cc2d3d2a5
+    Port:           80/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Sat, 09 May 2026 07:02:37 +0000
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-vzt6w (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       True 
+  ContainersReady             True 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-vzt6w:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  25s   default-scheduler  Successfully assigned default/nginx-replicaset-qbk45 to ip-192-168-58-97.ec2.internal
+  Normal  Pulling    25s   kubelet            Pulling image "httpd:latest"
+  Normal  Pulled     24s   kubelet            Successfully pulled image "httpd:latest" in 1.043s (1.043s including waiting). Image size: 45250501 bytes.
+  Normal  Created    24s   kubelet            Created container: nginx-container
+  Normal  Started    24s   kubelet            Started container nginx-container
+
+again when we delete yaml and then apply for replica set it is picking now httpd again
+---------
+
+
+
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl apply -f Deployment.yaml 
+deployment.apps/nginx-deployment created
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods
+NAME                                READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-6knjf    1/1     Running   0          38m
+nginx-deployment-6586c5b5fb-d74cb   1/1     Running   0          5s
+nginx-deployment-6586c5b5fb-kdf7j   1/1     Running   0          5s
+nginx-deployment-6586c5b5fb-tqddm   1/1     Running   0          5s
+nginx-replicaset-b8plm              1/1     Running   0          107s
+nginx-replicaset-fncv8              1/1     Running   0          107s
+nginx-replicaset-qbk45              1/1     Running   0          107s
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl delete  -f replicaset.yaml 
+replicaset.apps "nginx-replicaset" deleted
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods
+NAME                                READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-6knjf    1/1     Running   0          38m
+nginx-deployment-6586c5b5fb-d74cb   1/1     Running   0          28s
+nginx-deployment-6586c5b5fb-kdf7j   1/1     Running   0          28s
+nginx-deployment-6586c5b5fb-tqddm   1/1     Running   0          28s
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl delete pod nginx-deployment-6586c5b5fb-d74cb
+pod "nginx-deployment-6586c5b5fb-d74cb" deleted
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods
+NAME                                READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-6knjf    1/1     Running   0          38m
+nginx-deployment-6586c5b5fb-6bb8w   1/1     Running   0          3s
+nginx-deployment-6586c5b5fb-kdf7j   1/1     Running   0          54s
+nginx-deployment-6586c5b5fb-tqddm   1/1     Running   0          54s
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ vi Deployment.yaml 
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ cat Deployment.yaml 
+apiVersion: apps/v1 # API version for the Deployment resource
+kind: Deployment # The Kubernetes object kind
+metadata: # Metadata about this Deployment
+  name: nginx-deployment # Name used to identify this Deployment
+spec: # Desired state specification for the Deployment
+  replicas: 3 # Number of pod replicas to run
+  selector: # Selector used to identify pods managed by this Deployment
+    matchLabels:
+      app: nginx # Match pods with label app=nginx
+  template: # Pod template for creating pods
+    metadata:
+      labels:
+        app: nginx # Labels assigned to pods created from this template
+    spec:
+      containers: # List of containers to run in each pod
+      - name: nginx-container # Name of the container inside the pod
+        image: nginx:latest # Container image to deploy
+        ports:
+        - containerPort: 80 # Port exposed by the container[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ vi Deployment.yaml 
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ cat Deployment.yaml 
+apiVersion: apps/v1 # API version for the Deployment resource
+kind: Deployment # The Kubernetes object kind
+metadata: # Metadata about this Deployment
+  name: nginx-deployment # Name used to identify this Deployment
+spec: # Desired state specification for the Deployment
+  replicas: 3 # Number of pod replicas to run
+  selector: # Selector used to identify pods managed by this Deployment
+    matchLabels:
+      app: nginx # Match pods with label app=nginx
+  template: # Pod template for creating pods
+    metadata:
+      labels:
+        app: nginx # Labels assigned to pods created from this template
+    spec:
+      containers: # List of containers to run in each pod
+      - name: nginx-container # Name of the container inside the pod
+        image: httpd:latest # Container image to deploy
+        ports:
+        - containerPort: 80 # Port exposed by the container
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods
+NAME                                READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-6knjf    1/1     Running   0          39m
+nginx-deployment-6586c5b5fb-6bb8w   1/1     Running   0          61s
+nginx-deployment-6586c5b5fb-kdf7j   1/1     Running   0          112s
+nginx-deployment-6586c5b5fb-tqddm   1/1     Running   0          112s
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl apply -f Deployment.yaml 
+deployment.apps/nginx-deployment configured
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods
+NAME                                READY   STATUS              RESTARTS   AGE
+my-deployment-np-97bbd86dc-6knjf    1/1     Running             0          40m
+nginx-deployment-59d5b764dd-62d45   0/1     ContainerCreating   0          1s
+nginx-deployment-59d5b764dd-gmnrh   1/1     Running             0          4s
+nginx-deployment-59d5b764dd-vflpg   1/1     Running             0          3s
+nginx-deployment-6586c5b5fb-6bb8w   1/1     Running             0          72s
+nginx-deployment-6586c5b5fb-tqddm   0/1     Completed           0          2m3s
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get rs
+NAME                          DESIRED   CURRENT   READY   AGE
+my-deployment-np-97bbd86dc    1         1         1       3h56m
+nginx-deployment-59d5b764dd   3         3         3       12s
+nginx-deployment-6586c5b5fb   0         0         0       2m11s
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get deploy
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+my-deployment-np   1/1     1            1           3h56m
+nginx-deployment   3/3     3            3           2m17s
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods
+NAME                                READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-6knjf    1/1     Running   0          40m
+nginx-deployment-59d5b764dd-62d45   1/1     Running   0          31s
+nginx-deployment-59d5b764dd-gmnrh   1/1     Running   0          34s
+nginx-deployment-59d5b764dd-vflpg   1/1     Running   0          33s
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl desribe pod nginx-deployment-59d5b764dd-62d45
+error: unknown command "desribe" for "kubectl"
+
+Did you mean this?
+        describe
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl desciibe pod nginx-deployment-59d5b764dd-62d45
+error: unknown command "desciibe" for "kubectl"
+
+Did you mean this?
+        describe
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl describe pod nginx-deployment-59d5b764dd-62d45
+Name:             nginx-deployment-59d5b764dd-62d45
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             ip-192-168-58-97.ec2.internal/192.168.58.97
+Start Time:       Sat, 09 May 2026 07:06:19 +0000
+Labels:           app=nginx
+                  pod-template-hash=59d5b764dd
+Annotations:      <none>
+Status:           Running
+IP:               192.168.40.47
+IPs:
+  IP:           192.168.40.47
+Controlled By:  ReplicaSet/nginx-deployment-59d5b764dd
+Containers:
+  nginx-container:
+    Container ID:   containerd://ccb7504446669f803b713c11650e68ea8911169a9ecbb898c8d82a22edbc1bee
+    Image:          httpd:latest
+    Image ID:       docker.io/library/httpd@sha256:65541459bb7b5183228c4dcf6bd489a2dac7b8bc565b8dc58bce100cc2d3d2a5
+    Port:           80/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Sat, 09 May 2026 07:06:20 +0000
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-p9dt9 (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       True 
+  ContainersReady             True 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-p9dt9:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  61s   default-scheduler  Successfully assigned default/nginx-deployment-59d5b764dd-62d45 to ip-192-168-58-97.ec2.internal
+  Normal  Pulling    61s   kubelet            Pulling image "httpd:latest"
+  Normal  Pulled     61s   kubelet            Successfully pulled image "httpd:latest" in 125ms (125ms including waiting). Image size: 45250501 bytes.
+  Normal  Created    61s   kubelet            Created container: nginx-container
+  Normal  Started    61s   kubelet            Started container nginx-container
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ 
+
+
+now in this we saw the deployment yaml file have support rolling update when we have edited the yaml on the live and it automatically got pods with httpd
+
+
+--------------------------------------
+
+so 3 scnearios which we spoke about pod,replicaset and deployment yaml is been excuted and saw logic 
+
+
+---
+
+Free tier do nnot provide real time cluster access .
+
