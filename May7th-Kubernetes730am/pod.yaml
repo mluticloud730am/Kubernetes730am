@@ -1,12 +1,12 @@
-apiVersion: v1
-kind: Pod
-metadata:
-  name: nginx-pod
-  labels:
-    app: nginx
-spec:
-  containers:
-  - name: nginx-container
-    image: nginx:latest
-    ports:
-    - containerPort: 80
+apiVersion: v1 # API version for the Pod resource
+kind: Pod # Kubernetes object kind
+metadata: # Metadata about the Pod
+  name: nginx-pod # Name used to identify this Pod
+  labels: # Labels applied to the Pod
+    app: nginx # Label used for selection and organization
+spec: # Specification of the Pod's desired state
+  containers: # List of containers to run in this Pod
+  - name: nginx-container # Name of the container within the Pod
+    image: nginx:latest # Container image to use
+    ports: # Container ports to expose
+    - containerPort: 80 # Port number that the container listens on
