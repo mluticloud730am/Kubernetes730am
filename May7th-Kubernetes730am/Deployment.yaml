@@ -1,19 +1,19 @@
-apiversion: apps/v1
-kind: deployment
-metadata:
-  name: nginx-deployment  
-spec:
-  replicas: 3   
-  selector:
+apiVersion: apps/v1 # API version for the Deployment resource
+kind: Deployment # The Kubernetes object kind
+metadata: # Metadata about this Deployment
+  name: nginx-deployment # Name used to identify this Deployment
+spec: # Desired state specification for the Deployment
+  replicas: 3 # Number of pod replicas to run
+  selector: # Selector used to identify pods managed by this Deployment
     matchLabels:
-      app: nginx    
-  template:
+      app: nginx # Match pods with label app=nginx
+  template: # Pod template for creating pods
     metadata:
       labels:
-        app: nginx  
+        app: nginx # Labels assigned to pods created from this template
     spec:
-      containers: 
-      - name: nginx-container
-        image: nginx:latest
+      containers: # List of containers to run in each pod
+      - name: nginx-container # Name of the container inside the pod
+        image: nginx:latest # Container image to deploy
         ports:
-        - containerPort: 80
+        - containerPort: 80 # Port exposed by the container

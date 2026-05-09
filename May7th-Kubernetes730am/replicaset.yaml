@@ -1,19 +1,19 @@
-apiversion: apps/v1
-kind: ReplicaSet
-metadata:
-  name: nginx-replicaset  
-spec:
-  replicas: 3 
-  selector:
+apiVersion: apps/v1 # API version for the ReplicaSet resource
+kind: ReplicaSet # Kubernetes object kind for this manifest
+metadata: # Metadata about the ReplicaSet
+  name: nginx-replicaset  # Name used to identify this ReplicaSet
+spec: # Desired state specification for the ReplicaSet
+  replicas: 3 # Number of pod replicas to maintain
+  selector: # Selector matching pods managed by this ReplicaSet
     matchLabels:
-      app: nginx
-  template:
+      app: nginx # Match pods with label app=nginx
+  template: # Pod template used to create pods
     metadata:
       labels:
-        app: nginx
+        app: nginx # Labels assigned to pods created from this template
     spec:
-      containers:
-      - name: nginx-container
-        image: nginx:latest
+      containers: # List of containers that run in each pod
+      - name: nginx-container # Name of the container inside the pod
+        image: nginx:latest # Container image to deploy
         ports:
-        - containerPort: 80
+        - containerPort: 80 # Port exposed by the container
