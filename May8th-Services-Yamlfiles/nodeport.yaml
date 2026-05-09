@@ -3,7 +3,7 @@ kind: Deployment # Kubernetes object kind for this manifest
 metadata: # Metadata about the Deployment
   name: my-deployment-np # Name used to identify this Deployment
 spec: # Desired state specification for the Deployment
-  replicas: 1 # Number of pod replicas to run
+  replicas: 3 # Number of pod replicas to run
   selector: # Selector used to identify pods managed by this Deployment
     matchLabels:
       app: my-app-np # Match pods with label app=my-app-np
