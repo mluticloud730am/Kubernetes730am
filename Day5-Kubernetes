@@ -1,0 +1,146 @@
+
+How kube-proxy Works with Services in Kubernetes
+
+Whenever we create a Service inside the Kubernetes cluster, kube-proxy continuously watches the Service and Endpoint information from the API Server.
+
+Flow Explanation
+A Service is created in the cluster.
+The API Server updates the Endpoint object based on which Pod is attached to the Service.
+kube-proxy running on every node watches these changes.
+kube-proxy creates iptables (or IPVS) rules on the node.
+These rules forward incoming traffic to the correct Pod, even if the Pod is running on another node.
+Request Flow Example
+Client
+   ↓
+Node-1:30080   (NodePort Service)
+   ↓
+kube-proxy on Node-1
+   ↓
+iptables rules
+   ↓
+Traffic forwarded to Node-2
+   ↓
+Pod-A
+Important Concept
+
+Even if the request first reaches a node where the Pod is NOT running:
+
+kube-proxy checks the Service endpoints.
+It knows which node contains the actual Pod.
+Using iptables rules, it forwards the traffic to the correct node and Pod.
+
+So Kubernetes Services provide:
+
+Load balancing
+Service discovery
+Cross-node traffic routing
+Transparent networking between nodes and Pods
+Simple One-Line Understanding
+
+kube-proxy watches Services and Endpoints from the API Server and creates iptables rules to route user traffic to the correct Pod, even across different nodes.
+
+
+===========================================
+----------kubectl Installation-----------
+curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+
+chmod +x ./kubectl  
+sudo mv ./kubectl /usr/local/bin/kubectl  
+
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+   sudo mv /tmp/eksctl /usr/local/bin
+   eksctl version
+
+
+# EKS cluster Setup Process 
+
+  # Create an IAM Role and attache it to EC2 instance    
+   `Note: create IAM user with programmatic access if your bootstrap system is outside of AWS`   
+   IAM user should have access to   
+   IAM   
+   EC2   
+   VPC    
+   CloudFormation
+
+
+Created role adminacess and attached to ec2 and then proceeded for below 
+
+[ec2-user@ip-172-31-45-208 ~]$    eksctl create cluster --name test \
+      --region us-east-1 \
+   --node-type t2.medium \
+2026-05-09 02:52:44 [ℹ]  eksctl version 0.226.0
+2026-05-09 02:52:44 [ℹ]  using region us-east-1
+2026-05-09 02:52:44 [ℹ]  setting availability zones to [us-east-1d us-east-1a]
+2026-05-09 02:52:44 [ℹ]  subnets for us-east-1d - public:192.168.0.0/19 private:192.168.64.0/19
+2026-05-09 02:52:44 [ℹ]  subnets for us-east-1a - public:192.168.32.0/19 private:192.168.96.0/19
+2026-05-09 02:52:44 [ℹ]  nodegroup "ng-5c3a522b" will use "" [AmazonLinux2023/1.34]
+2026-05-09 02:52:44 [!]  Auto Mode will be enabled by default in an upcoming release of eksctl. This means managed node groups and managed networking add-ons will no longer be created by default. To maintain current behavior, explicitly set 'autoModeConfig.enabled: false' in your cluster configuration. Learn more: https://eksctl.io/usage/auto-mode/
+2026-05-09 02:52:44 [ℹ]  using Kubernetes version 1.34
+2026-05-09 02:52:44 [ℹ]  creating EKS cluster "test" in "us-east-1" region with managed nodes
+2026-05-09 02:52:44 [ℹ]  will create 2 separate CloudFormation stacks for cluster itself and the initial managed nodegroup
+2026-05-09 02:52:44 [ℹ]  if you encounter any issues, check CloudFormation console or try 'eksctl utils describe-stacks --region=us-east-1 --cluster=test'
+2026-05-09 02:52:44 [ℹ]  Kubernetes API endpoint access will use default of {publicAccess=true, privateAccess=false} for cluster "test" in "us-east-1"
+2026-05-09 02:52:44 [ℹ]  CloudWatch logging will not be enabled for cluster "test" in "us-east-1"
+2026-05-09 02:52:44 [ℹ]  you can enable it with 'eksctl utils update-cluster-logging --enable-types={SPECIFY-YOUR-LOG-TYPES-HERE (e.g. all)} --region=us-east-1 --cluster=test'
+2026-05-09 02:52:44 [ℹ]  default addons metrics-server, vpc-cni, kube-proxy, coredns were not specified, will install them as EKS addons
+2026-05-09 02:52:44 [ℹ]  
+2 sequential tasks: { create cluster control plane "test", 
+    2 sequential sub-tasks: { 
+        2 sequential sub-tasks: { 
+            1 task: { create addons },
+            wait for control plane to become ready,
+        },
+        create managed nodegroup "ng-5c3a522b",
+    } 
+}
+2026-05-09 02:52:44 [ℹ]  building cluster stack "eksctl-test-cluster"
+2026-05-09 02:52:44 [ℹ]  deploying stack "eksctl-test-cluster"
+2026-05-09 02:53:14 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-09 02:53:44 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-09 02:54:44 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-09 02:55:44 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-09 02:56:44 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-09 02:57:44 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-09 02:58:44 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-09 02:59:44 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-09 03:00:44 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-09 03:00:46 [!]  recommended policies were found for "vpc-cni" addon, but since OIDC is disabled on the cluster, eksctl cannot configure the requested permissions; the recommended way to provide IAM permissions for "vpc-cni" addon is via pod identity associations; after addon creation is completed, add all recommended policies to the config file, under `addon.PodIdentityAssociations`, and run `eksctl update addon`
+2026-05-09 03:00:46 [ℹ]  creating addon: vpc-cni
+2026-05-09 03:00:46 [ℹ]  successfully created addon: vpc-cni
+2026-05-09 03:00:46 [ℹ]  creating addon: kube-proxy
+2026-05-09 03:00:47 [ℹ]  successfully created addon: kube-proxy
+2026-05-09 03:00:47 [ℹ]  creating addon: coredns
+2026-05-09 03:00:47 [ℹ]  successfully created addon: coredns
+2026-05-09 03:03:03 [ℹ]  building managed nodegroup stack "eksctl-test-nodegroup-ng-5c3a522b"
+2026-05-09 03:03:03 [ℹ]  deploying stack "eksctl-test-nodegroup-ng-5c3a522b"
+2026-05-09 03:03:03 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-5c3a522b"
+2026-05-09 03:03:33 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-5c3a522b"
+2026-05-09 03:04:18 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-5c3a522b"
+2026-05-09 03:04:52 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-5c3a522b"
+2026-05-09 03:06:31 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-5c3a522b"
+2026-05-09 03:06:31 [ℹ]  waiting for the control plane to become ready
+2026-05-09 03:06:32 [✔]  saved kubeconfig as "/home/ec2-user/.kube/config"
+2026-05-09 03:06:32 [ℹ]  no tasks
+2026-05-09 03:06:32 [✔]  all EKS cluster resources for "test" have been created
+2026-05-09 03:06:32 [ℹ]  nodegroup "ng-5c3a522b" has 2 node(s)
+2026-05-09 03:06:32 [ℹ]  node "ip-192-168-1-109.ec2.internal" is ready
+2026-05-09 03:06:32 [ℹ]  node "ip-192-168-58-97.ec2.internal" is ready
+2026-05-09 03:06:32 [ℹ]  waiting for at least 2 node(s) to become ready in "ng-5c3a522b"
+2026-05-09 03:06:32 [ℹ]  nodegroup "ng-5c3a522b" has 2 node(s)
+2026-05-09 03:06:32 [ℹ]  node "ip-192-168-1-109.ec2.internal" is ready
+2026-05-09 03:06:32 [ℹ]  node "ip-192-168-58-97.ec2.internal" is ready
+2026-05-09 03:06:32 [✔]  created 1 managed nodegroup(s) in cluster "test"
+2026-05-09 03:06:33 [ℹ]  creating addon: metrics-server
+2026-05-09 03:06:33 [ℹ]  successfully created addon: metrics-server
+2026-05-09 03:06:34 [ℹ]  kubectl command should work with "/home/ec2-user/.kube/config", try 'kubectl get nodes'
+2026-05-09 03:06:34 [✔]  EKS cluster "test" in "us-east-1" region is ready
+[ec2-user@ip-172-31-45-208 ~]$ 
+
+
+
+
+
+
+
+
+
