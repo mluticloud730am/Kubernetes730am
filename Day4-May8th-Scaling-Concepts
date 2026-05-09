@@ -1,0 +1,355 @@
+if we want to give access of your application to end user we need to create one more dpeloyment file which we canprovide access
+
+so we have 3 services for doing this job -- Kubernetes Services  
+Kubernetes services enable internal and external communications 
+
+1 Node Port Service -- External communications 
+2 LoadBalancer ---------- External communications 
+3 HeadLess Service ---- Internal communications (Stateful applicatons databses)
+4 clusterIP --- Internal communication 
+
+
+so frontend and backend communicate through services called (Cluster IP for internal communication)
+So users will use frontend pod so we can load balancer service (external communications)(will not expose any ports or IP for external users)
+for Database alway go with azure,rds(cloud base database only ) and not recommend to use lightweight containers from docker is not recommeneded 
+
+nodeport services - external communication will be used mostly for ports + ip will be exposed to external services 
+
+
+for DB when master replica concept comes na examples one master pod and 2 readers pod so backend will be communicated to reader/master pods in this case 
+backend should connect seperately for reader and master based on DDL ,DML or any sql  so inthis case if we use load balancer and requests should be sent 
+based on spefici logic read or write and hope it is not possible right it does not which is reader or master it just send blidny thats it 
+
+so DB is something different so we use headless services where we can configure with DNS end point headless services alllowred to connect backend to connect 
+master or reader based on API gateway so headless used for statefull applications 
+
+
+
+K8's DNS we can use for route53 
+
+So frontend,backend- use -  deployment.yaml  
+where as  db with statefulset.yaml - it will create pods with unique order event if any pod deletes ot creates with
+same name 
+
+
+If suppose reader replica is deleted so statefulset will created replica=3 example with mysql0 mysql1 mysql2  so what about data inside to that pod?
+
+so their comes volumes so stateful will create same set and also EBS volumes and all to attach to same POD
+sepearte EBS volumes will be created .
+so logs storeage the elastic search will take stateful concept only 
+
+another secure option is directly RDS can be used instead of mnagaing DB thourgh pods in real time PROD env will use RDS endppoints that it just out side 
+kubernetes fully managed by cloud .
+
+--------------------------------------------------------------
+Kubernetes service architecture 
+
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get nodes
+NAME                            STATUS   ROLES    AGE     VERSION
+ip-192-168-1-109.ec2.internal   Ready    <none>   4h42m   v1.34.7-eks-4136f65
+ip-192-168-58-97.ec2.internal   Ready    <none>   4h42m   v1.34.7-eks-4136f65
+
+nodeport range 30000 32767
+
+So from external user request enters to node port 192.168.1.109:30008 to service port  and then to pod portor target port 
+
+IDeally their will be diff IP's for POD,Conatiner.
+
+so service will help from nodeport to portservice to target port for required pod
+
+so one more challenege if you have 2 pods running in different nodes pod1 and pod2 so you created only one service yaml for both pods . example in this case
+how IRCTC app works for incoming requests
+
+so service ports should be same so 2 things should understand 
+
+services port is enabled in all the required pods/services so 30008 is enabled in both pods
+
+Also their is one more concept called IPTABLES to communicate multiple servers 
+
+KUbeproxy and iptables concepts 
+
+ENduser request -- kubeproxy --- iptables rule match -- select pod ip - forward traffic 
+
+
+
+----
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl delete deployment my-deployment-np
+deployment.apps "my-deployment-np" deleted
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods -A
+NAMESPACE     NAME                              READY   STATUS    RESTARTS   AGE
+kube-system   aws-node-dr6v6                    2/2     Running   0          5h7m
+kube-system   aws-node-fdn8s                    2/2     Running   0          5h7m
+kube-system   coredns-566b9b9d-cmzfd            1/1     Running   0          5h11m
+kube-system   coredns-566b9b9d-jgkn6            1/1     Running   0          5h11m
+kube-system   kube-proxy-2qdl8                  1/1     Running   0          5h7m
+kube-system   kube-proxy-br2d4                  1/1     Running   0          5h7m
+kube-system   metrics-server-6f49c4bc6c-k82n4   1/1     Running   0          5h5m
+kube-system   metrics-server-6f49c4bc6c-zzpn9   1/1     Running   0          5h5m
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl apply -f nodeport.yaml 
+deployment.apps/my-deployment-np created
+service/my-service unchanged
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods -o wide
+NAME                               READY   STATUS    RESTARTS   AGE   IP              NODE                            NOMINATED NODE   READINESS GATES
+my-deployment-np-97bbd86dc-jbsj6   1/1     Running   0          11s   192.168.40.47   ip-192-168-58-97.ec2.internal   <none>           <none>
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get nodes -o wide
+NAME                            STATUS   ROLES    AGE    VERSION               INTERNAL-IP     EXTERNAL-IP     OS-IMAGE                        KERNEL-VERSION                    CONTAINER-RUNTIME
+ip-192-168-1-109.ec2.internal   Ready    <none>   5h8m   v1.34.7-eks-4136f65   192.168.1.109   54.167.41.45    Amazon Linux 2023.11.20260505   6.12.80-106.156.amzn2023.x86_64   containerd://2.2.3+unknown
+ip-192-168-58-97.ec2.internal   Ready    <none>   5h8m   v1.34.7-eks-4136f65   192.168.58.97   54.172.158.83   Amazon Linux 2023.11.20260505   6.12.80-106.156.amzn2023.x86_64   containerd://2.2.3+unknown
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get svc
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   10.100.0.1       <none>        443/TCP        5h14m
+my-service   NodePort    10.100.168.126   <none>        80:30007/TCP   5h3m
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ cat nodeport.yaml 
+apiVersion: apps/v1 # API version for the Deployment resource
+kind: Deployment # Kubernetes object kind for this manifest
+metadata: # Metadata about the Deployment
+  name: my-deployment-np # Name used to identify this Deployment
+spec: # Desired state specification for the Deployment
+  replicas: 1 # Number of pod replicas to run
+  selector: # Selector used to identify pods managed by this Deployment
+    matchLabels:
+      app: my-app-np # Match pods with label app=my-app-np
+  template: # Pod template for creating pods
+    metadata:
+      labels:
+        app: my-app-np # Labels assigned to pods created from this template
+    spec:
+      containers: # List of containers to run in each pod
+      - name: my-container # Name of the container inside the pod
+        image: nginx:latest # Container image to deploy
+        ports:
+        - containerPort: 80 # Port exposed by the container
+---
+apiVersion: v1 # API version for the Service resource
+kind: Service # Kubernetes object kind for this manifest
+metadata: # Metadata about the Service
+  name: my-service # Name used to identify this Service
+spec: # Specification of the Service's desired state
+  type: NodePort # Service type that exposes the service on each node's IP at a static port
+  selector: # Selector to match pods that this Service will route traffic to
+    app: my-app-np # Match pods with label app=my-app-np
+  ports: # List of ports that the Service exposes
+    - port: 80 # Port on the Service that will be exposed
+      # By default and for convenience, the `targetPort` is set to
+      # the same value as the `port` field.
+      targetPort: 80 # Port on the pod that the Service will forward traffic to
+      # Optional field
+      # By default and for convenience, the Kubernetes control plane
+      # if you not mention node port field below system will allocate a port from a range (default: 30000-32767)
+      nodePort: 30007 # Port on each node where the Service is exposed
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ 
+
+enabled 30007 port for SG in newly created ec2 machine 
+
+
+Name
+	
+Instance ID
+	
+Instance state
+	
+Instance type
+	
+Status check
+	
+Alarm status
+	
+Availability Zone
+	
+Public IPv4 DNS
+	
+Public IPv4 address
+	
+Elastic IP
+	
+IPv6 IPs
+	
+Monitoring
+	
+Security group name
+	
+Key name
+	
+Launch time
+	
+Platform details
+	
+Managed
+	
+Operator
+	
+Private DNS name
+	
+Private IP address
+	
+VPC ID
+
+Name
+	
+Instance ID
+	
+Instance state
+	
+Instance type
+	
+Status check
+	
+Alarm status
+	
+Availability Zone
+	
+Public IPv4 DNS
+	
+Public IPv4 address
+	
+Elastic IP
+	
+IPv6 IPs
+	
+Monitoring
+	
+Security group name
+	
+Key name
+	
+Launch time
+	
+Platform details
+	
+Managed
+	
+Operator
+	
+Private DNS name
+	
+Private IP address
+	
+VPC ID
+
+test-ng-5c3a522b-Node
+i-0010cec003c94be4c
+Running
+
+t2.medium
+2/2 checks passed
+View alarms
+
+us-east-1d
+ec2-54-167-41-45.compute-1.amazonaws.com
+54.167.41.45
+–
+–
+disabled
+eks-cluster-sg-test-3556498
+–
+2026/05/09 08:34 GMT+5:30
+Linux/UNIX
+false
+–
+ip-192-168-1-109.ec2.internal
+192.168.1.109
+vpc-0ab83103e86
+
+below is testing 
+
+http://54.167.41.45:30007/
+
+Welcome to nginx!
+If you see this page, nginx is successfully installed and working. Further configuration is required for the web server, reverse proxy, API gateway, load balancer, content cache, or other features.
+
+For online documentation and support please refer to nginx.org.
+To engage with the community please visit community.nginx.org.
+For enterprise grade support, professional services, additional security features and capabilities please refer to f5.com/nginx.
+
+Thank you for using nginx.
+
+
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get svc
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   10.100.0.1       <none>        443/TCP        5h21m
+my-service   NodePort    10.100.168.126   <none>        80:30007/TCP   5h9m
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ 
+
+how to ensure which service and which pods so mainthing is labels should match in given above nodeport.yaml
+
+test-ng-5c3a522b-Node
+i-0dd331bc336702c96
+Running
+
+t2.medium
+2/2 checks passed
+View alarms
+
+us-east-1a
+ec2-54-172-158-83.compute-1.amazonaws.com
+54.172.158.83
+–
+–
+disabled
+eks-cluster-sg-test-3556498
+–
+2026/05/09 08:34 GMT+5:30
+Linux/UNIX
+false
+–
+ip-192-168-58-97.ec2.internal
+192.168.58.97
+vpc-0ab83103e86fc
+
+we anothern node also the request will redirect to same pod using iptables and all 
+
+http://54.172.158.83:30007/
+
+Welcome to nginx!
+If you see this page, nginx is successfully installed and working. Further configuration is required for the web server, reverse proxy, API gateway, load balancer, content cache, or other features.
+
+For online documentation and support please refer to nginx.org.
+To engage with the community please visit community.nginx.org.
+For enterprise grade support, professional services, additional security features and capabilities please refer to f5.com/nginx.
+
+Thank you for using nginx.
+
+
+ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl describe svc my-service
+Name:                     my-service
+Namespace:                default
+Labels:                   <none>
+Annotations:              <none>
+Selector:                 app=my-app-np
+Type:                     NodePort
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.100.168.126
+IPs:                      10.100.168.126
+Port:                     <unset>  80/TCP
+TargetPort:               80/TCP
+NodePort:                 <unset>  30007/TCP
+Endpoints:                192.168.40.47:80
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+
+
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get pods -o wide
+NAME                               READY   STATUS    RESTARTS   AGE   IP              NODE                            NOMINATED NODE   READINESS GATES
+my-deployment-np-97bbd86dc-jbsj6   1/1     Running   0          11m   192.168.40.47   ip-192-168-58-97.ec2.internal   <none>           <none>
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get nodes -o wide
+NAME                            STATUS   ROLES    AGE     VERSION               INTERNAL-IP     EXTERNAL-IP     OS-IMAGE                        KERNEL-VERSION                    CONTAINER-RUNTIME
+ip-192-168-1-109.ec2.internal   Ready    <none>   5h19m   v1.34.7-eks-4136f65   192.168.1.109   54.167.41.45    Amazon Linux 2023.11.20260505   6.12.80-106.156.amzn2023.x86_64   containerd://2.2.3+unknown
+ip-192-168-58-97.ec2.internal   Ready    <none>   5h19m   v1.34.7-eks-4136f65   192.168.58.97   54.172.158.83   Amazon Linux 2023.11.20260505   6.12.80-106.156.amzn2023.x86_64   containerd://2.2.3+unknown
+[ec2-user@ip-172-31-45-208 May7th-Kubernetes730am]$ kubectl get svc -o wide
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE     SELECTOR
+kubernetes   ClusterIP   10.100.0.1       <none>        443/TCP        5h25m   <none>
+my-service   NodePort    10.100.168.126   <none>        80:30007/TCP   5h14m   app=my-app-np
+
+
+so now where hardcodeed info is not their 
+
+so checking above kubectl describe svc my-service you can easily co related everything b/w service,nodeport,podport and everything 
+
+
+
+
+-----
+
