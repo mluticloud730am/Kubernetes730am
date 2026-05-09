@@ -1,0 +1,943 @@
+
+Services are four type 
+
+cluster ip -- Internal communication 
+nodeport -- external communication 
+loadbalancer -- external communication 
+headless services - INternal communication (stateful applications Databases) - if multiple instances are their 
+
+DB moongo db,mysql,rds
+
+for example if only one DB then we can use cluster ip also can be used.
+
+in headless services get for replica and post for writer used 
+
+Example 2 nodes are their so in all nodes kubelet ,kubeproxy will run on both nodes 
+
+example pod is running on 2nd node and ip is 193.1.2.4 and their is another node 193.1.2.5 and no pod running 
+
+So whenever you create/run services in cluster  - nodeport services wehn you run inside cluster so nodeport 30008 will be created into 2 nodes
+
+so we have component called kubeproxy in both nodes is only responible for services and not responsibile for pod to pod communication
+
+so target port is pod port and in between service will be their SVC :IP and SVC:PORT 
+
+so ideally ports/IPS
+
+IP's
+Node IP
+Service IP
+POD IP
+
+Ports 
+Node Port
+Service Port
+Pod Target port
+
+
+When ever create service insider cluster kubeproxy always watch service status with help of API server
+
+Kube proxy knows where end point created (endpoint svc attachment to pod)
+Whenever user request comes --> request goes to kube porxy --> if pod is running or second node --> kube proxy create ip tables rules to mapend user
+request to the node where pod is running through request comes from different node where pod is not running 
+
+
+How kube-proxy Works with Services in Kubernetes
+
+Whenever we create a Service inside the Kubernetes cluster, kube-proxy continuously watches the Service and Endpoint information from the API Server.
+
+Flow Explanation
+A Service is created in the cluster.
+The API Server updates the Endpoint object based on which Pod is attached to the Service.
+kube-proxy running on every node watches these changes.
+kube-proxy creates iptables (or IPVS) rules on the node.
+These rules forward incoming traffic to the correct Pod, even if the Pod is running on another node.
+Request Flow Example
+
+
+Client
+   ↓
+Node-1:30080   (NodePort Service)
+   ↓
+kube-proxy on Node-1
+   ↓
+iptables rules
+   ↓
+Traffic forwarded to Node-2
+   ↓
+Pod-A
+Important Concept
+
+Even if the request first reaches a node where the Pod is NOT running:
+
+kube-proxy checks the Service endpoints.
+It knows which node contains the actual Pod.
+Using iptables rules, it forwards the traffic to the correct node and Pod.
+
+So Kubernetes Services provide:
+
+Load balancing
+Service discovery
+Cross-node traffic routing
+Transparent networking between nodes and Pods
+Simple One-Line Understanding
+
+kube-proxy watches Services and Endpoints from the API Server and creates iptables rules to route user traffic to the correct Pod, even across different nodes.
+
+
+===========================================
+----------kubectl Installation-----------
+curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+
+chmod +x ./kubectl  
+sudo mv ./kubectl /usr/local/bin/kubectl  
+
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+   sudo mv /tmp/eksctl /usr/local/bin
+   eksctl version
+
+
+# EKS cluster Setup Process 
+
+  # Create an IAM Role and attache it to EC2 instance    
+   `Note: create IAM user with programmatic access if your bootstrap system is outside of AWS`   
+   IAM user should have access to   
+   IAM   
+   EC2   
+   VPC    
+   CloudFormation
+
+
+Created role adminacess and attached to ec2 and then proceeded for below 
+
+ec2-user@ip-172-31-45-20 ~]$ curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+
+chmod +x ./kubectl  
+sudo mv ./kubectl /usr/local/bin/kubectl
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 55060k 100 55060k   0     0 110.7M     0  --:--:-- --:--:-- --:--:-- 110.8M
+[ec2-user@ip-172-31-45-20 ~]$  curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+   sudo mv /tmp/eksctl /usr/local/bin
+   eksctl version
+0.226.0
+[ec2-user@ip-172-31-45-20 ~]$    eksctl create cluster --name test \
+      --region us-east-1 \
+   --node-type t2.medium 
+2026-05-09 17:59:14 [ℹ]  eksctl version 0.226.0
+2026-05-09 17:59:14 [ℹ]  using region us-east-1
+2026-05-09 17:59:15 [ℹ]  setting availability zones to [us-east-1d us-east-1f]
+2026-05-09 17:59:15 [ℹ]  subnets for us-east-1d - public:192.168.0.0/19 private:192.168.64.0/19
+2026-05-09 17:59:15 [ℹ]  subnets for us-east-1f - public:192.168.32.0/19 private:192.168.96.0/19
+2026-05-09 17:59:15 [ℹ]  nodegroup "ng-bb972c8b" will use "" [AmazonLinux2023/1.34]
+2026-05-09 17:59:15 [!]  Auto Mode will be enabled by default in an upcoming release of eksctl. This means managed node groups and managed networking add-ons will no longer be created by default. To maintain current behavior, explicitly set 'autoModeConfig.enabled: false' in your cluster configuration. Learn more: https://eksctl.io/usage/auto-mode/
+2026-05-09 17:59:15 [ℹ]  using Kubernetes version 1.34
+2026-05-09 17:59:15 [ℹ]  creating EKS cluster "test" in "us-east-1" region with managed nodes
+2026-05-09 17:59:15 [ℹ]  will create 2 separate CloudFormation stacks for cluster itself and the initial managed nodegroup
+2026-05-09 17:59:15 [ℹ]  if you encounter any issues, check CloudFormation console or try 'eksctl utils describe-stacks --region=us-east-1 --cluster=test'
+2026-05-09 17:59:15 [ℹ]  Kubernetes API endpoint access will use default of {publicAccess=true, privateAccess=false} for cluster "test" in "us-east-1"
+2026-05-09 17:59:15 [ℹ]  CloudWatch logging will not be enabled for cluster "test" in "us-east-1"
+2026-05-09 17:59:15 [ℹ]  you can enable it with 'eksctl utils update-cluster-logging --enable-types={SPECIFY-YOUR-LOG-TYPES-HERE (e.g. all)} --region=us-east-1 --cluster=test'
+2026-05-09 17:59:15 [ℹ]  default addons vpc-cni, kube-proxy, coredns, metrics-server were not specified, will install them as EKS addons
+2026-05-09 17:59:15 [ℹ]  
+2 sequential tasks: { create cluster control plane "test", 
+    2 sequential sub-tasks: { 
+        2 sequential sub-tasks: { 
+            1 task: { create addons },
+            wait for control plane to become ready,
+        },
+        create managed nodegroup "ng-bb972c8b",
+    } 
+}
+2026-05-09 17:59:15 [ℹ]  building cluster stack "eksctl-test-cluster"
+2026-05-09 17:59:15 [ℹ]  deploying stack "eksctl-test-cluster"
+2026-05-09 17:59:45 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-09 18:00:15 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-09 18:01:15 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-09 18:02:15 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-09 18:03:15 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-09 18:04:15 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-09 18:05:15 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-09 18:06:15 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-09 18:07:15 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-09 18:07:17 [!]  recommended policies were found for "vpc-cni" addon, but since OIDC is disabled on the cluster, eksctl cannot configure the requested permissions; the recommended way to provide IAM permissions for "vpc-cni" addon is via pod identity associations; after addon creation is completed, add all recommended policies to the config file, under `addon.PodIdentityAssociations`, and run `eksctl update addon`
+2026-05-09 18:07:17 [ℹ]  creating addon: vpc-cni
+2026-05-09 18:07:17 [ℹ]  successfully created addon: vpc-cni
+2026-05-09 18:07:17 [ℹ]  creating addon: kube-proxy
+2026-05-09 18:07:18 [ℹ]  successfully created addon: kube-proxy
+2026-05-09 18:07:18 [ℹ]  creating addon: coredns
+2026-05-09 18:07:18 [ℹ]  successfully created addon: coredns
+2026-05-09 18:09:19 [ℹ]  building managed nodegroup stack "eksctl-test-nodegroup-ng-bb972c8b"
+2026-05-09 18:09:19 [ℹ]  deploying stack "eksctl-test-nodegroup-ng-bb972c8b"
+2026-05-09 18:09:19 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-bb972c8b"
+2026-05-09 18:09:49 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-bb972c8b"
+2026-05-09 18:10:38 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-bb972c8b"
+2026-05-09 18:11:43 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-bb972c8b"
+2026-05-09 18:11:43 [ℹ]  waiting for the control plane to become ready
+2026-05-09 18:11:45 [✔]  saved kubeconfig as "/home/ec2-user/.kube/config"
+2026-05-09 18:11:45 [ℹ]  no tasks
+2026-05-09 18:11:45 [✔]  all EKS cluster resources for "test" have been created
+2026-05-09 18:11:45 [ℹ]  nodegroup "ng-bb972c8b" has 2 node(s)
+2026-05-09 18:11:45 [ℹ]  node "ip-192-168-4-64.ec2.internal" is ready
+2026-05-09 18:11:45 [ℹ]  node "ip-192-168-56-244.ec2.internal" is ready
+2026-05-09 18:11:45 [ℹ]  waiting for at least 2 node(s) to become ready in "ng-bb972c8b"
+2026-05-09 18:11:45 [ℹ]  nodegroup "ng-bb972c8b" has 2 node(s)
+2026-05-09 18:11:45 [ℹ]  node "ip-192-168-4-64.ec2.internal" is ready
+2026-05-09 18:11:45 [ℹ]  node "ip-192-168-56-244.ec2.internal" is ready
+2026-05-09 18:11:45 [✔]  created 1 managed nodegroup(s) in cluster "test"
+2026-05-09 18:11:45 [ℹ]  creating addon: metrics-server
+2026-05-09 18:11:46 [ℹ]  successfully created addon: metrics-server
+2026-05-09 18:11:46 [ℹ]  kubectl command should work with "/home/ec2-user/.kube/config", try 'kubectl get nodes'
+2026-05-09 18:11:46 [✔]  EKS cluster "test" in "us-east-1" region is ready
+[ec2-user@ip-172-31-45-20 ~]$ kubcetl get nodes
+-bash: kubcetl: command not found
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get nodes
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-4-64.ec2.internal     Ready    <none>   12m   v1.34.7-eks-4136f65
+ip-192-168-56-244.ec2.internal   Ready    <none>   12m   v1.34.7-eks-4136f65
+[ec2-user@ip-172-31-45-20 ~]$ vi np.yaml
+[ec2-user@ip-172-31-45-20 ~]$ cat np.yaml 
+apiVersion: apps/v1 # API version for the Deployment resource
+kind: Deployment # Kubernetes object kind for this manifest
+metadata: # Metadata about the Deployment
+  name: my-deployment-np # Name used to identify this Deployment
+spec: # Desired state specification for the Deployment
+  replicas: 1 # Number of pod replicas to run
+  selector: # Selector used to identify pods managed by this Deployment
+    matchLabels:
+      app: my-app-np # Match pods with label app=my-app-np
+  template: # Pod template for creating pods
+    metadata:
+      labels:
+        app: my-app-np # Labels assigned to pods created from this template
+    spec:
+      containers: # List of containers to run in each pod
+      - name: my-container # Name of the container inside the pod
+        image: nginx:latest # Container image to deploy
+        ports:
+        - containerPort: 80 # Port exposed by the container
+---
+apiVersion: v1 # API version for the Service resource
+kind: Service # Kubernetes object kind for this manifest
+metadata: # Metadata about the Service
+  name: my-service # Name used to identify this Service
+spec: # Specification of the Service's desired state
+  type: NodePort # Service type that exposes the service on each node's IP at a static port
+  selector: # Selector to match pods that this Service will route traffic to
+    app: my-app-np # Match pods with label app=my-app-np
+  ports: # List of ports that the Service exposes
+    - port: 80 # Port on the Service that will be exposed
+      # By default and for convenience, the `targetPort` is set to
+      # the same value as the `port` field.
+      targetPort: 80 # Port on the pod that the Service will forward traffic to
+      # Optional field
+      # By default and for convenience, the Kubernetes control plane
+      # if you not mention node port field below system will allocate a port from a range (default: 30000-32767)
+      nodePort: 30007 # Port on each node where the Service is exposed
+[ec2-user@ip-172-31-45-20 ~]$ kubectl apply -f np.yaml 
+deployment.apps/my-deployment-np created
+service/my-service created
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-82z7j   1/1     Running   0          14s
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get svs
+error: the server doesn't have a resource type "svs"
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get svc
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   10.100.0.1       <none>        443/TCP        19m
+my-service   NodePort    10.100.154.227   <none>        80:30007/TCP   24s
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get svc my-service
+NAME         TYPE       CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+my-service   NodePort   10.100.154.227   <none>        80:30007/TCP   50s
+[ec2-user@ip-172-31-45-20 ~]$ kubectl describe svc my-service
+Name:                     my-service
+Namespace:                default
+Labels:                   <none>
+Annotations:              <none>
+Selector:                 app=my-app-np
+Type:                     NodePort
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.100.154.227
+IPs:                      10.100.154.227
+Port:                     <unset>  80/TCP
+TargetPort:               80/TCP
+NodePort:                 <unset>  30007/TCP
+Endpoints:                192.168.21.190:80
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+
+
+Always remember 
+
+Service name matching with np yaml
+
+labels should match deployment label and pod label and service label 
+
+above IP is service IP10.100.154.227
+service port 80/TCP
+
+
+Endpoints:                192.168.21.190:80
+
+
+
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get nodes
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-4-64.ec2.internal     Ready    <none>   19m   v1.34.7-eks-4136f65
+ip-192-168-56-244.ec2.internal   Ready    <none>   19m   v1.34.7-eks-4136f65
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get endpoints
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME         ENDPOINTS                                AGE
+kubernetes   192.168.106.187:443,192.168.86.133:443   25m
+my-service   192.168.21.190:80                        6m13s
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get pods -o wide
+NAME                               READY   STATUS    RESTARTS   AGE     IP               NODE                           NOMINATED NODE   READINESS GATES
+my-deployment-np-97bbd86dc-82z7j   1/1     Running   0          6m28s   192.168.21.190   ip-192-168-4-64.ec2.internal   <none>           <none>
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get nodes -o wide
+NAME                             STATUS   ROLES    AGE   VERSION               INTERNAL-IP      EXTERNAL-IP     OS-IMAGE                        KERNEL-VERSION                    CONTAINER-RUNTIME
+ip-192-168-4-64.ec2.internal     Ready    <none>   20m   v1.34.7-eks-4136f65   192.168.4.64     18.233.9.84     Amazon Linux 2023.11.20260505   6.12.80-106.156.amzn2023.x86_64   containerd://2.2.3+unknown
+ip-192-168-56-244.ec2.internal   Ready    <none>   20m   v1.34.7-eks-4136f65   192.168.56.244   44.213.75.182   Amazon Linux 2023.11.20260505   6.12.80-106.156.amzn2023.x86_64   containerd://2.2.3+unknown
+[ec2-user@ip-172-31-45-20 ~]$ 
+
+we can clearly the linkage betweeen node/pod/service and all 
+
+
+
+now added all traffic allow in newly created nodes 
+
+
+http://44.213.75.182:30007/
+
+
+
+Welcome to nginx!
+If you see this page, nginx is successfully installed and working. Further configuration is required for the web server, reverse proxy, API gateway, load balancer, content cache, or other features.
+
+For online documentation and support please refer to nginx.org.
+To engage with the community please visit community.nginx.org.
+For enterprise grade support, professional services, additional security features and capabilities please refer to f5.com/nginx.
+
+Thank you for using nginx.
+
+
+Made replicas 3 in np  yaml
+
+[ec2-user@ip-172-31-45-20 ~]$ kubectl apply -f np.yaml 
+deployment.apps/my-deployment-np configured
+service/my-service unchanged
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-82z7j   1/1     Running   0          14m
+my-deployment-np-97bbd86dc-lsl64   1/1     Running   0          5s
+my-deployment-np-97bbd86dc-xmx7m   1/1     Running   0          5s
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get endpoints
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME         ENDPOINTS                                               AGE
+kubernetes   192.168.106.187:443,192.168.86.133:443                  34m
+my-service   192.168.12.190:80,192.168.21.190:80,192.168.56.204:80   15m
+[ec2-user@ip-172-31-45-20 ~]$ kubectl  get pods -o wide
+NAME                               READY   STATUS    RESTARTS   AGE   IP               NODE                             NOMINATED NODE   READINESS GATES
+my-deployment-np-97bbd86dc-82z7j   1/1     Running   0          15m   192.168.21.190   ip-192-168-4-64.ec2.internal     <none>           <none>
+my-deployment-np-97bbd86dc-lsl64   1/1     Running   0          28s   192.168.56.204   ip-192-168-56-244.ec2.internal   <none>           <none>
+my-deployment-np-97bbd86dc-xmx7m   1/1     Running   0          28s   192.168.12.190   ip-192-168-4-64.ec2.internal     <none>           <none>
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get nodes -o wide
+NAME                             STATUS   ROLES    AGE   VERSION               INTERNAL-IP      EXTERNAL-IP     OS-IMAGE                        KERNEL-VERSION                    CONTAINER-RUNTIME
+ip-192-168-4-64.ec2.internal     Ready    <none>   28m   v1.34.7-eks-4136f65   192.168.4.64     18.233.9.84     Amazon Linux 2023.11.20260505   6.12.80-106.156.amzn2023.x86_64   containerd://2.2.3+unknown
+ip-192-168-56-244.ec2.internal   Ready    <none>   29m   v1.34.7-eks-4136f65   192.168.56.244   44.213.75.182   Amazon Linux 2023.11.20260505   6.12.80-106.156.amzn2023.x86_64   containerd://2.2.3+unknown
+[ec2-user@ip-172-31-45-20 ~]$ 
+
+
+when ever seervices apply 
+
+
+in interview question comes like even service is runing but notable to access endppoitnd means 
+
+SG level their may be restrutcions 
+or we need to check if end point created or not may be label mistmatch dpeloyment label should match otherwise even service created we extrenal user 
+cannot access the application 
+
+------------------------------------------------------
+
+
+[ec2-user@ip-172-31-45-20 ~]$ ll
+total 8
+-rw-r--r--. 1 ec2-user ec2-user 892 May  9 18:41 np.yaml
+-rw-r--r--. 1 ec2-user ec2-user 448 May  9 18:56 svc.yaml
+[ec2-user@ip-172-31-45-20 ~]$ cat np.yaml 
+apiVersion: apps/v1 # API version for the Deployment resource
+kind: Deployment # Kubernetes object kind for this manifest
+metadata: # Metadata about the Deployment
+  name: my-deployment-np # Name used to identify this Deployment
+spec: # Desired state specification for the Deployment
+  replicas: 3 # Number of pod replicas to run
+  selector: # Selector used to identify pods managed by this Deployment
+    matchLabels:
+      app: my-app-np # Match pods with label app=my-app-np
+  template: # Pod template for creating pods
+    metadata:
+      labels:
+        app: my-app-np # Labels assigned to pods created from this template
+    spec:
+      containers: # List of containers to run in each pod
+      - name: my-container # Name of the container inside the pod
+        image: nginx:latest # Container image to deploy
+        ports:
+        - containerPort: 80 # Port exposed by the container
+[ec2-user@ip-172-31-45-20 ~]$ kubectl apply -f np.yaml 
+deployment.apps/my-deployment-np created
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get endpoints
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME         ENDPOINTS                                AGE
+kubernetes   192.168.106.187:443,192.168.86.133:443   54m
+my-service   <none>                                   35m
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get svc
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   10.100.0.1       <none>        443/TCP        54m
+my-service   NodePort    10.100.154.227   <none>        80:30007/TCP   35m
+[ec2-user@ip-172-31-45-20 ~]$ kubectl describe svc my-service
+Name:                     my-service
+Namespace:                default
+Labels:                   <none>
+Annotations:              <none>
+Selector:                 app=my-app-npp
+Type:                     NodePort
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.100.154.227
+IPs:                      10.100.154.227
+Port:                     <unset>  80/TCP
+TargetPort:               80/TCP
+NodePort:                 <unset>  30007/TCP
+Endpoints:                
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+[ec2-user@ip-172-31-45-20 ~]$ cat svc.yaml 
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  type: NodePort
+  selector:
+    app: my-app-npp
+  ports:
+    - port: 80
+      # By default and for convenience, the `targetPort` is set to
+      # the same value as the `port` field.
+      targetPort: 80
+      # Optional field
+      # By default and for convenience, the Kubernetes control plane
+      # will allocate a port from a range (default: 30000-32767)
+      nodePort: 30007
+[ec2-user@ip-172-31-45-20 ~]$ kubcetl apply -f svc.yaml 
+-bash: kubcetl: command not found
+[ec2-user@ip-172-31-45-20 ~]$ kube apply -f svc.yaml 
+-bash: kube: command not found
+[ec2-user@ip-172-31-45-20 ~]$ kubectl apply -f svc.yaml 
+service/my-service unchanged
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-5ntpd   1/1     Running   0          110s
+my-deployment-np-97bbd86dc-g6zjq   1/1     Running   0          110s
+my-deployment-np-97bbd86dc-skcf5   1/1     Running   0          110s
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get endpoints
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME         ENDPOINTS                                AGE
+kubernetes   192.168.106.187:443,192.168.86.133:443   56m
+my-service   <none>                                   37m
+[ec2-user@ip-172-31-45-20 ~]$ >svc.yaml 
+[ec2-user@ip-172-31-45-20 ~]$ vi svc.yaml 
+[ec2-user@ip-172-31-45-20 ~]$ kubectl apply -f svc.yaml 
+service/my-service configured
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get endpoints
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME         ENDPOINTS                                              AGE
+kubernetes   192.168.106.187:443,192.168.86.133:443                 57m
+my-service   192.168.0.243:80,192.168.12.190:80,192.168.56.204:80   38m
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get svc
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   10.100.0.1       <none>        443/TCP        57m
+my-service   NodePort    10.100.154.227   <none>        80:30007/TCP   38m
+[ec2-user@ip-172-31-45-20 ~]$ kubectl describe svc my-service
+Name:                     my-service
+Namespace:                default
+Labels:                   <none>
+Annotations:              <none>
+Selector:                 app=my-app-np
+Type:                     NodePort
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.100.154.227
+IPs:                      10.100.154.227
+Port:                     <unset>  80/TCP
+TargetPort:               80/TCP
+NodePort:                 <unset>  30007/TCP
+Endpoints:                192.168.12.190:80,192.168.56.204:80,192.168.0.243:80
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+[ec2-user@ip-172-31-45-20 ~]$ 
+
+
+
+------
+
+
+
+[ec2-user@ip-172-31-45-20 ~]$ kubectl delete -f svc.yaml 
+service "my-service" deleted
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-5ntpd   1/1     Running   0          4m34s
+my-deployment-np-97bbd86dc-g6zjq   1/1     Running   0          4m34s
+my-deployment-np-97bbd86dc-skcf5   1/1     Running   0          4m34s
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get endpoints
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME         ENDPOINTS                                AGE
+kubernetes   192.168.106.187:443,192.168.86.133:443   59m
+[ec2-user@ip-172-31-45-20 ~]$ >svc.yaml 
+[ec2-user@ip-172-31-45-20 ~]$ vi svc.yaml 
+[ec2-user@ip-172-31-45-20 ~]$ kubectl apply -f svc.yaml 
+service/my-service created
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-5ntpd   1/1     Running   0          5m42s
+my-deployment-np-97bbd86dc-g6zjq   1/1     Running   0          5m42s
+my-deployment-np-97bbd86dc-skcf5   1/1     Running   0          5m42s
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get endpoints
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME         ENDPOINTS                                AGE
+kubernetes   192.168.106.187:443,192.168.86.133:443   60m
+my-service   <none>                                   33s
+[ec2-user@ip-172-31-45-20 ~]$ kubectl describe svc my-service
+Name:                     my-service
+Namespace:                default
+Labels:                   <none>
+Annotations:              <none>
+Selector:                 app=my-app-nppp
+Type:                     NodePort
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.100.226.3
+IPs:                      10.100.226.3
+Port:                     <unset>  80/TCP
+TargetPort:               80/TCP
+NodePort:                 <unset>  30007/TCP
+Endpoints:                
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+[ec2-user@ip-172-31-45-20 ~]$ 
+
+
+so here label mismatch clearly so this is creating problem and not showing any endpoints here 
+
+
+---------------------------------------------------------------
+
+
+Nows Lets check on LoadBalancer --
+[ec2-user@ip-172-31-45-20 ~]$ vi svc.yaml 
+[ec2-user@ip-172-31-45-20 ~]$ cat svc.yaml 
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: my-app-np
+  ports:
+    - port: 80
+      # By default and for convenience, the `targetPort` is set to
+      # the same value as the `port` field.
+      targetPort: 80
+      # Optional field
+      # By default and for convenience, the Kubernetes control plane
+      # will allocate a port from a range (default: 30000-32767)
+      nodePort: 30007
+
+[ec2-user@ip-172-31-45-20 ~]$ kubectl apply -f svc.yaml 
+service/my-service configured
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get svc
+NAME         TYPE           CLUSTER-IP     EXTERNAL-IP                                                               PORT(S)        AGE
+kubernetes   ClusterIP      10.100.0.1     <none>                                                                    443/TCP        67m
+my-service   LoadBalancer   10.100.226.3   ac0128bb491954d5c83737cdffdb6286-1107091595.us-east-1.elb.amazonaws.com   80:30007/TCP   7m14s
+
+Load balancers (1/1) What's new?
+
+Actions
+Create load balancer
+
+Elastic Load Balancing scales your load balancer capacity automatically in response to changes in incoming traffic.
+
+
+1
+
+
+Name
+	
+State
+	
+Type
+	
+Scheme
+	
+IP address type
+	
+VPC ID
+	
+Availability Zones
+	
+Security groups
+	
+DNS name
+	
+ARN
+	
+Date created
+
+Name
+	
+State
+	
+Type
+	
+Scheme
+	
+IP address type
+	
+VPC ID
+	
+Availability Zones
+	
+Security groups
+	
+DNS name
+	
+ARN
+	
+Date created
+
+ac0128bb491954d5c83737cdffdb6286
+–
+classic
+-
+-
+vpc-0106149fe9ad366fd
+
+
+load balalancer ,TG,listener rules everything will be created at AWS end 
+
+----
+http://ac0128bb491954d5c83737cdffdb6286-1107091595.us-east-1.elb.amazonaws.com/
+
+
+
+Welcome to nginx!
+If you see this page, nginx is successfully installed and working. Further configuration is required for the web server, reverse proxy, API gateway, load balancer, content cache, or other features.
+
+For online documentation and support please refer to nginx.org.
+To engage with the community please visit community.nginx.org.
+For enterprise grade support, professional services, additional security features and capabilities please refer to f5.com/nginx.
+
+Thank you for using nginx.
+
+
+one more point is noted where load balancer 
+
+security rules will have default 80 port allowed and insider listner load balancer will be having 30007 
+
+
+---
+
+ec2-user@ip-172-31-45-20 ~]$ kubectl get svc
+NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.100.0.1   <none>        443/TCP   74m
+[ec2-user@ip-172-31-45-20 ~]$ vi svc.yaml 
+[ec2-user@ip-172-31-45-20 ~]$ cat svc.yaml 
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-np
+  labels:
+    app: my-app-np
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: my-app-np
+
+[ec2-user@ip-172-31-45-20 ~]$ kubectl apply -f svc.yaml 
+service/my-app-np created
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get endpoints
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME         ENDPOINTS                                              AGE
+kubernetes   192.168.106.187:443,192.168.86.133:443                 74m
+my-app-np    192.168.0.243:80,192.168.12.190:80,192.168.56.204:80   9s
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get svc
+NAME         TYPE           CLUSTER-IP      EXTERNAL-IP                                                              PORT(S)        AGE
+kubernetes   ClusterIP      10.100.0.1      <none>                                                                   443/TCP        75m
+my-app-np    LoadBalancer   10.100.28.159   a40d7a4d518214e829f8faacbdb1ad83-531795687.us-east-1.elb.amazonaws.com   80:31425/TCP   16s
+[ec2-user@ip-172-31-45-20 ~]$ 
+
+[ec2-user@ip-172-31-45-20 ~]$ ll
+total 8
+-rw-r--r--. 1 ec2-user ec2-user 892 May  9 18:41 np.yaml
+-rw-r--r--. 1 ec2-user ec2-user 204 May  9 19:19 svc.yaml
+[ec2-user@ip-172-31-45-20 ~]$ cat np.yaml 
+apiVersion: apps/v1 # API version for the Deployment resource
+kind: Deployment # Kubernetes object kind for this manifest
+metadata: # Metadata about the Deployment
+  name: my-deployment-np # Name used to identify this Deployment
+spec: # Desired state specification for the Deployment
+  replicas: 3 # Number of pod replicas to run
+  selector: # Selector used to identify pods managed by this Deployment
+    matchLabels:
+      app: my-app-np # Match pods with label app=my-app-np
+  template: # Pod template for creating pods
+    metadata:
+      labels:
+        app: my-app-np # Labels assigned to pods created from this template
+    spec:
+      containers: # List of containers to run in each pod
+      - name: my-container # Name of the container inside the pod
+        image: nginx:latest # Container image to deploy
+        ports:
+        - containerPort: 80 # Port exposed by the container
+[ec2-user@ip-172-31-45-20 ~]$ 
+
+http://a40d7a4d518214e829f8faacbdb1ad83-531795687.us-east-1.elb.amazonaws.com/
+
+Welcome to nginx!
+If you see this page, nginx is successfully installed and working. Further configuration is required for the web server, reverse proxy, API gateway, load balancer, content cache, or other features.
+
+For online documentation and support please refer to nginx.org.
+To engage with the community please visit community.nginx.org.
+For enterprise grade support, professional services, additional security features and capabilities please refer to f5.com/nginx.
+
+Thank you for using nginx.
+
+
+
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get endpoints
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME         ENDPOINTS                                              AGE
+kubernetes   192.168.106.187:443,192.168.86.133:443                 79m
+my-app-np    192.168.0.243:80,192.168.12.190:80,192.168.56.204:80   4m25s
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get svc
+NAME         TYPE           CLUSTER-IP      EXTERNAL-IP                                                              PORT(S)        AGE
+kubernetes   ClusterIP      10.100.0.1      <none>                                                                   443/TCP        79m
+my-app-np    LoadBalancer   10.100.28.159   a40d7a4d518214e829f8faacbdb1ad83-531795687.us-east-1.elb.amazonaws.com   80:31425/TCP   4m35s
+[ec2-user@ip-172-31-45-20 ~]$ 
+
+
+---
+-------------------------------------------------
+
+
+Cluster ip related 
+
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get pods
+NAME                               READY   STATUS    RESTARTS   AGE
+my-deployment-np-97bbd86dc-5ntpd   1/1     Running   0          29m
+my-deployment-np-97bbd86dc-g6zjq   1/1     Running   0          29m
+my-deployment-np-97bbd86dc-skcf5   1/1     Running   0          29m
+[ec2-user@ip-172-31-45-20 ~]$ cat svc.yaml 
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-svc
+  labels:
+    app: my-app
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: my-app-np
+
+[ec2-user@ip-172-31-45-20 ~]$ kubectl apply -f svc.yaml 
+service/my-app-svc created
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get svc
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.100.0.1       <none>        443/TCP   84m
+my-app-svc   ClusterIP   10.100.232.162   <none>        80/TCP    9s
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get endpoints
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME         ENDPOINTS                                              AGE
+kubernetes   192.168.106.187:443,192.168.86.133:443                 84m
+my-app-svc   192.168.0.243:80,192.168.12.190:80,192.168.56.204:80   17s
+[ec2-user@ip-172-31-45-20 ~]$ kubectl describe svc my-app-svc
+Name:                     my-app-svc
+Namespace:                default
+Labels:                   app=my-app
+Annotations:              <none>
+Selector:                 app=my-app-np
+Type:                     ClusterIP
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.100.232.162
+IPs:                      10.100.232.162
+Port:                     <unset>  80/TCP
+TargetPort:               80/TCP
+Endpoints:                192.168.12.190:80,192.168.56.204:80,192.168.0.243:80
+Session Affinity:         None
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+[ec2-user@ip-172-31-45-20 ~]$ 
+
+
+so here we can see no external ip created and also no listner ip for any port 
+
+so end user will be completely blocked thats it 
+
+so it can used only for frontend to backend thats it 
+
+
+so lets access this by using local host 
+
+---
+[ec2-user@ip-172-31-45-20 ~]$ cat svc.yaml 
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-svc
+  labels:
+    app: my-app
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: my-app-np
+
+[ec2-user@ip-172-31-45-20 ~]$ kubectl apply -f svc.yaml 
+service/my-app-svc created
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get svc
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.100.0.1       <none>        443/TCP   84m
+my-app-svc   ClusterIP   10.100.232.162   <none>        80/TCP    9s
+[ec2-user@ip-172-31-45-20 ~]$ kubectl get endpoints
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME         ENDPOINTS                                              AGE
+kubernetes   192.168.106.187:443,192.168.86.133:443                 84m
+my-app-svc   192.168.0.243:80,192.168.12.190:80,192.168.56.204:80   17s
+[ec2-user@ip-172-31-45-20 ~]$ kubectl describe svc my-app-svc
+Name:                     my-app-svc
+Namespace:                default
+Labels:                   app=my-app
+Annotations:              <none>
+Selector:                 app=my-app-np
+Type:                     ClusterIP
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.100.232.162
+IPs:                      10.100.232.162
+Port:                     <unset>  80/TCP
+TargetPort:               80/TCP
+Endpoints:                192.168.12.190:80,192.168.56.204:80,192.168.0.243:80
+Session Affinity:         None
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+[ec2-user@ip-172-31-45-20 ~]$ curl http://my-app-svc
+curl: (6) Could not resolve host: my-app-svc
+[ec2-user@ip-172-31-45-20 ~]$ kubecetl exec -it my-deployment-np-97bbd86dc-skcf5 -- sh
+-bash: kubecetl: command not found
+[ec2-user@ip-172-31-45-20 ~]$ kubectl exec -it my-deployment-np-97bbd86dc-skcf5 -- sh
+# curl https://my-app-svc
+^C
+# curl https://10.100.232.162
+^C
+# exit
+command terminated with exit code 130
+[ec2-user@ip-172-31-45-20 ~]$ 
+
+so finally am able to curl from logging directlty from node ec2 machine created from aws also from inside pod
+
+command terminated with exit code 130
+[ec2-user@ip-172-31-45-20 ~]$ kubectl exec -it my-deployment-np-97bbd86dc-skcf5 -- sh
+# curl http://10.100.232.162                                             
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, nginx is successfully installed and working.
+Further configuration is required for the web server, reverse proxy, 
+API gateway, load balancer, content cache, or other features.</p>
+
+<p>For online documentation and support please refer to
+<a href="https://nginx.org/">nginx.org</a>.<br/>
+To engage with the community please visit
+<a href="https://community.nginx.org/">community.nginx.org</a>.<br/>
+For enterprise grade support, professional services, additional 
+security features and capabilities please refer to
+<a href="https://f5.com/nginx">f5.com/nginx</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+# 
+
+
+
+
+root@ip-192-168-4-64 ~]# curl http://10.100.232.162
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, nginx is successfully installed and working.
+Further configuration is required for the web server, reverse proxy, 
+API gateway, load balancer, content cache, or other features.</p>
+
+<p>For online documentation and support please refer to
+<a href="https://nginx.org/">nginx.org</a>.<br/>
+To engage with the community please visit
+<a href="https://community.nginx.org/">community.nginx.org</a>.<br/>
+For enterprise grade support, professional services, additional 
+security features and capabilities please refer to
+<a href="https://f5.com/nginx">f5.com/nginx</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+[root@ip-192-168-4-64 ~]# 
+
+---------------------
+
+
+
+
+
+
