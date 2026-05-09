@@ -1,0 +1,37 @@
+apiVersion: apps/v1 # API version for the Deployment resource
+kind: Deployment # Kubernetes object kind for this manifest
+metadata: # Metadata about the Deployment
+  name: my-deployment-np # Name used to identify this Deployment
+spec: # Desired state specification for the Deployment
+  replicas: 1 # Number of pod replicas to run
+  selector: # Selector used to identify pods managed by this Deployment
+    matchLabels:
+      app: my-app-np # Match pods with label app=my-app-np
+  template: # Pod template for creating pods
+    metadata:
+      labels:
+        app: my-app-np # Labels assigned to pods created from this template
+    spec:
+      containers: # List of containers to run in each pod
+      - name: my-container # Name of the container inside the pod
+        image: nginx:latest # Container image to deploy
+        ports:
+        - containerPort: 80 # Port exposed by the container
+---
+apiVersion: v1 # API version for the Service resource
+kind: Service # Kubernetes object kind for this manifest
+metadata: # Metadata about the Service
+  name: my-service # Name used to identify this Service
+spec: # Specification of the Service's desired state
+  type: NodePort # Service type that exposes the service on each node's IP at a static port
+  selector: # Selector to match pods that this Service will route traffic to
+    app: my-app-np # Match pods with label app=my-app-np
+  ports: # List of ports that the Service exposes
+    - port: 80 # Port on the Service that will be exposed
+      # By default and for convenience, the `targetPort` is set to
+      # the same value as the `port` field.
+      targetPort: 80 # Port on the pod that the Service will forward traffic to
+      # Optional field
+      # By default and for convenience, the Kubernetes control plane
+      # if you not mention node port field below system will allocate a port from a range (default: 30000-32767)
+      nodePort: 30007 # Port on each node where the Service is exposed
