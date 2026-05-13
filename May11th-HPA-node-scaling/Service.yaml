@@ -1,0 +1,60 @@
+# ============================================================================
+# KUBERNETES SERVICE CONFIGURATION (LoadBalancer Type)
+# ============================================================================
+# A Service is a way to expose your Pods to the outside world
+# LoadBalancer type automatically creates an external IP address
+# that you can use to access your application from anywhere
+# ============================================================================
+
+# API version tells Kubernetes which version of the Service feature to use
+# v1 is the standard version for services
+apiVersion: v1
+
+# Kind specifies what type of Kubernetes object this is
+# Service exposes your application to network traffic
+kind: Service
+
+# Metadata section contains information about this Service object
+metadata:
+  # name: The identifier/name of this Service
+  # You use this name to reference the service from other resources
+  name: my-app-lb
+  
+  # labels: Tags that help organize and identify this service
+  labels:
+    # app: my-app-lb is a label you can use to find this service
+    app: my-app-lb
+
+# Spec (Specification) section defines HOW the service should work
+spec:
+  # type: Determines how the service exposes your application
+  # LoadBalancer: Creates an external IP address accessible from outside the cluster
+  # Alternative types:
+  #   - ClusterIP: Only accessible within the cluster (default)
+  #   - NodePort: Accessible via Node IP + specific port
+  #   - ExternalName: For external services
+  type: LoadBalancer
+
+  # ports: Defines which network ports to expose and how to route traffic
+  ports:
+  # First port mapping rule
+  - port: 80
+    # port: The external port users connect to (from outside the cluster)
+    # Users access your service on port 80 (standard HTTP port)
+    
+    # targetPort: The port inside the container that receives traffic
+    # When traffic comes on port 80, it's forwarded to port 80 inside the container
+    targetPort: 80
+    
+    # protocol: The network protocol used for communication
+    # TCP: Reliable connection-oriented protocol (standard for web traffic)
+    # Alternative: UDP for faster but unreliable communication
+    protocol: TCP
+
+  # selector: Tells the Service WHICH Pods to route traffic to
+  # The service uses labels to find the right pods
+  selector:
+    # app: nginx means "route traffic to all pods labeled with app=nginx"
+    # This must match the labels on your Deployment pods
+    # Make sure this matches the label in your Deployment template
+    app: nginx

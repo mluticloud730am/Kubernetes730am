@@ -1,0 +1,66 @@
+# ============================================================================
+# HORIZONTAL POD AUTOSCALER (HPA) CONFIGURATION
+# ============================================================================
+# This file defines rules for automatically scaling your Kubernetes pods
+# based on CPU usage. When CPU usage is high, more pods will be created.
+# When CPU usage is low, some pods will be removed.
+# ============================================================================
+
+# API version tells Kubernetes which version of the autoscaling feature to use
+# v2 is the newer version that supports advanced metrics and custom rules
+apiVersion: autoscaling/v2
+
+# Kind specifies what type of Kubernetes object this is
+# HorizontalPodAutoscaler is used for automatic pod scaling
+kind: HorizontalPodAutoscaler
+
+# Metadata section contains information about this HPA object
+metadata:
+  # Name: This is the identifier for this autoscaler
+  # You can use this name to view/edit/delete the HPA later
+  name: nginx
+
+# Spec (Specification) section defines HOW the scaling should work
+spec:
+  # scaleTargetRef: This tells HPA WHICH Deployment to monitor and scale
+  scaleTargetRef:
+    # API version of the Deployment being scaled
+    apiVersion: apps/v1
+    # Type of object we're scaling (in this case, a Deployment)
+    kind: Deployment
+    # Name of the specific Deployment to scale
+    # Make sure this matches your actual Deployment name
+    name: nginx-hpa
+
+  # minReplicas: The MINIMUM number of pods that must always be running
+  # Even if CPU usage is 0%, at least 1 pod will keep running
+  # This ensures your service is always available
+  minReplicas: 1
+
+  # maxReplicas: The MAXIMUM number of pods that can be created
+  # The HPA will never scale beyond 10 pods, even if CPU is extremely high
+  # This prevents unlimited cost and resource usage
+  maxReplicas: 10
+
+  # metrics: This section defines the SCALING RULES (what triggers scaling)
+  # You can have multiple metrics, and the HPA will scale based on all of them
+  metrics:
+  # First metric rule (using resource-based metric)
+  - type: Resource
+    # We're using CPU resource as the metric for scaling
+    resource:
+      # name: Specifies which resource to monitor (CPU or Memory)
+      # CPU: Affects how many pods are created based on processor usage
+      # Memory: Affects how many pods are created based on RAM usage
+      name: cpu
+      # target: Defines WHEN to scale (what's the threshold?)
+      target:
+        # type: Utilization means we measure usage as a percentage (0-100%)
+        # Alternative: "AverageValue" would use raw units instead
+        type: Utilization
+        # averageUtilization: The CPU usage threshold in percentage
+        # If average CPU goes ABOVE 1%, scale UP (create more pods)
+        # If average CPU goes BELOW 1%, scale DOWN (remove pods)
+        # NOTE: 1% is very low - typically 70-80% is used in production
+        # This 1% value means even minimal CPU will trigger scaling
+        averageUtilization: 1

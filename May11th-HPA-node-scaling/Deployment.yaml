@@ -1,0 +1,82 @@
+# ============================================================================
+# KUBERNETES DEPLOYMENT CONFIGURATION
+# ============================================================================
+# A Deployment is a way to tell Kubernetes how to run your application
+# It manages the creation and updating of Pods automatically
+# ============================================================================
+
+# API version tells Kubernetes which version of the Deployment feature to use
+# apps/v1 is the standard version for managing applications
+apiVersion: apps/v1
+
+# Kind specifies what type of Kubernetes object this is
+# Deployment automatically manages Pod creation, updates, and scaling
+kind: Deployment
+
+# Metadata section contains information about this Deployment object
+metadata:
+  # name: The identifier/name of this Deployment
+  # Used to reference and manage this deployment via kubectl commands
+  name: nginx-hpa
+  
+  # namespace: Logical grouping of resources in Kubernetes
+  # "default" is the default namespace when you don't specify one
+  # You can have multiple namespaces to organize your applications
+  namespace: default
+
+# Spec (Specification) section defines HOW the application should run
+spec:
+  # replicas: The INITIAL number of Pods to create
+  # This starts with 1 pod, but HPA will increase/decrease this number
+  # based on CPU usage automatically
+  replicas: 1
+
+  # selector: Tells Deployment WHICH Pods to manage
+  # It uses labels to identify the pods it should control
+  selector:
+    # matchLabels: Pods with these labels will be managed by this Deployment
+    matchLabels:
+      # app: nginx means "manage all pods labeled with app=nginx"
+      app: nginx
+
+  # template: Blueprint for creating new Pods
+  # Whenever the Deployment needs to create a new Pod, it uses this template
+  template:
+    # Pod metadata (labels and info for this Pod)
+    metadata:
+      # labels: Tags that identify this Pod
+      # Other resources use these labels to find and manage pods
+      labels:
+        # app: nginx - This label identifies this pod as part of nginx app
+        # The Deployment selector looks for this label to manage the pod
+        app: nginx
+
+    # Pod specification - Details about the containers inside the Pod
+    spec:
+      # containers: List of containers that run inside this Pod
+      # A Pod can have multiple containers, but usually has one main container
+      containers:
+      # First container configuration
+      - name: nginx
+        # image: The Docker image to use for this container
+        # nginx:1.7.9 means use the nginx web server, version 1.7.9
+        # Docker images are pre-built application environments
+        image: nginx:1.7.9
+        
+        # ports: Which network ports this container listens on
+        ports:
+        # Expose port 80 (standard HTTP port) from the container
+        - containerPort: 80
+
+        # resources: CPU and Memory allocation for this container
+        # IMPORTANT: For HPA to work with CPU metrics, you MUST specify requests
+        resources:
+          # requests: The MINIMUM resources guaranteed to this container
+          # Kubernetes reserves this much CPU for the pod
+          # If not specified, HPA cannot calculate CPU percentage
+          # CPU is measured in "millicores" (m)
+          # 250m = 0.25 CPU cores = 1/4 of one processor
+          requests:
+            cpu: "250m"
+          # NOTE: Memory requests could be added here too, e.g., memory: "256Mi"
+          # But this deployment only specifies CPU, which is enough for HPA
