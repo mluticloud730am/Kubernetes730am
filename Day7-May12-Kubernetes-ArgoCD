@@ -1,0 +1,204 @@
+ARGOCD is Kubernetes Native deployment tool it gives good user interface and we can easily automate yml deployment process
+
+Example this is my cluster which have one control plane and 2 worker nodes 
+
+Suppose any developer who write yaml file and connect to cluster and apply directly 
+
+Above example developer directly connected to cluster to run yaml files ------ WIthout ArgoCD
+
+Same example lets see with ARGO CD - we need to push the yaml files to source code repo github repo so you need to integarte ARGO CD - SO it always watches if any yaml files comes it will sync with cluster always 
+
+so in above example once we integrated with argocd insider cluster argocd githubrepo
+so if any developer pushed changes automatically apply those changes to cluster and this process is called gitops process.
+
+developer push code --> docker file --> image push ---> ecr --> yaml push to github(apply ) (UNTIL THIS PROCESS IS CALLED CI)-->argocd integration (THIS PROCESS is called CD -) --> Kubernetes  control plane --> worker nodes
+
+Jenkins ,github action ,gitlab (CI) and 
+
+medium blog -- https://medium.com/@veerababu.narni232/a-complete-overview-of-argocd-with-a-practical-example-f4a9a8488cf9
+
+ec2-user@ip-172-31-46-3 Kubernetes730am]$ kubectl create namespace argocd
+namespace/argocd created
+[ec2-user@ip-172-31-46-3 Kubernetes730am]$ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+customresourcedefinition.apiextensions.k8s.io/applications.argoproj.io created
+customresourcedefinition.apiextensions.k8s.io/appprojects.argoproj.io created
+serviceaccount/argocd-application-controller created
+serviceaccount/argocd-applicationset-controller created
+serviceaccount/argocd-dex-server created
+serviceaccount/argocd-notifications-controller created
+serviceaccount/argocd-redis created
+serviceaccount/argocd-repo-server created
+serviceaccount/argocd-server created
+role.rbac.authorization.k8s.io/argocd-application-controller created
+role.rbac.authorization.k8s.io/argocd-applicationset-controller created
+role.rbac.authorization.k8s.io/argocd-dex-server created
+role.rbac.authorization.k8s.io/argocd-notifications-controller created
+role.rbac.authorization.k8s.io/argocd-redis created
+role.rbac.authorization.k8s.io/argocd-server created
+clusterrole.rbac.authorization.k8s.io/argocd-application-controller created
+clusterrole.rbac.authorization.k8s.io/argocd-applicationset-controller created
+clusterrole.rbac.authorization.k8s.io/argocd-server created
+rolebinding.rbac.authorization.k8s.io/argocd-application-controller created
+rolebinding.rbac.authorization.k8s.io/argocd-applicationset-controller created
+rolebinding.rbac.authorization.k8s.io/argocd-dex-server created
+rolebinding.rbac.authorization.k8s.io/argocd-notifications-controller created
+rolebinding.rbac.authorization.k8s.io/argocd-redis created
+rolebinding.rbac.authorization.k8s.io/argocd-server created
+clusterrolebinding.rbac.authorization.k8s.io/argocd-application-controller created
+clusterrolebinding.rbac.authorization.k8s.io/argocd-applicationset-controller created
+clusterrolebinding.rbac.authorization.k8s.io/argocd-server created
+configmap/argocd-cm created
+configmap/argocd-cmd-params-cm created
+configmap/argocd-gpg-keys-cm created
+configmap/argocd-notifications-cm created
+configmap/argocd-rbac-cm created
+configmap/argocd-ssh-known-hosts-cm created
+configmap/argocd-tls-certs-cm created
+secret/argocd-notifications-secret created
+secret/argocd-secret created
+service/argocd-applicationset-controller created
+service/argocd-dex-server created
+service/argocd-metrics created
+service/argocd-notifications-controller-metrics created
+service/argocd-redis created
+service/argocd-repo-server created
+service/argocd-server created
+service/argocd-server-metrics created
+deployment.apps/argocd-applicationset-controller created
+deployment.apps/argocd-dex-server created
+deployment.apps/argocd-notifications-controller created
+deployment.apps/argocd-redis created
+deployment.apps/argocd-repo-server created
+deployment.apps/argocd-server created
+statefulset.apps/argocd-application-controller created
+networkpolicy.networking.k8s.io/argocd-application-controller-network-policy created
+networkpolicy.networking.k8s.io/argocd-applicationset-controller-network-policy created
+networkpolicy.networking.k8s.io/argocd-dex-server-network-policy created
+networkpolicy.networking.k8s.io/argocd-notifications-controller-network-policy created
+networkpolicy.networking.k8s.io/argocd-redis-network-policy created
+networkpolicy.networking.k8s.io/argocd-repo-server-network-policy created
+networkpolicy.networking.k8s.io/argocd-server-network-policy created
+The CustomResourceDefinition "applicationsets.argoproj.io" is invalid: metadata.annotations: Too long: may not be more than 262144 bytes
+[ec2-user@ip-172-31-46-3 Kubernetes730am]$ 
+
+[ec2-user@ip-172-31-46-3 Kubernetes730am]$ kubectl get pods -n argocd
+NAME                                                READY   STATUS    RESTARTS   AGE
+argocd-application-controller-0                     0/1     Running   0          22s
+argocd-applicationset-controller-76dbd99d7d-5wrk9   1/1     Running   0          23s
+argocd-dex-server-7d64856cff-2jbtd                  1/1     Running   0          23s
+argocd-notifications-controller-7c88c479fd-5hxzh    1/1     Running   0          23s
+argocd-redis-5bd688d4ff-rgkfw                       1/1     Running   0          23s
+argocd-repo-server-787655f46d-slczw                 0/1     Running   0          23s
+argocd-server-67fdbb46f4-bxnh9                      0/1     Running   0          23s
+[ec2-user@ip-172-31-46-3 Kubernetes730am]$ 
+
+
+
+[ec2-user@ip-172-31-46-3 Kubernetes730am]$ kubectl get pods -n argocd
+NAME                                                READY   STATUS    RESTARTS   AGE
+argocd-application-controller-0                     0/1     Running   0          22s
+argocd-applicationset-controller-76dbd99d7d-5wrk9   1/1     Running   0          23s
+argocd-dex-server-7d64856cff-2jbtd                  1/1     Running   0          23s
+argocd-notifications-controller-7c88c479fd-5hxzh    1/1     Running   0          23s
+argocd-redis-5bd688d4ff-rgkfw                       1/1     Running   0          23s
+argocd-repo-server-787655f46d-slczw                 0/1     Running   0          23s
+argocd-server-67fdbb46f4-bxnh9                      0/1     Running   0          23s
+[ec2-user@ip-172-31-46-3 Kubernetes730am]$ kubectl get all -n argocd
+NAME                                                    READY   STATUS    RESTARTS   AGE
+pod/argocd-application-controller-0                     1/1     Running   0          58s
+pod/argocd-applicationset-controller-76dbd99d7d-5wrk9   1/1     Running   0          59s
+pod/argocd-dex-server-7d64856cff-2jbtd                  1/1     Running   0          59s
+pod/argocd-notifications-controller-7c88c479fd-5hxzh    1/1     Running   0          59s
+pod/argocd-redis-5bd688d4ff-rgkfw                       1/1     Running   0          59s
+pod/argocd-repo-server-787655f46d-slczw                 1/1     Running   0          59s
+pod/argocd-server-67fdbb46f4-bxnh9                      1/1     Running   0          59s
+
+NAME                                              TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+service/argocd-applicationset-controller          ClusterIP   10.100.185.105   <none>        7000/TCP,8080/TCP            60s
+service/argocd-dex-server                         ClusterIP   10.100.88.61     <none>        5556/TCP,5557/TCP,5558/TCP   59s
+service/argocd-metrics                            ClusterIP   10.100.45.28     <none>        8082/TCP                     59s
+service/argocd-notifications-controller-metrics   ClusterIP   10.100.236.154   <none>        9001/TCP                     59s
+service/argocd-redis                              ClusterIP   10.100.150.60    <none>        6379/TCP                     59s
+service/argocd-repo-server                        ClusterIP   10.100.82.216    <none>        8081/TCP,8084/TCP            59s
+service/argocd-server                             ClusterIP   10.100.7.199     <none>        80/TCP,443/TCP               59s
+service/argocd-server-metrics                     ClusterIP   10.100.1.98      <none>        8083/TCP                     59s
+
+NAME                                               READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/argocd-applicationset-controller   1/1     1            1           59s
+deployment.apps/argocd-dex-server                  1/1     1            1           59s
+deployment.apps/argocd-notifications-controller    1/1     1            1           59s
+deployment.apps/argocd-redis                       1/1     1            1           59s
+deployment.apps/argocd-repo-server                 1/1     1            1           59s
+deployment.apps/argocd-server                      1/1     1            1           59s
+
+NAME                                                          DESIRED   CURRENT   READY   AGE
+replicaset.apps/argocd-applicationset-controller-76dbd99d7d   1         1         1       59s
+replicaset.apps/argocd-dex-server-7d64856cff                  1         1         1       59s
+replicaset.apps/argocd-notifications-controller-7c88c479fd    1         1         1       59s
+replicaset.apps/argocd-redis-5bd688d4ff                       1         1         1       59s
+replicaset.apps/argocd-repo-server-787655f46d                 1         1         1       59s
+replicaset.apps/argocd-server-67fdbb46f4                      1         1         1       59s
+
+NAME                                             READY   AGE
+statefulset.apps/argocd-application-controller   1/1     59s
+[ec2-user@ip-172-31-46-3 Kubernetes730am]$ 
+
+
+Now lets change cluster ip 
+
+kubectl edit svc argocd-server -n argocd  #enable Node Port 
+
+from 
+
+  type: ClusterIP
+
+to 
+
+  type: LoadBalancer
+
+[ec2-user@ip-172-31-46-3 Kubernetes730am]$ kubectl edit svc argocd-server -n argocd
+service/argocd-server edited
+
+
+ec2-user@ip-172-31-46-3 Kubernetes730am]$ kubectl get svc -n argocd
+NAME                                      TYPE           CLUSTER-IP       EXTERNAL-IP                                                              PORT(S)                      AGE
+argocd-applicationset-controller          ClusterIP      10.100.185.105   <none>                                                                   7000/TCP,8080/TCP            3m55s
+argocd-dex-server                         ClusterIP      10.100.88.61     <none>                                                                   5556/TCP,5557/TCP,5558/TCP   3m54s
+argocd-metrics                            ClusterIP      10.100.45.28     <none>                                                                   8082/TCP                     3m54s
+argocd-notifications-controller-metrics   ClusterIP      10.100.236.154   <none>                                                                   9001/TCP                     3m54s
+argocd-redis                              ClusterIP      10.100.150.60    <none>                                                                   6379/TCP                     3m54s
+argocd-repo-server                        ClusterIP      10.100.82.216    <none>                                                                   8081/TCP,8084/TCP            3m54s
+argocd-server                             LoadBalancer   10.100.7.199     ab8b31b742e6d486d8722609197017d7-363169874.us-east-1.elb.amazonaws.com   80:32542/TCP,443:30553/TCP   3m54s
+argocd-server-metrics                     ClusterIP      10.100.1.98      <none>                                                                   8083/TCP                     3m54s
+[ec2-user@ip-172-31-46-3 Kubernetes730am]$ 
+
+
+https://ab8b31b742e6d486d8722609197017d7-363169874.us-east-1.elb.amazonaws.com/applications
+
+Let's get stuff deployed!
+
+
+[ec2-user@ip-172-31-46-3 Kubernetes730am]$ kubectl get secret argocd-initial-admin-secret -n argocd -o yaml
+apiVersion: v1
+data:
+  password: OUNRTGxjd3BMLVdNSU9qWA==
+kind: Secret
+metadata:
+  creationTimestamp: "2026-05-13T18:54:22Z"
+  name: argocd-initial-admin-secret
+  namespace: argocd
+  resourceVersion: "30823"
+  uid: ffdfaf3c-2060-4974-85c2-d3f2097dd9af
+type: Opaque
+[ec2-user@ip-172-31-46-3 Kubernetes730am]$ echo "OUNRTGxjd3BMLVdNSU9qWA==" |base64 -d
+
+
+9CQLlcwpL-WMIOjX
+
+
+https://ab8b31b742e6d486d8722609197017d7-363169874.us-east-1.elb.amazonaws.com/applications
+
+
+
+
+
