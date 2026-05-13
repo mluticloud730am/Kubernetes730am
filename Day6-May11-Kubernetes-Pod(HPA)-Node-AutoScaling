@@ -1,0 +1,1925 @@
+Kubernetes - POD/Node Scalability
+
+Horizantal Pod Auto Scaling 
+
+Example in Replicaset and Deployment YAML the replicas:3 the number which you gave is understand by controller inside kubernetes for self healing so will mainatain same number 
+
+But in case of HPA controller will actually monitor the load and control the replicas set 
+
+
+
+curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+chmod +x ./kubectl  
+sudo mv ./kubectl /usr/local/bin/kubectl  
+
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+   sudo mv /tmp/eksctl /usr/local/bin
+   eksctl version
+
+
+eksctl version
+kubectl version
+eksctl create cluster --name test       --region us-east-1    --node-type t2.medium 
+
+
+BY Default Deployment controller replica are static it wont change count dynamically along with load
+TO make Dynamic this replicas we need to integrate HOrizantal pod autoscaler .
+
+So HPA monitor load as given set point it will update replicas accordinlgy into deployment controller 
+-------------------------------
+HPA YAML 
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nginx
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nginx-hpa
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 1
+
+-----------------------------------
+Deployment YAML 
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-hpa
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.7.9
+        ports:
+        - containerPort: 80
+        resources:
+          # You must specify requests for CPU to autoscale
+          # based on CPU utilization
+          requests:
+            cpu: "250m"
+--------------------------------
+Service YAML
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-lb
+  labels:
+    app: my-app-lb
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: nginx
+
+------------------------------------
+
+
+
+Just compare 3 yamls and find the major diff 
+
+Trget reference will be same in deployment yaml and hpa yaml 
+
+
+How about target specifications 
+example t2.micro 1 cpu is capacity
+
+so for pod we are not having size right 
+
+sowe are giving specifications like 
+        resources:
+          # You must specify requests for CPU to autoscale
+          # based on CPU utilization
+          requests:
+            cpu: "250m"
+
+so total 250millcore for the pod capacity load
+
+so set point here is 
+      target:
+        type: Utilization
+        averageUtilization: 1
+
+
+means 1*250/100 set point reached them immediately so 2.5% reached so immediately the values of replicas will be set by min and max replica based on the load in HPA controller 
+
+
+----
+
+
+[ec2-user@ip-172-31-46-3 ~]$ git clone https://github.com/mluticloud730am/Kubernetes730am.git
+Cloning into 'Kubernetes730am'...
+remote: Enumerating objects: 92, done.
+remote: Counting objects: 100% (92/92), done.
+remote: Compressing objects: 100% (78/78), done.
+remote: Total 92 (delta 41), reused 33 (delta 13), pack-reused 0 (from 0)
+Receiving objects: 100% (92/92), 136.25 KiB | 9.73 MiB/s, done.
+Resolving deltas: 100% (41/41), done.
+[ec2-user@ip-172-31-46-3 ~]$ ll
+total 16
+drwxr-xr-x. 6 ec2-user ec2-user 16384 May 13 17:02 Kubernetes730am
+[ec2-user@ip-172-31-46-3 ~]$ cd Kubernetes730am/
+[ec2-user@ip-172-31-46-3 Kubernetes730am]$ ls 
+Day1-Intro-notes-veera                     Day3-7th-May-Kubernetes-pod-replicaset-deployment-yamlsfiles-explantions                 Day5-May9th-Kubernetes-clusterip-loadbalncer-nodeport-handson_claudenotes.md
+Day1-Kubernetes-Intro-ClaudeNotes.md       Day3-7th-May-Kubernetes-pod-replicaset-deployment-yamlsfiles-explantions_Claudenotes.md  May11th-HPA-node-scaling
+Day1-Kubernetes-Intro-ManualNotes          Day4-May8th-Services-nodeport-loadbbalancer-headless-clusterip--Concepts                 May7th-Kubernetes730am-yamlfiles
+Day2-Components-Kubernetes-ClaudeNotes.md  Day4-May8th-Services-nodeport-loadbbalancer-headless-clusterip--Concepts_caludenotes.md  May8th-Services-Yamlfiles
+Day2-Components_kubernetes                 Day5-May9th-Kubernetes-clusterip-loadbalncer-nodeport-handson
+[ec2-user@ip-172-31-46-3 Kubernetes730am]$ cd May11th-HPA-node-scaling/
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ ll
+total 12
+-rw-r--r--. 1 ec2-user ec2-user 3550 May 13 17:02 Deployment.yaml
+-rw-r--r--. 1 ec2-user ec2-user 2537 May 13 17:02 Service.yaml
+-rw-r--r--. 1 ec2-user ec2-user 3016 May 13 17:02 hpa.yaml
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl apply -f Deployment.yaml Service.yaml
+error: Unexpected args: [Service.yaml]
+See 'kubectl apply -h' for help and examples
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl apply -f Deployment.yaml -f Service.yaml
+deployment.apps/nginx-hpa created
+service/my-app-lb created
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get pods
+NAME                         READY   STATUS         RESTARTS   AGE
+nginx-hpa-685856c965-82npm   0/1     ErrImagePull   0          10s
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubcetl describe pod nginx-hpa-685856c965-82npm
+-bash: kubcetl: command not found
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl describe pod nginx-hpa-685856c965-82npm
+Name:             nginx-hpa-685856c965-82npm
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             ip-192-168-35-17.ec2.internal/192.168.35.17
+Start Time:       Wed, 13 May 2026 17:04:33 +0000
+Labels:           app=nginx
+                  pod-template-hash=685856c965
+Annotations:      <none>
+Status:           Pending
+IP:               192.168.47.175
+IPs:
+  IP:           192.168.47.175
+Controlled By:  ReplicaSet/nginx-hpa-685856c965
+Containers:
+  nginx:
+    Container ID:   
+    Image:          nginx:1.7.9
+    Image ID:       
+    Port:           80/TCP
+    Host Port:      0/TCP
+    State:          Waiting
+      Reason:       ErrImagePull
+    Ready:          False
+    Restart Count:  0
+    Requests:
+      cpu:        250m
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-pbddj (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       False 
+  ContainersReady             False 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-pbddj:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age                From               Message
+  ----     ------     ----               ----               -------
+  Normal   Scheduled  39s                default-scheduler  Successfully assigned default/nginx-hpa-685856c965-82npm to ip-192-168-35-17.ec2.internal
+  Normal   Pulling    25s (x2 over 39s)  kubelet            Pulling image "nginx:1.7.9"
+  Warning  Failed     25s (x2 over 39s)  kubelet            Failed to pull image "nginx:1.7.9": rpc error: code = Unimplemented desc = failed to pull and unpack image "docker.io/library/nginx:1.7.9": not implemented: media type "application/vnd.docker.distribution.manifest.v1+prettyjws" is no longer supported since containerd v2.1, please rebuild the image as "application/vnd.docker.distribution.manifest.v2+json" or "application/vnd.oci.image.manifest.v1+json"
+  Warning  Failed     25s (x2 over 39s)  kubelet            Error: ErrImagePull
+  Normal   BackOff    14s (x2 over 39s)  kubelet            Back-off pulling image "nginx:1.7.9"
+  Warning  Failed     14s (x2 over 39s)  kubelet            Error: ImagePullBackOff
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ vi Deployment.yaml 
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl apply -f Deployment.yaml -f Service.yaml
+deployment.apps/nginx-hpa configured
+service/my-app-lb unchanged
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get pods
+NAME                        READY   STATUS    RESTARTS   AGE
+nginx-hpa-bb688f6fd-6s2lw   1/1     Running   0          9s
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get svc
+NAME         TYPE           CLUSTER-IP     EXTERNAL-IP                                                              PORT(S)        AGE
+kubernetes   ClusterIP      10.100.0.1     <none>                                                                   443/TCP        42m
+my-app-lb    LoadBalancer   10.100.19.29   a1fdf867c75af41b7ba9b63fbe2f864f-334942128.us-east-1.elb.amazonaws.com   80:31545/TCP   2m8s
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ cat Deployment.yaml 
+# ============================================================================
+# KUBERNETES DEPLOYMENT CONFIGURATION
+# ============================================================================
+# A Deployment is a way to tell Kubernetes how to run your application
+# It manages the creation and updating of Pods automatically
+# ============================================================================
+
+# API version tells Kubernetes which version of the Deployment feature to use
+# apps/v1 is the standard version for managing applications
+apiVersion: apps/v1
+
+# Kind specifies what type of Kubernetes object this is
+# Deployment automatically manages Pod creation, updates, and scaling
+kind: Deployment
+
+# Metadata section contains information about this Deployment object
+metadata:
+  # name: The identifier/name of this Deployment
+  # Used to reference and manage this deployment via kubectl commands
+  name: nginx-hpa
+  
+  # namespace: Logical grouping of resources in Kubernetes
+  # "default" is the default namespace when you don't specify one
+  # You can have multiple namespaces to organize your applications
+  namespace: default
+
+# Spec (Specification) section defines HOW the application should run
+spec:
+  # replicas: The INITIAL number of Pods to create
+  # This starts with 1 pod, but HPA will increase/decrease this number
+  # based on CPU usage automatically
+  replicas: 1
+
+  # selector: Tells Deployment WHICH Pods to manage
+  # It uses labels to identify the pods it should control
+  selector:
+    # matchLabels: Pods with these labels will be managed by this Deployment
+    matchLabels:
+      # app: nginx means "manage all pods labeled with app=nginx"
+      app: nginx
+
+  # template: Blueprint for creating new Pods
+  # Whenever the Deployment needs to create a new Pod, it uses this template
+  template:
+    # Pod metadata (labels and info for this Pod)
+    metadata:
+      # labels: Tags that identify this Pod
+      # Other resources use these labels to find and manage pods
+      labels:
+        # app: nginx - This label identifies this pod as part of nginx app
+        # The Deployment selector looks for this label to manage the pod
+        app: nginx
+
+    # Pod specification - Details about the containers inside the Pod
+    spec:
+      # containers: List of containers that run inside this Pod
+      # A Pod can have multiple containers, but usually has one main container
+      containers:
+      # First container configuration
+      - name: nginx
+        # image: The Docker image to use for this container
+        # nginx:1.7.9 means use the nginx web server, version 1.7.9
+        # Docker images are pre-built application environments
+        image: nginx
+        
+        # ports: Which network ports this container listens on
+        ports:
+        # Expose port 80 (standard HTTP port) from the container
+        - containerPort: 80
+
+        # resources: CPU and Memory allocation for this container
+        # IMPORTANT: For HPA to work with CPU metrics, you MUST specify requests
+        resources:
+          # requests: The MINIMUM resources guaranteed to this container
+          # Kubernetes reserves this much CPU for the pod
+          # If not specified, HPA cannot calculate CPU percentage
+          # CPU is measured in "millicores" (m)
+          # 250m = 0.25 CPU cores = 1/4 of one processor
+          requests:
+            cpu: "250m"
+          # NOTE: Memory requests could be added here too, e.g., memory: "256Mi"
+          # But this deployment only specifies CPU, which is enough for HPA
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ 
+
+----------------------------------
+
+
+http://a1fdf867c75af41b7ba9b63fbe2f864f-334942128.us-east-1.elb.amazonaws.com/
+
+Welcome to nginx!
+If you see this page, nginx is successfully installed and working. Further configuration is required for the web server, reverse proxy, API gateway, load balancer, content cache, or other features.
+
+For online documentation and support please refer to nginx.org.
+To engage with the community please visit community.nginx.org.
+For enterprise grade support, professional services, additional security features and capabilities please refer to f5.com/nginx.
+
+Thank you for using nginx.
+
+
+ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ watch kubectl top pods
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl top pods
+NAME                        CPU(cores)   MEMORY(bytes)   
+nginx-hpa-bb688f6fd-6s2lw   43m          3Mi             
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ cat test.sh 
+for j in {1..10}; do  
+    for i in {1..10000}; do  
+        curl -s -o /dev/null -w "%{http_code}\n" http://a1fdf867c75af41b7ba9b63fbe2f864f-334942128.us-east-1.elb.amazonaws.com// &  
+    done  
+    wait  # Wait for all background curl processes to finish before next iteration
+done
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ 
+
+
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl apply -f hpa.yaml
+horizontalpodautoscaler.autoscaling/nginx created
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get hpa
+NAME    REFERENCE              TARGETS             MINPODS   MAXPODS   REPLICAS   AGE
+nginx   Deployment/nginx-hpa   cpu: <unknown>/1%   1         10        0          9s
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get pods
+NAME                        READY   STATUS    RESTARTS   AGE
+nginx-hpa-bb688f6fd-6s2lw   1/1     Running   0          10m
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl top pods
+NAME                        CPU(cores)   MEMORY(bytes)   
+nginx-hpa-bb688f6fd-6s2lw   48m          3Mi             
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get pods
+NAME                        READY   STATUS    RESTARTS   AGE
+nginx-hpa-bb688f6fd-2h88c   1/1     Running   0          3s
+nginx-hpa-bb688f6fd-5smf6   1/1     Running   0          3s
+nginx-hpa-bb688f6fd-6s2lw   1/1     Running   0          10m
+nginx-hpa-bb688f6fd-7b6lj   1/1     Running   0          18s
+nginx-hpa-bb688f6fd-gzc4p   1/1     Running   0          18s
+nginx-hpa-bb688f6fd-tqqrp   1/1     Running   0          3s
+nginx-hpa-bb688f6fd-vbvx5   1/1     Running   0          18s
+nginx-hpa-bb688f6fd-wk8z5   1/1     Running   0          3s
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl top pods
+NAME                        CPU(cores)   MEMORY(bytes)   
+nginx-hpa-bb688f6fd-6s2lw   37m          3Mi             
+nginx-hpa-bb688f6fd-7b6lj   15m          3Mi             
+nginx-hpa-bb688f6fd-gzc4p   15m          3Mi             
+nginx-hpa-bb688f6fd-vbvx5   20m          3Mi             
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl top pods
+NAME                        CPU(cores)   MEMORY(bytes)   
+nginx-hpa-bb688f6fd-2h88c   12m          3Mi             
+nginx-hpa-bb688f6fd-5smf6   8m           3Mi             
+nginx-hpa-bb688f6fd-6s2lw   10m          3Mi             
+nginx-hpa-bb688f6fd-7b6lj   8m           3Mi             
+nginx-hpa-bb688f6fd-gzc4p   15m          3Mi             
+nginx-hpa-bb688f6fd-tqqrp   11m          3Mi             
+nginx-hpa-bb688f6fd-vbvx5   10m          3Mi             
+nginx-hpa-bb688f6fd-wk8z5   11m          3Mi      
+
+
+
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get pods 
+NAME                        READY   STATUS    RESTARTS   AGE
+nginx-hpa-bb688f6fd-2h88c   1/1     Running   0          96s
+nginx-hpa-bb688f6fd-5smf6   1/1     Running   0          96s
+nginx-hpa-bb688f6fd-6s2lw   1/1     Running   0          12m
+nginx-hpa-bb688f6fd-7b6lj   1/1     Running   0          111s
+nginx-hpa-bb688f6fd-fs8hs   1/1     Running   0          81s
+nginx-hpa-bb688f6fd-gzc4p   1/1     Running   0          111s
+nginx-hpa-bb688f6fd-q95cd   1/1     Running   0          81s
+nginx-hpa-bb688f6fd-tqqrp   1/1     Running   0          96s
+nginx-hpa-bb688f6fd-vbvx5   1/1     Running   0          111s
+nginx-hpa-bb688f6fd-wk8z5   1/1     Running   0          96s
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get pods  | wc -l
+11
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl top pods
+NAME                        CPU(cores)   MEMORY(bytes)   
+nginx-hpa-bb688f6fd-2h88c   7m           3Mi             
+nginx-hpa-bb688f6fd-5smf6   7m           3Mi             
+nginx-hpa-bb688f6fd-6s2lw   6m           3Mi             
+nginx-hpa-bb688f6fd-7b6lj   7m           3Mi             
+nginx-hpa-bb688f6fd-fs8hs   7m           3Mi             
+nginx-hpa-bb688f6fd-gzc4p   7m           3Mi             
+nginx-hpa-bb688f6fd-q95cd   5m           3Mi             
+nginx-hpa-bb688f6fd-tqqrp   7m           3Mi             
+nginx-hpa-bb688f6fd-vbvx5   6m           3Mi             
+nginx-hpa-bb688f6fd-wk8z5   6m           3Mi            
+
+
+need to calculate how load is been shared between the pods 
+
+--------------
+
+ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl top pods
+NAME                        CPU(cores)   MEMORY(bytes)   
+nginx-hpa-bb688f6fd-2h88c   7m           3Mi             
+nginx-hpa-bb688f6fd-5smf6   7m           3Mi             
+nginx-hpa-bb688f6fd-6s2lw   6m           3Mi             
+nginx-hpa-bb688f6fd-7b6lj   7m           3Mi             
+nginx-hpa-bb688f6fd-fs8hs   7m           3Mi             
+nginx-hpa-bb688f6fd-gzc4p   8m           3Mi             
+nginx-hpa-bb688f6fd-q95cd   7m           3Mi             
+nginx-hpa-bb688f6fd-tqqrp   7m           3Mi             
+nginx-hpa-bb688f6fd-vbvx5   6m           3Mi             
+nginx-hpa-bb688f6fd-wk8z5   7m           3Mi             
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl top nodes
+NAME                            CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
+ip-192-168-0-38.ec2.internal    118m         6%     529Mi           15%       
+ip-192-168-35-17.ec2.internal   91m          4%     493Mi           14%       
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get pods -o wide
+NAME                        READY   STATUS    RESTARTS   AGE     IP               NODE                            NOMINATED NODE   READINESS GATES
+nginx-hpa-bb688f6fd-2h88c   1/1     Running   0          3m28s   192.168.47.175   ip-192-168-35-17.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-5smf6   1/1     Running   0          3m28s   192.168.0.164    ip-192-168-0-38.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-6s2lw   1/1     Running   0          14m     192.168.6.242    ip-192-168-0-38.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-7b6lj   1/1     Running   0          3m43s   192.168.55.229   ip-192-168-35-17.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-fs8hs   1/1     Running   0          3m13s   192.168.47.162   ip-192-168-35-17.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-gzc4p   1/1     Running   0          3m43s   192.168.41.26    ip-192-168-35-17.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-q95cd   1/1     Running   0          3m13s   192.168.24.242   ip-192-168-0-38.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-tqqrp   1/1     Running   0          3m28s   192.168.60.0     ip-192-168-35-17.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-vbvx5   1/1     Running   0          3m43s   192.168.26.147   ip-192-168-0-38.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-wk8z5   1/1     Running   0          3m28s   192.168.21.69    ip-192-168-0-38.ec2.internal    <none>           <none>
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl top pods
+NAME                        CPU(cores)   MEMORY(bytes)   
+nginx-hpa-bb688f6fd-2h88c   6m           3Mi             
+nginx-hpa-bb688f6fd-5smf6   6m           3Mi             
+nginx-hpa-bb688f6fd-6s2lw   6m           3Mi             
+nginx-hpa-bb688f6fd-7b6lj   7m           3Mi             
+nginx-hpa-bb688f6fd-fs8hs   7m           3Mi             
+nginx-hpa-bb688f6fd-gzc4p   7m           3Mi             
+nginx-hpa-bb688f6fd-q95cd   6m           3Mi             
+nginx-hpa-bb688f6fd-tqqrp   6m           3Mi             
+nginx-hpa-bb688f6fd-vbvx5   6m           3Mi             
+nginx-hpa-bb688f6fd-wk8z5   6m           3Mi  
+
+
+so each pod can be up to 250 core but put set point is 1 percent that is 2.5 millicore 
+
+
+
+
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get pods -o wide;kubectl top nodes;kubectl top pods;
+NAME                        READY   STATUS    RESTARTS   AGE     IP               NODE                            NOMINATED NODE   READINESS GATES
+nginx-hpa-bb688f6fd-2h88c   1/1     Running   0          7m19s   192.168.47.175   ip-192-168-35-17.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-5f2nq   0/1     Pending   0          63s     <none>           <none>                          <none>           <none>
+nginx-hpa-bb688f6fd-5smf6   1/1     Running   0          7m19s   192.168.0.164    ip-192-168-0-38.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-6s2lw   1/1     Running   0          18m     192.168.6.242    ip-192-168-0-38.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-7b6lj   1/1     Running   0          7m34s   192.168.55.229   ip-192-168-35-17.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-f4f6v   0/1     Pending   0          63s     <none>           <none>                          <none>           <none>
+nginx-hpa-bb688f6fd-fs8hs   1/1     Running   0          7m4s    192.168.47.162   ip-192-168-35-17.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-gzc4p   1/1     Running   0          7m34s   192.168.41.26    ip-192-168-35-17.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-hjcgn   0/1     Pending   0          63s     <none>           <none>                          <none>           <none>
+nginx-hpa-bb688f6fd-hthtp   0/1     Pending   0          63s     <none>           <none>                          <none>           <none>
+nginx-hpa-bb688f6fd-hz98g   0/1     Pending   0          63s     <none>           <none>                          <none>           <none>
+nginx-hpa-bb688f6fd-jftv6   1/1     Running   0          63s     192.168.58.242   ip-192-168-35-17.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-jp972   0/1     Pending   0          63s     <none>           <none>                          <none>           <none>
+nginx-hpa-bb688f6fd-q95cd   1/1     Running   0          7m4s    192.168.24.242   ip-192-168-0-38.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-qt6hr   0/1     Pending   0          63s     <none>           <none>                          <none>           <none>
+nginx-hpa-bb688f6fd-r5l54   0/1     Pending   0          63s     <none>           <none>                          <none>           <none>
+nginx-hpa-bb688f6fd-t7wc9   0/1     Pending   0          63s     <none>           <none>                          <none>           <none>
+nginx-hpa-bb688f6fd-tqqrp   1/1     Running   0          7m19s   192.168.60.0     ip-192-168-35-17.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-vbvx5   1/1     Running   0          7m34s   192.168.26.147   ip-192-168-0-38.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-wk8z5   1/1     Running   0          7m19s   192.168.21.69    ip-192-168-0-38.ec2.internal    <none>           <none>
+NAME                            CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
+ip-192-168-0-38.ec2.internal    87m          4%     527Mi           15%       
+ip-192-168-35-17.ec2.internal   113m         5%     505Mi           14%       
+NAME                        CPU(cores)   MEMORY(bytes)   
+nginx-hpa-bb688f6fd-2h88c   6m           3Mi             
+nginx-hpa-bb688f6fd-5smf6   6m           3Mi             
+nginx-hpa-bb688f6fd-6s2lw   6m           3Mi             
+nginx-hpa-bb688f6fd-7b6lj   6m           3Mi             
+nginx-hpa-bb688f6fd-fs8hs   6m           3Mi             
+nginx-hpa-bb688f6fd-gzc4p   3m           3Mi             
+nginx-hpa-bb688f6fd-jftv6   6m           3Mi             
+nginx-hpa-bb688f6fd-q95cd   6m           3Mi             
+nginx-hpa-bb688f6fd-tqqrp   6m           3Mi             
+nginx-hpa-bb688f6fd-vbvx5   6m           3Mi             
+nginx-hpa-bb688f6fd-wk8z5   6m           3Mi             
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl describe pod nginx-hpa-bb688f6fd-t7wc9
+Name:             nginx-hpa-bb688f6fd-t7wc9
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             <none>
+Labels:           app=nginx
+                  pod-template-hash=bb688f6fd
+Annotations:      <none>
+Status:           Pending
+IP:               
+IPs:              <none>
+Controlled By:    ReplicaSet/nginx-hpa-bb688f6fd
+Containers:
+  nginx:
+    Image:      nginx
+    Port:       80/TCP
+    Host Port:  0/TCP
+    Requests:
+      cpu:        250m
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-ttcrq (ro)
+Conditions:
+  Type           Status
+  PodScheduled   False 
+Volumes:
+  kube-api-access-ttcrq:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason            Age   From               Message
+  ----     ------            ----  ----               -------
+  Warning  FailedScheduling  90s   default-scheduler  0/2 nodes are available: 2 Insufficient cpu. no new claims to deallocate, preemption: 0/2 nodes are available: 2 No preemption victims found for incoming pod.
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ 
+
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get hpa
+NAME    REFERENCE              TARGETS      MINPODS   MAXPODS   REPLICAS   AGE
+nginx   Deployment/nginx-hpa   cpu: 2%/1%   1         30        20         9m2s
+
+
+why targets are cpu 2%/1%
+
+below is from ASG in EC2 console 
+
+
+
+nodes autoscaling
+
+------------
+eks-ng-88ff37a8-4acf1115-aed3-2256-9b9d-1b38a5bcd07e
+eks-ng-88ff37a8-4acf1115-aed3-2256-9b9d-1b38a5bcd07e Capacity overview
+Edit
+arn:aws:autoscaling:us-east-1:095866557180:autoScalingGroup:f07826c7-52f4-4511-871e-88ece43826e4:autoScalingGroupName/eks-ng-88ff37a8-4acf1115-aed3-2256-9b9d-1b38a5bcd07e
+Desired capacity
+2
+Scaling limits
+2 - 2
+Desired capacity type
+Units (number of instances)
+Status
+ At desired capacity
+
+-----------------
+
+so here we need to install autoscaling group controller to check insider cluster so ASG controller should be integrated installed in ec2 so that PODS monitoring that can be their and that is differnt topic 
+
+
+
+now lets inrease max and desired capacity to 4 
+
+
+
+eks-ng-88ff37a8-4acf1115-aed3-2256-9b9d-1b38a5bcd07e
+eks-ng-88ff37a8-4acf1115-aed3-2256-9b9d-1b38a5bcd07e Capacity overview
+Edit
+arn:aws:autoscaling:us-east-1:095866557180:autoScalingGroup:f07826c7-52f4-4511-871e-88ece43826e4:autoScalingGroupName/eks-ng-88ff37a8-4acf1115-aed3-2256-9b9d-1b38a5bcd07e
+Desired capacity
+4
+Scaling limits
+2 - 4
+Desired capacity type
+Units (number of instances)
+Status
+Updating capacity
+
+
+
+4 nodes came up in aws as well
+
+Name
+	
+Instance ID
+	
+Instance state
+	
+Instance type
+	
+Status check
+	
+Alarm status
+	
+Availability Zone
+	
+Public IPv4 DNS
+	
+Public IPv4 address
+	
+Elastic IP
+	
+IPv6 IPs
+	
+Monitoring
+	
+Security group name
+	
+Key name
+	
+Launch time
+	
+Platform details
+	
+Managed
+	
+Operator
+	
+Private DNS name
+	
+Private IP address
+	
+VPC ID
+
+Name
+	
+Instance ID
+	
+Instance state
+	
+Instance type
+	
+Status check
+	
+Alarm status
+	
+Availability Zone
+	
+Public IPv4 DNS
+	
+Public IPv4 address
+	
+Elastic IP
+	
+IPv6 IPs
+	
+Monitoring
+	
+Security group name
+	
+Key name
+	
+Launch time
+	
+Platform details
+	
+Managed
+	
+Operator
+	
+Private DNS name
+	
+Private IP address
+	
+VPC ID
+
+test-ng-88ff37a8-Node
+i-0c40bb91a20f1eefd
+Pending
+
+t2.medium
+–
+View alarms
+
+us-east-1c
+ec2-18-208-209-223.compute-1.amazonaws.com
+18.208.209.223
+–
+–
+disabled
+eks-cluster-sg-test-3556498
+–
+2026/05/13 23:06 GMT+5:30
+Linux/UNIX
+false
+–
+ip-192-168-37-204.ec2.internal
+192.168.37.204
+vpc-078d1bbf469652818
+test-ng-88ff37a8-Node
+i-043db3fb94bdd793c
+Running
+
+t2.medium
+2/2 checks passed
+View alarms
+
+us-east-1c
+ec2-32-197-37-205.compute-1.amazonaws.com
+32.197.37.205
+–
+–
+disabled
+eks-cluster-sg-test-3556498
+–
+2026/05/13 21:59 GMT+5:30
+Linux/UNIX
+false
+–
+ip-192-168-35-17.ec2.internal
+192.168.35.17
+vpc-078d1bbf469652818
+test-ng-88ff37a8-Node
+i-04e02efeeaeb67eba
+Pending
+
+t2.medium
+Initializing
+View alarms
+
+us-east-1a
+ec2-23-23-35-115.compute-1.amazonaws.com
+23.23.35.115
+–
+–
+disabled
+eks-cluster-sg-test-3556498
+–
+2026/05/13 23:06 GMT+5:30
+Linux/UNIX
+false
+–
+ip-192-168-7-217.ec2.internal
+192.168.7.217
+vpc-078d1bbf469652818
+test-ng-88ff37a8-Node
+i-0b418cc7e7fac9581
+Running
+
+t2.medium
+2/2 checks passed
+View alarms
+
+us-east-1a
+ec2-100-55-19-96.compute-1.amazonaws.com
+100.55.19.96
+
+-----------------------
+
+so before pods which are pending also now it is container is creating 
+
+ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get pods -o wide;kubectl top nodes;kubectl top pods;kubectl get nodes;
+NAME                        READY   STATUS    RESTARTS   AGE   IP               NODE                             NOMINATED NODE   READINESS GATES
+nginx-hpa-bb688f6fd-2h88c   1/1     Running   0          20m   192.168.47.175   ip-192-168-35-17.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-5f2nq   1/1     Running   0          14m   192.168.16.97    ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-5smf6   1/1     Running   0          20m   192.168.0.164    ip-192-168-0-38.ec2.internal     <none>           <none>
+nginx-hpa-bb688f6fd-6s2lw   1/1     Running   0          31m   192.168.6.242    ip-192-168-0-38.ec2.internal     <none>           <none>
+nginx-hpa-bb688f6fd-7b6lj   1/1     Running   0          20m   192.168.55.229   ip-192-168-35-17.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-f4f6v   1/1     Running   0          14m   192.168.4.232    ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-fs8hs   1/1     Running   0          20m   192.168.47.162   ip-192-168-35-17.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-gzc4p   1/1     Running   0          20m   192.168.41.26    ip-192-168-35-17.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-hjcgn   1/1     Running   0          14m   192.168.34.10    ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-hthtp   1/1     Running   0          14m   192.168.19.87    ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-hz98g   1/1     Running   0          14m   192.168.2.93     ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-jftv6   1/1     Running   0          14m   192.168.58.242   ip-192-168-35-17.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-jp972   1/1     Running   0          14m   192.168.28.55    ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-q95cd   1/1     Running   0          20m   192.168.24.242   ip-192-168-0-38.ec2.internal     <none>           <none>
+nginx-hpa-bb688f6fd-qt6hr   1/1     Running   0          14m   192.168.27.205   ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-r5l54   1/1     Running   0          14m   192.168.47.42    ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-t7wc9   1/1     Running   0          14m   192.168.3.213    ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-tqqrp   1/1     Running   0          20m   192.168.60.0     ip-192-168-35-17.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-vbvx5   1/1     Running   0          20m   192.168.26.147   ip-192-168-0-38.ec2.internal     <none>           <none>
+nginx-hpa-bb688f6fd-wk8z5   1/1     Running   0          20m   192.168.21.69    ip-192-168-0-38.ec2.internal     <none>           <none>
+NAME                             CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
+ip-192-168-0-38.ec2.internal     93m          4%     530Mi           15%       
+ip-192-168-35-17.ec2.internal    58m          3%     507Mi           15%       
+ip-192-168-37-204.ec2.internal   664m         34%    625Mi           18%       
+ip-192-168-7-217.ec2.internal    103m         5%     465Mi           13%       
+NAME                        CPU(cores)   MEMORY(bytes)   
+nginx-hpa-bb688f6fd-2h88c   4m           3Mi             
+nginx-hpa-bb688f6fd-5smf6   4m           3Mi             
+nginx-hpa-bb688f6fd-6s2lw   4m           3Mi             
+nginx-hpa-bb688f6fd-7b6lj   4m           3Mi             
+nginx-hpa-bb688f6fd-f4f6v   4m           3Mi             
+nginx-hpa-bb688f6fd-fs8hs   4m           3Mi             
+nginx-hpa-bb688f6fd-gzc4p   4m           3Mi             
+nginx-hpa-bb688f6fd-hjcgn   8m           3Mi             
+nginx-hpa-bb688f6fd-hthtp   4m           3Mi             
+nginx-hpa-bb688f6fd-hz98g   4m           3Mi             
+nginx-hpa-bb688f6fd-jftv6   5m           3Mi             
+nginx-hpa-bb688f6fd-q95cd   4m           3Mi             
+nginx-hpa-bb688f6fd-qt6hr   4m           3Mi             
+nginx-hpa-bb688f6fd-r5l54   8m           3Mi             
+nginx-hpa-bb688f6fd-t7wc9   4m           3Mi             
+nginx-hpa-bb688f6fd-tqqrp   4m           3Mi             
+nginx-hpa-bb688f6fd-vbvx5   4m           3Mi             
+nginx-hpa-bb688f6fd-wk8z5   4m           3Mi             
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-0-38.ec2.internal     Ready    <none>   67m   v1.34.7-eks-4136f65
+ip-192-168-35-17.ec2.internal    Ready    <none>   67m   v1.34.7-eks-4136f65
+ip-192-168-37-204.ec2.internal   Ready    <none>   49s   v1.34.7-eks-4136f65
+ip-192-168-7-217.ec2.internal    Ready    <none>   70s   v1.34.7-eks-4136f65
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ 
+
+
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl describe node ip-192-168-37-204.ec2.internal
+Name:               ip-192-168-37-204.ec2.internal
+Roles:              <none>
+Labels:             alpha.eksctl.io/cluster-name=test
+                    alpha.eksctl.io/nodegroup-name=ng-88ff37a8
+                    beta.kubernetes.io/arch=amd64
+                    beta.kubernetes.io/instance-type=t2.medium
+                    beta.kubernetes.io/os=linux
+                    eks.amazonaws.com/capacityType=ON_DEMAND
+                    eks.amazonaws.com/nodegroup=ng-88ff37a8
+                    eks.amazonaws.com/nodegroup-image=ami-0ed72033524de037a
+                    eks.amazonaws.com/sourceLaunchTemplateId=lt-06a435a45f21c10fa
+                    eks.amazonaws.com/sourceLaunchTemplateVersion=1
+                    failure-domain.beta.kubernetes.io/region=us-east-1
+                    failure-domain.beta.kubernetes.io/zone=us-east-1c
+                    k8s.io/cloud-provider-aws=854eb3ccf34504388259f69f42e91894
+                    kubernetes.io/arch=amd64
+                    kubernetes.io/hostname=ip-192-168-37-204.ec2.internal
+                    kubernetes.io/os=linux
+                    node.kubernetes.io/instance-type=t2.medium
+                    topology.k8s.aws/zone-id=use1-az1
+                    topology.kubernetes.io/region=us-east-1
+                    topology.kubernetes.io/zone=us-east-1c
+Annotations:        alpha.kubernetes.io/provided-node-ip: 192.168.37.204
+                    node.alpha.kubernetes.io/ttl: 0
+                    volumes.kubernetes.io/controller-managed-attach-detach: true
+CreationTimestamp:  Wed, 13 May 2026 17:37:09 +0000
+Taints:             <none>
+Unschedulable:      false
+Lease:
+  HolderIdentity:  ip-192-168-37-204.ec2.internal
+  AcquireTime:     <unset>
+  RenewTime:       Wed, 13 May 2026 17:39:42 +0000
+Conditions:
+  Type             Status  LastHeartbeatTime                 LastTransitionTime                Reason                       Message
+  ----             ------  -----------------                 ------------------                ------                       -------
+  MemoryPressure   False   Wed, 13 May 2026 17:37:40 +0000   Wed, 13 May 2026 17:37:07 +0000   KubeletHasSufficientMemory   kubelet has sufficient memory available
+  DiskPressure     False   Wed, 13 May 2026 17:37:40 +0000   Wed, 13 May 2026 17:37:07 +0000   KubeletHasNoDiskPressure     kubelet has no disk pressure
+  PIDPressure      False   Wed, 13 May 2026 17:37:40 +0000   Wed, 13 May 2026 17:37:07 +0000   KubeletHasSufficientPID      kubelet has sufficient PID available
+  Ready            True    Wed, 13 May 2026 17:37:40 +0000   Wed, 13 May 2026 17:37:25 +0000   KubeletReady                 kubelet is posting ready status
+Addresses:
+  InternalIP:   192.168.37.204
+  ExternalIP:   18.208.209.223
+  InternalDNS:  ip-192-168-37-204.ec2.internal
+  Hostname:     ip-192-168-37-204.ec2.internal
+  ExternalDNS:  ec2-18-208-209-223.compute-1.amazonaws.com
+Capacity:
+  cpu:                2
+  ephemeral-storage:  83808236Ki
+  hugepages-2Mi:      0
+  memory:             4004648Ki
+  pods:               17
+Allocatable:
+  cpu:                1930m
+  ephemeral-storage:  76163928346
+  hugepages-2Mi:      0
+  memory:             3449640Ki
+  pods:               17
+System Info:
+  Machine ID:                 ec26dae6d3eaaa5fa53943187ae326f6
+  System UUID:                ec26dae6-d3ea-aa5f-a539-43187ae326f6
+  Boot ID:                    24df8c83-00e7-4b7e-bbb4-c0fb621d34e7
+  Kernel Version:             6.12.80-106.156.amzn2023.x86_64
+  OS Image:                   Amazon Linux 2023.11.20260505
+  Operating System:           linux
+  Architecture:               amd64
+  Container Runtime Version:  containerd://2.2.3+unknown
+  Kubelet Version:            v1.34.7-eks-4136f65
+  Kube-Proxy Version:         
+ProviderID:                   aws:///us-east-1c/i-0c40bb91a20f1eefd
+Non-terminated Pods:          (4 in total)
+  Namespace                   Name                         CPU Requests  CPU Limits  Memory Requests  Memory Limits  Age
+  ---------                   ----                         ------------  ----------  ---------------  -------------  ---
+  default                     nginx-hpa-bb688f6fd-hjcgn    250m (12%)    0 (0%)      0 (0%)           0 (0%)         16m
+  default                     nginx-hpa-bb688f6fd-r5l54    250m (12%)    0 (0%)      0 (0%)           0 (0%)         16m
+  kube-system                 aws-node-xjqnl               50m (2%)      0 (0%)      0 (0%)           0 (0%)         2m36s
+  kube-system                 kube-proxy-5wxtq             100m (5%)     0 (0%)      0 (0%)           0 (0%)         2m36s
+Allocated resources:
+  (Total limits may be over 100 percent, i.e., overcommitted.)
+  Resource           Requests    Limits
+  --------           --------    ------
+  cpu                650m (33%)  0 (0%)
+  memory             0 (0%)      0 (0%)
+  ephemeral-storage  0 (0%)      0 (0%)
+  hugepages-2Mi      0 (0%)      0 (0%)
+Events:
+  Type     Reason                   Age                    From                   Message
+  ----     ------                   ----                   ----                   -------
+  Normal   Starting                 2m30s                  kube-proxy             
+  Normal   Starting                 2m38s                  kubelet                Starting kubelet.
+  Warning  InvalidDiskCapacity      2m38s                  kubelet                invalid capacity 0 on image filesystem
+  Normal   NodeHasSufficientMemory  2m38s (x3 over 2m38s)  kubelet                Node ip-192-168-37-204.ec2.internal status is now: NodeHasSufficientMemory
+  Normal   NodeHasNoDiskPressure    2m38s (x3 over 2m38s)  kubelet                Node ip-192-168-37-204.ec2.internal status is now: NodeHasNoDiskPressure
+  Normal   NodeHasSufficientPID     2m38s (x3 over 2m38s)  kubelet                Node ip-192-168-37-204.ec2.internal status is now: NodeHasSufficientPID
+  Normal   NodeAllocatableEnforced  2m38s                  kubelet                Updated Node Allocatable limit across pods
+  Normal   Synced                   2m35s                  cloud-node-controller  Node synced successfully
+  Normal   RegisteredNode           2m34s                  node-controller        Node ip-192-168-37-204.ec2.internal event: Registered Node ip-192-168-37-204.ec2.internal in Controller
+  Normal   NodeReady                2m20s                  kubelet                Node ip-192-168-37-204.ec2.internal status is now: NodeReady
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ 
+
+
+
+Node Total Capacity
+cpu: 2
+
+
+Node has 2 vCPUs
+
+
+Kubernetes measures CPU in:
+
+
+1000m = 1 CPU
+
+
+So total = 2000m
+
+
+
+
+
+memory: 4004648Ki
+≈ 3.8 GB RAM
+
+pods: 17
+Maximum 17 Pods can run on this node.
+In Amazon Web Services Amazon EKS, pod limit depends mostly on:
+
+
+EC2 type
+
+
+ENI limits
+
+
+available IP addresses
+
+
+
+Allocatable Resources
+cpu: 1930m
+Out of total 2000m, only 1930m available to Pods.
+Remaining ~70m reserved for:
+
+
+kubelet
+
+
+container runtime
+
+
+system processes
+
+
+
+memory: 3449640Ki
+≈ 3.2–3.3 GB usable memory for workloads.
+Remaining memory reserved for:
+
+
+OS
+
+
+kube-proxy
+
+
+kubelet
+
+
+aws-node CNI
+
+
+daemonsets
+
+
+
+Important Concept
+Capacity
+Physical total node resources.
+Allocatable
+Resources Kubernetes actually gives to Pods.
+
+Why Pods Limit = 17
+This is an AWS networking limitation.
+Each Pod gets an IP from VPC CNI.
+Maximum Pods depend on:
+
+
+EC2 instance type
+
+
+Number of ENIs
+
+
+Secondary IPs per ENI
+
+
+Example:
+
+
+t3.medium → around 17 pods
+
+
+t3.large → around 35 pods
+
+
+
+Check Instance Type
+Run:
+kubectl get nodes -o wide
+Then SSH into node:
+curl http://169.254.169.254/latest/meta-data/instance-type
+Or:
+kubectl describe node <node-name> | grep Instance
+This helps map capacity to EC2 type.
+
+
+------------
+
+For a t2.medium node in Amazon EKS, maximum Pods are typically 17.
+
+You can verify directly from Kubernetes:
+
+kubectl describe node <node-name> | grep pods
+
+Example:
+
+kubectl describe node ip-192-168-0-38.ec2.internal | grep pods
+
+Output:
+
+pods: 17
+Why Only 17 Pods?
+
+AWS calculates pod limit using:
+
+Number of ENIs (Elastic Network Interfaces)
+IP addresses per ENI
+
+Formula:
+
+(Number of ENIs × (IPs per ENI - 1)) + 2
+
+For t2.medium:
+
+ENIs = 3
+IPs per ENI = 6
+
+So:
+
+(3×(6−1))+2=17
+
+Meaning:
+
+Maximum Pods ≈ 17
+Important
+
+This is NOT mainly CPU/RAM limitation.
+
+Even if CPU and memory are free, Kubernetes cannot schedule more Pods once:
+
+Pod IPs are exhausted
+ENI limits reached
+
+    now in hpa.yaml lets do this 
+
+        averageUtilization: 75
+
+
+ran test.sh again below is the result
+
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get pods -o wide;kubectl top nodes;kubectl top pods;kubectl get nodes;
+NAME                        READY   STATUS    RESTARTS   AGE   IP               NODE                             NOMINATED NODE   READINESS GATES
+nginx-hpa-bb688f6fd-blqvt   1/1     Running   0          17s   192.168.2.93     ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-ddl8t   1/1     Running   0          17s   192.168.58.242   ip-192-168-35-17.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-hjcgn   1/1     Running   0          24m   192.168.34.10    ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-n46vt   1/1     Running   0          17s   192.168.26.129   ip-192-168-0-38.ec2.internal     <none>           <none>
+nginx-hpa-bb688f6fd-r62pz   1/1     Running   0          2s    192.168.6.242    ip-192-168-0-38.ec2.internal     <none>           <none>
+nginx-hpa-bb688f6fd-vnbsw   1/1     Running   0          2s    192.168.3.213    ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-vph78   1/1     Running   0          2s    192.168.48.33    ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-w2gpz   1/1     Running   0          2s    192.168.47.162   ip-192-168-35-17.ec2.internal    <none>           <none>
+NAME                             CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
+ip-192-168-0-38.ec2.internal     58m          3%     500Mi           14%       
+ip-192-168-35-17.ec2.internal    79m          4%     460Mi           13%       
+ip-192-168-37-204.ec2.internal   95m          4%     408Mi           12%       
+ip-192-168-7-217.ec2.internal    70m          3%     417Mi           12%       
+NAME                        CPU(cores)   MEMORY(bytes)   
+nginx-hpa-bb688f6fd-blqvt   20m          3Mi             
+nginx-hpa-bb688f6fd-ddl8t   15m          3Mi             
+nginx-hpa-bb688f6fd-hjcgn   27m          3Mi             
+nginx-hpa-bb688f6fd-n46vt   18m          3Mi             
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-0-38.ec2.internal     Ready    <none>   77m   v1.34.7-eks-4136f65
+ip-192-168-35-17.ec2.internal    Ready    <none>   77m   v1.34.7-eks-4136f65
+ip-192-168-37-204.ec2.internal   Ready    <none>   10m   v1.34.7-eks-4136f65
+ip-192-168-7-217.ec2.internal    Ready    <none>   11m   v1.34.7-eks-4136f65
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ 
+
+
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl apply -f hpa.yaml 
+horizontalpodautoscaler.autoscaling/nginx configured
+
+    averageUtilization: 75
+
+Default Behavior
+
+Scale up → fast ✅
+
+Scale down → slow ⏳
+
+Usually:
+
+~5 minutes stabilization period
+configurable in HPA behavior
+
+
+ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl describe hpa nginx
+Name:                                                  nginx
+Namespace:                                             default
+Labels:                                                <none>
+Annotations:                                           <none>
+CreationTimestamp:                                     Wed, 13 May 2026 17:16:41 +0000
+Reference:                                             Deployment/nginx-hpa
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  1% (3m) / 75%
+Min replicas:                                          1
+Max replicas:                                          30
+Deployment pods:                                       20 current / 20 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+Events:
+  Type    Reason             Age                  From                       Message
+  ----    ------             ----                 ----                       -------
+  Normal  SuccessfulRescale  34m                  horizontal-pod-autoscaler  New size: 10; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  28m                  horizontal-pod-autoscaler  New size: 20; reason: All metrics below target
+  Normal  SuccessfulRescale  8m26s                horizontal-pod-autoscaler  New size: 1; reason: All metrics below target
+  Normal  SuccessfulRescale  4m41s (x2 over 35m)  horizontal-pod-autoscaler  New size: 4; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  4m26s (x2 over 35m)  horizontal-pod-autoscaler  New size: 8; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  4m11s                horizontal-pod-autoscaler  New size: 16; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  3m56s                horizontal-pod-autoscaler  New size: 20; reason:
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ 
+
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl describe hpa nginx
+Name:                                                  nginx
+Namespace:                                             default
+Labels:                                                <none>
+Annotations:                                           <none>
+CreationTimestamp:                                     Wed, 13 May 2026 17:16:41 +0000
+Reference:                                             Deployment/nginx-hpa
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  1% (3m) / 75%
+Min replicas:                                          1
+Max replicas:                                          30
+Deployment pods:                                       20 current / 16 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    SucceededRescale    the HPA controller was able to update the target scale to 16
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+Events:
+  Type    Reason             Age                  From                       Message
+  ----    ------             ----                 ----                       -------
+  Normal  SuccessfulRescale  35m                  horizontal-pod-autoscaler  New size: 10; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  29m                  horizontal-pod-autoscaler  New size: 20; reason: All metrics below target
+  Normal  SuccessfulRescale  9m6s                 horizontal-pod-autoscaler  New size: 1; reason: All metrics below target
+  Normal  SuccessfulRescale  5m21s (x2 over 36m)  horizontal-pod-autoscaler  New size: 4; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  5m6s (x2 over 35m)   horizontal-pod-autoscaler  New size: 8; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  4m51s                horizontal-pod-autoscaler  New size: 16; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  4m36s                horizontal-pod-autoscaler  New size: 20; reason:
+  Normal  SuccessfulRescale  6s                   horizontal-pod-autoscaler  New size: 16; reason: All metrics below target
+
+
+---
+
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl describe hpa nginx
+Name:                                                  nginx
+Namespace:                                             default
+Labels:                                                <none>
+Annotations:                                           <none>
+CreationTimestamp:                                     Wed, 13 May 2026 17:16:41 +0000
+Reference:                                             Deployment/nginx-hpa
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  1% (4m) / 75%
+Min replicas:                                          1
+Max replicas:                                          30
+Deployment pods:                                       6 current / 1 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    SucceededRescale    the HPA controller was able to update the target scale to 1
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+Events:
+  Type    Reason             Age                  From                       Message
+  ----    ------             ----                 ----                       -------
+  Normal  SuccessfulRescale  36m                  horizontal-pod-autoscaler  New size: 10; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  30m                  horizontal-pod-autoscaler  New size: 20; reason: All metrics below target
+  Normal  SuccessfulRescale  6m2s (x2 over 36m)   horizontal-pod-autoscaler  New size: 4; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  5m47s (x2 over 36m)  horizontal-pod-autoscaler  New size: 8; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  5m32s                horizontal-pod-autoscaler  New size: 16; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  5m17s                horizontal-pod-autoscaler  New size: 20; reason:
+  Normal  SuccessfulRescale  47s                  horizontal-pod-autoscaler  New size: 16; reason: All metrics below target
+  Normal  SuccessfulRescale  17s                  horizontal-pod-autoscaler  New size: 6; reason: All metrics below target
+  Normal  SuccessfulRescale  1s (x2 over 9m47s)   horizontal-pod-autoscaler  New size: 1; reason: All metrics below target
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get pods -o wide;kubectl top nodes;kubectl top pods;kubectl get nodes;
+NAME                        READY   STATUS    RESTARTS   AGE     IP              NODE                            NOMINATED NODE   READINESS GATES
+nginx-hpa-bb688f6fd-l69tl   1/1     Running   0          5m41s   192.168.19.87   ip-192-168-7-217.ec2.internal   <none>           <none>
+NAME                             CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
+ip-192-168-0-38.ec2.internal     118m         6%     522Mi           15%       
+ip-192-168-35-17.ec2.internal    92m          4%     453Mi           13%       
+ip-192-168-37-204.ec2.internal   134m         6%     441Mi           13%       
+ip-192-168-7-217.ec2.internal    117m         6%     435Mi           12%       
+NAME                        CPU(cores)   MEMORY(bytes)   
+nginx-hpa-bb688f6fd-l69tl   9m           3Mi             
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-0-38.ec2.internal     Ready    <none>   83m   v1.34.7-eks-4136f65
+ip-192-168-35-17.ec2.internal    Ready    <none>   83m   v1.34.7-eks-4136f65
+ip-192-168-37-204.ec2.internal   Ready    <none>   16m   v1.34.7-eks-4136f65
+ip-192-168-7-217.ec2.internal    Ready    <none>   17m   v1.34.7-eks-4136f65
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ 
+
+---
+
+Even though only 1 application Pod is running, every node still consumes CPU and memory because Kubernetes system components are running on all worker nodes.
+
+Why Other Nodes Still Show CPU Usage
+Each node runs background components such as:
+
+
+kubelet
+
+
+kube-proxy
+
+
+aws-node (VPC CNI)
+
+
+container runtime
+
+
+system daemons
+
+
+monitoring agents
+
+
+DNS/networking processes
+
+
+These consume CPU even without your app Pods.
+That’s why you see:
+CPU% 1% to 6%
+on all nodes.
+
+Example
+Your app Pod:
+nginx-hpa-bb688f6fd-l69tl
+is running only on:
+ip-192-168-7-217
+But other nodes still run Kubernetes infrastructure services.
+
+Why Nodes Were NOT Removed Yet
+Cluster Autoscaler/Karpenter does not instantly terminate nodes.
+It waits because:
+
+
+node may receive new Pods soon
+
+
+avoids frequent EC2 creation/deletion
+
+
+stabilization/cooldown period
+
+
+Usually nodes stay idle for several minutes before removal.
+
+Verify System Pods
+Run:
+kubectl get pods -A -o wide
+You’ll notice on every node:
+
+
+aws-node
+
+
+kube-proxy
+
+
+coredns
+
+
+metrics-server
+etc.
+
+
+These are consuming the CPU you see.
+
+Important Concept
+Even an “empty” Kubernetes node is never truly empty.
+A node always runs:
+
+
+Kubernetes agents
+
+
+networking stack
+
+
+monitoring
+
+
+OS services
+
+
+So:
+
+
+0 application Pods ❌
+
+
+does NOT mean
+
+
+0 CPU usage ❌
+
+
+
+Ideally Should Only One Node Exist?
+Theoretically yes — if:
+
+
+autoscaler scale-down delay completes
+
+
+node becomes drainable
+
+
+no daemon constraints
+
+
+autoscaler configured properly
+
+
+Then unused nodes will terminate automatically.
+You’re currently in the cooldown/stabilization period after HPA scaled down from 20 Pods → 1 Pod.
+
+
+HPA increases Pods
+        ↓
+Scheduler needs more space
+        ↓
+Cluster Autoscaler increases Nodes
+        ↓
+Traffic decreases
+        ↓
+HPA decreases Pods
+        ↓
+ASG desired capacity still 4
+        ↓
+Nodes remain running
+
+
+
+Events:
+  Type     Reason     Age                    From               Message
+  ----     ------     ----                   ----               -------
+  Normal   Scheduled  4m11s                  default-scheduler  Successfully assigned kube-system/cluster-autoscaler-dcbd9cb95-zhtgv to ip-192-168-37-204.ec2.internal
+  Normal   Pulled     4m8s                   kubelet            Successfully pulled image "registry.k8s.io/autoscaling/cluster-autoscaler:v1.26.2" in 2.412s (2.412s including waiting). Image size: 32512572 bytes.
+  Normal   Pulled     3m35s                  kubelet            Successfully pulled image "registry.k8s.io/autoscaling/cluster-autoscaler:v1.26.2" in 126ms (126ms including waiting). Image size: 32512572 bytes.
+  Normal   Pulled     2m57s (x2 over 3m56s)  kubelet            Successfully pulled image "registry.k8s.io/autoscaling/cluster-autoscaler:v1.26.2" in 113ms (113ms including waiting). Image size: 32512572 bytes.
+  Normal   Pulled     117s                   kubelet            Successfully pulled image "registry.k8s.io/autoscaling/cluster-autoscaler:v1.26.2" in 116ms (116ms including waiting). Image size: 32512572 bytes.
+  Normal   Pulling    19s (x6 over 4m10s)    kubelet            Pulling image "registry.k8s.io/autoscaling/cluster-autoscaler:v1.26.2"
+  Normal   Created    19s (x6 over 4m8s)     kubelet            Created container: cluster-autoscaler
+  Normal   Started    19s (x6 over 4m7s)     kubelet            Started container cluster-autoscaler
+  Normal   Pulled     19s                    kubelet            Successfully pulled image "registry.k8s.io/autoscaling/cluster-autoscaler:v1.26.2" in 110ms (110ms including waiting). Image size: 32512572 bytes.
+  Warning  BackOff    9s (x15 over 3m47s)    kubelet            Back-off restarting failed container cluster-autoscaler in pod cluster-autoscaler-dcbd9cb95-zhtgv_kube-system(353a398d-1c27-4e52-85e2-74f947ec904e)
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl -n kube-system edit deployment cluster-autoscaler
+Edit cancelled, no changes made.
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl delete -f https://raw.githubusercontent.com/kubernetes/autoscaler/cluster-autoscaler-1.29.0/cluster-autoscaler/cloudprovider/aws/examples/cluster-autos
+caler-autodiscover.yaml
+serviceaccount "cluster-autoscaler" deleted
+clusterrole.rbac.authorization.k8s.io "cluster-autoscaler" deleted
+role.rbac.authorization.k8s.io "cluster-autoscaler" deleted
+clusterrolebinding.rbac.authorization.k8s.io "cluster-autoscaler" deleted
+rolebinding.rbac.authorization.k8s.io "cluster-autoscaler" deleted
+deployment.apps "cluster-autoscaler" deleted
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl -n kube-system get pods
+NAME                              READY   STATUS    RESTARTS   AGE
+aws-node-5lhlw                    2/2     Running   0          102m
+aws-node-hqj7k                    2/2     Running   0          36m
+aws-node-xjqnl                    2/2     Running   0          36m
+aws-node-zgxb7                    2/2     Running   0          103m
+coredns-566b9b9d-gftqm            1/1     Running   0          106m
+coredns-566b9b9d-rlbbz            1/1     Running   0          106m
+kube-proxy-5wxtq                  1/1     Running   0          36m
+kube-proxy-cxng6                  1/1     Running   0          102m
+kube-proxy-jtc2l                  1/1     Running   0          103m
+kube-proxy-zsql8                  1/1     Running   0          36m
+metrics-server-6f49c4bc6c-2bbnp   1/1     Running   0          101m
+metrics-server-6f49c4bc6c-p8gpc   1/1     Running   0          101m
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/cluster-autoscaler-1.29.0/cluster-autoscaler/cloudprovider/aws/examples/cluster-autosc
+aler-autodiscover.yaml
+serviceaccount/cluster-autoscaler created
+clusterrole.rbac.authorization.k8s.io/cluster-autoscaler created
+role.rbac.authorization.k8s.io/cluster-autoscaler created
+clusterrolebinding.rbac.authorization.k8s.io/cluster-autoscaler created
+rolebinding.rbac.authorization.k8s.io/cluster-autoscaler created
+deployment.apps/cluster-autoscaler created
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl -n kube-system get pods
+NAME                                 READY   STATUS    RESTARTS   AGE
+aws-node-5lhlw                       2/2     Running   0          103m
+aws-node-hqj7k                       2/2     Running   0          36m
+aws-node-xjqnl                       2/2     Running   0          36m
+aws-node-zgxb7                       2/2     Running   0          103m
+cluster-autoscaler-dcbd9cb95-xqwzk   1/1     Running   0          4s
+coredns-566b9b9d-gftqm               1/1     Running   0          107m
+coredns-566b9b9d-rlbbz               1/1     Running   0          107m
+kube-proxy-5wxtq                     1/1     Running   0          36m
+kube-proxy-cxng6                     1/1     Running   0          103m
+kube-proxy-jtc2l                     1/1     Running   0          103m
+kube-proxy-zsql8                     1/1     Running   0          36m
+metrics-server-6f49c4bc6c-2bbnp      1/1     Running   0          102m
+metrics-server-6f49c4bc6c-p8gpc      1/1     Running   0          102m
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ 
+
+
+
+----------
+
+
+        - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/test                          
+edit above line 
+
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl -n kube-system edit deployment.apps/cluster-autoscaler
+deployment.apps/cluster-autoscaler edited
+
+
+GO to EKS your cluster compute section
+
+Node groups (1) Info
+Edit
+Delete
+Add
+Node groups implement basic compute scaling through EC2 Auto Scaling groups.
+
+
+1
+
+Node group selection	
+Group name
+Desired size
+AMI release version
+Launch template
+Status
+ng-88ff37a8
+4
+1.34.7-20260505
+eksctl-test-nodegroup-ng-88ff37a8 (1)
+Active
+
+https://us-east-1.console.aws.amazon.com/eks/clusters/test/nodegroups/ng-88ff37a8?region=us-east-1&selectedTab=cluster-compute-tab
+
+
+Details
+
+Nodes
+
+Health issues
+0
+
+Kubernetes labels
+
+Update config
+
+Kubernetes taints
+
+Update history
+
+Tags
+Details
+Node group ARN
+arn:aws:eks:us-east-1:095866557180:nodegroup/test/ng-88ff37a8/4acf1115-aed3-2256-9b9d-1b38a5bcd07e
+Created
+2 hours ago
+Autoscaling group name
+eks-ng-88ff37a8-4acf1115-aed3-2256-9b9d-1b38a5bcd07e 
+Node IAM role ARN
+arn:aws:iam::095866557180:role/eksctl-test-nodegroup-ng-88ff37a8-NodeInstanceRole-bHc1EonKFc4M
+View in IAM 
+Capacity type
+On-Demand
+Desired size
+4 nodes
+Minimum size
+2 nodes
+Maximum size
+4 nodes
+Subnets
+subnet-0f2394065759242f0 
+subnet-0ea6cfbd8a0198610 
+Configure remote access to nodes
+off
+
+Got  to IAM from EKS node group IAM 
+
+https://us-east-1.console.aws.amazon.com/iam/home#/roles/details/eksctl-test-nodegroup-ng-88ff37a8-NodeInstanceRole-bHc1EonKFc4M
+
+kubectl -n kube-system edit deployment.apps/cluster-autoscaler
+Inside the manifest, find the container args section and update:
+
+yaml
+Copy code
+containers:
+  - name: cluster-autoscaler
+    - command:
+        - ./cluster-autoscaler
+        - --v=4
+        - --stderrthreshold=info
+        - --cloud-provider=aws
+        - --skip-nodes-with-local-storage=false
+        - --expander=least-waste
+        - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/naresh ###chnage the cluster name in place of naresh my cluster name is naresh
+        image: registry.k8s.io/autoscaling/cluster-autoscaler:v1.26.2
+        imagePullPolicy: Always
+        name: cluster-autoscaler
+Save & exit.
+
+
+
+4️⃣ Configure IAM Permissions
+Cluster Autoscaler requires IAM permissions to scale nodes.
+Go to your EKS Node Group IAM Role and attach the following policy.
+
+👉 Either attach AmazonEKSClusterAutoscalerPolicy (AWS Managed)
+or create a custom IAM policy with the JSON below.
+
+Example IAM Policy JSON
+
+
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "autoscaling:DescribeAutoScalingGroups",
+        "autoscaling:DescribeAutoScalingInstances",
+        "autoscaling:DescribeLaunchConfigurations",
+        "autoscaling:DescribeTags",
+        "autoscaling:SetDesiredCapacity",
+        "autoscaling:TerminateInstanceInAutoScalingGroup",
+        "ec2:DescribeLaunchTemplateVersions"
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
+    }
+  ]
+}
+Attach this to your Node Group Role.
+
+
+aws eks update-nodegroup-config \
+  --cluster-name test \
+  --nodegroup-name ng-88ff37a8 \
+  --scaling-config minSize=2,maxSize=6,desiredSize=2
+
+
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ aws eks update-nodegroup-config \
+  --cluster-name test \
+  --nodegroup-name ng-88ff37a8 \
+  --scaling-config minSize=2,maxSize=6,desiredSize=2
+{
+    "update": {
+        "id": "0ff81959-a7ce-3d05-9a97-cf6948ec2b24",
+        "status": "InProgress",
+        "type": "ConfigUpdate",
+        "params": [
+            {
+                "type": "MinSize",
+                "value": "2"
+            },
+            {
+                "type": "MaxSize",
+                "value": "6"
+            },
+            {
+                "type": "DesiredSize",
+                "value": "2"
+            }
+        ],
+        "createdAt": "2026-05-13T18:22:06.125000+00:00",
+        "errors": []
+    }
+}
+[ec2-user@ip-172-31
+--------------
+
+Name
+	
+Status - new
+	
+Launch template/configuration 
+	
+Instances
+	
+Instance health - new
+	
+Desired capacity
+	
+Min
+	
+Max
+	
+Availability Zones
+	
+Creation time
+
+eks-ng-88ff37a8-4acf1115-aed3-2256-9b9d-1b38a5bcd07e
+Updating capacity
+eks-4acf1115-aed3-2256-9b9d-1b38a5bcd07e | Version 1
+4
+ 4/4 Healthy
+2
+2
+6
+2 Availability Zones
+Wed May 13 2026 21:5
+
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ vi hpa.yaml 
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ cat hpa.yaml  | tail
+      target:
+        # type: Utilization means we measure usage as a percentage (0-100%)
+        # Alternative: "AverageValue" would use raw units instead
+        type: Utilization
+        # averageUtilization: The CPU usage threshold in percentage
+        # If average CPU goes ABOVE 1%, scale UP (create more pods)
+        # If average CPU goes BELOW 1%, scale DOWN (remove pods)
+        # NOTE: 1% is very low - typically 70-80% is used in production
+        # This 1% value means even minimal CPU will trigger scaling
+        averageUtilization: 1
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get pods
+NAME                        READY   STATUS    RESTARTS   AGE
+nginx-hpa-bb688f6fd-l69tl   1/1     Running   0          36m
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get pods -o wide;kubectl top nodes;kubectl top pods;kubectl get nodes;
+NAME                        READY   STATUS    RESTARTS   AGE   IP              NODE                            NOMINATED NODE   READINESS GATES
+nginx-hpa-bb688f6fd-l69tl   1/1     Running   0          36m   192.168.19.87   ip-192-168-7-217.ec2.internal   <none>           <none>
+NAME                             CPU(cores)   CPU%        MEMORY(bytes)   MEMORY%     
+ip-192-168-37-204.ec2.internal   23m          1%          609Mi           18%         
+ip-192-168-7-217.ec2.internal    19m          0%          475Mi           14%         
+ip-192-168-0-38.ec2.internal     <unknown>    <unknown>   <unknown>       <unknown>   
+ip-192-168-35-17.ec2.internal    <unknown>    <unknown>   <unknown>       <unknown>   
+NAME                        CPU(cores)   MEMORY(bytes)   
+nginx-hpa-bb688f6fd-l69tl   12m          3Mi             
+NAME                             STATUS                        ROLES    AGE    VERSION
+ip-192-168-0-38.ec2.internal     NotReady,SchedulingDisabled   <none>   114m   v1.34.7-eks-4136f65
+ip-192-168-35-17.ec2.internal    NotReady,SchedulingDisabled   <none>   114m   v1.34.7-eks-4136f65
+ip-192-168-37-204.ec2.internal   Ready                         <none>   47m    v1.34.7-eks-4136f65
+ip-192-168-7-217.ec2.internal    Ready                         <none>   47m    v1.34.7-eks-4136f65
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get hpa
+NAME    REFERENCE              TARGETS       MINPODS   MAXPODS   REPLICAS   AGE
+nginx   Deployment/nginx-hpa   cpu: 4%/75%   1         30        1          68m
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get pods -o wide;kubectl top nodes;kubectl top pods;kubectl get nodes;
+NAME                        READY   STATUS    RESTARTS   AGE   IP              NODE                            NOMINATED NODE   READINESS GATES
+nginx-hpa-bb688f6fd-l69tl   1/1     Running   0          37m   192.168.19.87   ip-192-168-7-217.ec2.internal   <none>           <none>
+NAME                             CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
+ip-192-168-37-204.ec2.internal   50m          2%     560Mi           16%       
+ip-192-168-7-217.ec2.internal    140m         7%     477Mi           14%       
+NAME                        CPU(cores)   MEMORY(bytes)   
+nginx-hpa-bb688f6fd-l69tl   57m          3Mi             
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-37-204.ec2.internal   Ready    <none>   48m   v1.34.7-eks-4136f65
+ip-192-168-7-217.ec2.internal    Ready    <none>   48m   v1.34.7-eks-4136f65
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ 
+
+
+------------
+
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl apply -f hpa.yaml 
+horizontalpodautoscaler.autoscaling/nginx configured
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get pods -o wide;kubectl top nodes;kubectl top pods;kubectl get nodes;
+NAME                        READY   STATUS              RESTARTS   AGE   IP              NODE                             NOMINATED NODE   READINESS GATES
+nginx-hpa-bb688f6fd-6hx6k   0/1     ContainerCreating   0          1s    <none>          ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-7j5rp   0/1     ContainerCreating   0          1s    <none>          ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-9v2vq   0/1     ContainerCreating   0          1s    <none>          ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-l69tl   1/1     Running             0          38m   192.168.19.87   ip-192-168-7-217.ec2.internal    <none>           <none>
+NAME                             CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
+ip-192-168-37-204.ec2.internal   50m          2%     560Mi           16%       
+ip-192-168-7-217.ec2.internal    123m         6%     477Mi           14%       
+NAME                        CPU(cores)   MEMORY(bytes)   
+nginx-hpa-bb688f6fd-l69tl   49m          3Mi             
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-37-204.ec2.internal   Ready    <none>   49m   v1.34.7-eks-4136f65
+ip-192-168-7-217.ec2.internal    Ready    <none>   49m   v1.34.7-eks-4136f65
+
+Desire changed to 3 now 
+
+	
+Status - new
+	
+Launch template/configuration 
+	
+Instances
+	
+Instance health - new
+	
+Desired capacity
+	
+Min
+	
+Max
+	
+Availability Zones
+	
+Creation time
+
+eks-ng-88ff37a8-4acf1115-aed3-2256-9b9d-1b38a5bcd07e
+Updating capacity
+eks-4acf1115-aed3-2256-9b9d-1b38a5bcd07e | Version 1
+2
+ 2/2 Healthy
+3
+2
+6
+2 Availability Zones
+Wed May 13 2026 21:59:29 GMT+0530 (India Standard Time)
+
+
+https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#AutoScalingGroups:
+
+
+
+------------
+
+ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get pods -o wide;kubectl top nodes;kubectl top pods;kubectl get nodes;
+NAME                        READY   STATUS    RESTARTS   AGE   IP               NODE                             NOMINATED NODE   READINESS GATES
+nginx-hpa-bb688f6fd-5qpjh   1/1     Running   0          68s   192.168.3.213    ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-6hx6k   1/1     Running   0          83s   192.168.52.46    ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-725z4   0/1     Pending   0          53s   <none>           <none>                           <none>           <none>
+nginx-hpa-bb688f6fd-7j5rp   1/1     Running   0          83s   192.168.2.93     ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-99pfk   1/1     Running   0          53s   192.168.6.95     ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-9v2vq   1/1     Running   0          83s   192.168.61.227   ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-bsdcp   0/1     Pending   0          38s   <none>           <none>                           <none>           <none>
+nginx-hpa-bb688f6fd-clddp   0/1     Pending   0          53s   <none>           <none>                           <none>           <none>
+nginx-hpa-bb688f6fd-ftv5n   1/1     Running   0          68s   192.168.43.206   ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-j8m4f   1/1     Running   0          53s   192.168.31.237   ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-jn248   0/1     Pending   0          53s   <none>           <none>                           <none>           <none>
+nginx-hpa-bb688f6fd-l69tl   1/1     Running   0          39m   192.168.19.87    ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-lkqmp   1/1     Running   0          68s   192.168.52.110   ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-m9klv   0/1     Pending   0          38s   <none>           <none>                           <none>           <none>
+nginx-hpa-bb688f6fd-mswpn   0/1     Pending   0          38s   <none>           <none>                           <none>           <none>
+nginx-hpa-bb688f6fd-rbtk4   1/1     Running   0          53s   192.168.50.50    ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-sh9gz   0/1     Pending   0          38s   <none>           <none>                           <none>           <none>
+nginx-hpa-bb688f6fd-spbbj   0/1     Pending   0          53s   <none>           <none>                           <none>           <none>
+nginx-hpa-bb688f6fd-w6hbp   1/1     Running   0          68s   192.168.23.38    ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-wrdv2   0/1     Pending   0          53s   <none>           <none>                           <none>           <none>
+NAME                             CPU(cores)   CPU%        MEMORY(bytes)   MEMORY%     
+ip-192-168-37-204.ec2.internal   130m         6%          609Mi           18%         
+ip-192-168-7-217.ec2.internal    105m         5%          524Mi           15%         
+ip-192-168-30-239.ec2.internal   <unknown>    <unknown>   <unknown>       <unknown>   
+NAME                        CPU(cores)   MEMORY(bytes)   
+nginx-hpa-bb688f6fd-5qpjh   7m           3Mi             
+nginx-hpa-bb688f6fd-6hx6k   7m           3Mi             
+nginx-hpa-bb688f6fd-7j5rp   6m           3Mi             
+nginx-hpa-bb688f6fd-99pfk   6m           3Mi             
+nginx-hpa-bb688f6fd-9v2vq   8m           3Mi             
+nginx-hpa-bb688f6fd-ftv5n   7m           3Mi             
+nginx-hpa-bb688f6fd-j8m4f   7m           3Mi             
+nginx-hpa-bb688f6fd-l69tl   6m           3Mi             
+nginx-hpa-bb688f6fd-lkqmp   8m           3Mi             
+nginx-hpa-bb688f6fd-rbtk4   7m           3Mi             
+nginx-hpa-bb688f6fd-w6hbp   6m           3Mi             
+NAME                             STATUS     ROLES    AGE   VERSION
+ip-192-168-30-239.ec2.internal   NotReady   <none>   3s    v1.34.7-eks-4136f65
+ip-192-168-37-204.ec2.internal   Ready      <none>   50m   v1.34.7-eks-4136f65
+ip-192-168-7-217.ec2.internal    Ready      <none>   50m   v1.34.7-eks-4136f65
+
+__________________________________
+
+Could see 4 nodes coming 
+
+ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get pods -o wide;kubectl top nodes;kubectl top pods;kubectl get nodes;
+NAME                        READY   STATUS              RESTARTS   AGE     IP               NODE                             NOMINATED NODE   READINESS GATES
+nginx-hpa-bb688f6fd-5qpjh   1/1     Running             0          115s    192.168.3.213    ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-6hx6k   1/1     Running             0          2m10s   192.168.52.46    ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-725z4   1/1     Running             0          100s    192.168.18.237   ip-192-168-30-239.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-7j5rp   1/1     Running             0          2m10s   192.168.2.93     ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-99pfk   1/1     Running             0          100s    192.168.6.95     ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-9v2vq   1/1     Running             0          2m10s   192.168.61.227   ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-bsdcp   1/1     Running             0          85s     192.168.52.177   ip-192-168-55-153.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-clddp   1/1     Running             0          100s    192.168.22.226   ip-192-168-30-239.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-ftv5n   1/1     Running             0          115s    192.168.43.206   ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-j8m4f   1/1     Running             0          100s    192.168.31.237   ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-jn248   1/1     Running             0          100s    192.168.3.128    ip-192-168-30-239.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-l69tl   1/1     Running             0          40m     192.168.19.87    ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-lkqmp   1/1     Running             0          115s    192.168.52.110   ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-m9klv   0/1     ContainerCreating   0          85s     <none>           ip-192-168-30-239.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-mswpn   1/1     Running             0          85s     192.168.34.60    ip-192-168-55-153.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-rbtk4   1/1     Running             0          100s    192.168.50.50    ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-sh9gz   1/1     Running             0          85s     192.168.18.51    ip-192-168-30-239.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-spbbj   1/1     Running             0          100s    192.168.20.186   ip-192-168-30-239.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-w6hbp   1/1     Running             0          115s    192.168.23.38    ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-wrdv2   1/1     Running             0          100s    192.168.31.85    ip-192-168-30-239.ec2.internal   <none>           <none>
+NAME                             CPU(cores)   CPU%        MEMORY(bytes)   MEMORY%     
+ip-192-168-30-239.ec2.internal   413m         21%         451Mi           13%         
+ip-192-168-37-204.ec2.internal   97m          5%          611Mi           18%         
+ip-192-168-7-217.ec2.internal    100m         5%          527Mi           15%         
+ip-192-168-55-153.ec2.internal   <unknown>    <unknown>   <unknown>       <unknown>   
+NAME                        CPU(cores)   MEMORY(bytes)   
+nginx-hpa-bb688f6fd-5qpjh   5m           3Mi             
+nginx-hpa-bb688f6fd-6hx6k   5m           3Mi             
+nginx-hpa-bb688f6fd-725z4   4m           3Mi             
+nginx-hpa-bb688f6fd-7j5rp   5m           3Mi             
+nginx-hpa-bb688f6fd-99pfk   4m           3Mi             
+nginx-hpa-bb688f6fd-9v2vq   4m           3Mi             
+nginx-hpa-bb688f6fd-clddp   8m           3Mi             
+nginx-hpa-bb688f6fd-ftv5n   4m           3Mi             
+nginx-hpa-bb688f6fd-j8m4f   4m           3Mi             
+nginx-hpa-bb688f6fd-jn248   4m           3Mi             
+nginx-hpa-bb688f6fd-l69tl   5m           3Mi             
+nginx-hpa-bb688f6fd-lkqmp   5m           3Mi             
+nginx-hpa-bb688f6fd-rbtk4   5m           3Mi             
+nginx-hpa-bb688f6fd-spbbj   4m           3Mi             
+nginx-hpa-bb688f6fd-w6hbp   6m           3Mi             
+nginx-hpa-bb688f6fd-wrdv2   8m           3Mi             
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-30-239.ec2.internal   Ready    <none>   50s   v1.34.7-eks-4136f65
+ip-192-168-37-204.ec2.internal   Ready    <none>   51m   v1.34.7-eks-4136f65
+ip-192-168-55-153.ec2.internal   Ready    <none>   26s   v1.34.7-eks-4136f65
+ip-192-168-7-217.ec2.internal    Ready    <none>   51m   v1.34.7-eks-4136f65
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ 
+
+----------------------------
+
+
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ kubectl get pods -o wide;kubectl top nodes;kubectl top pods;kubectl get nodes;
+NAME                        READY   STATUS    RESTARTS   AGE     IP               NODE                             NOMINATED NODE   READINESS GATES
+nginx-hpa-bb688f6fd-5qpjh   1/1     Running   0          2m44s   192.168.3.213    ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-6hx6k   1/1     Running   0          2m59s   192.168.52.46    ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-725z4   1/1     Running   0          2m29s   192.168.18.237   ip-192-168-30-239.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-7j5rp   1/1     Running   0          2m59s   192.168.2.93     ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-99pfk   1/1     Running   0          2m29s   192.168.6.95     ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-9v2vq   1/1     Running   0          2m59s   192.168.61.227   ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-bsdcp   1/1     Running   0          2m14s   192.168.52.177   ip-192-168-55-153.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-clddp   1/1     Running   0          2m29s   192.168.22.226   ip-192-168-30-239.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-ftv5n   1/1     Running   0          2m44s   192.168.43.206   ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-j8m4f   1/1     Running   0          2m29s   192.168.31.237   ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-jn248   1/1     Running   0          2m29s   192.168.3.128    ip-192-168-30-239.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-l69tl   1/1     Running   0          41m     192.168.19.87    ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-lkqmp   1/1     Running   0          2m44s   192.168.52.110   ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-m9klv   1/1     Running   0          2m14s   192.168.1.30     ip-192-168-30-239.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-mswpn   1/1     Running   0          2m14s   192.168.34.60    ip-192-168-55-153.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-rbtk4   1/1     Running   0          2m29s   192.168.50.50    ip-192-168-37-204.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-sh9gz   1/1     Running   0          2m14s   192.168.18.51    ip-192-168-30-239.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-spbbj   1/1     Running   0          2m29s   192.168.20.186   ip-192-168-30-239.ec2.internal   <none>           <none>
+nginx-hpa-bb688f6fd-w6hbp   1/1     Running   0          2m44s   192.168.23.38    ip-192-168-7-217.ec2.internal    <none>           <none>
+nginx-hpa-bb688f6fd-wrdv2   1/1     Running   0          2m29s   192.168.31.85    ip-192-168-30-239.ec2.internal   <none>           <none>
+NAME                             CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
+ip-192-168-30-239.ec2.internal   92m          4%     474Mi           14%       
+ip-192-168-37-204.ec2.internal   91m          4%     616Mi           18%       
+ip-192-168-55-153.ec2.internal   72m          3%     416Mi           12%       
+ip-192-168-7-217.ec2.internal    84m          4%     528Mi           15%       
+NAME                        CPU(cores)   MEMORY(bytes)   
+nginx-hpa-bb688f6fd-5qpjh   4m           3Mi             
+nginx-hpa-bb688f6fd-6hx6k   3m           3Mi             
+nginx-hpa-bb688f6fd-725z4   3m           3Mi             
+nginx-hpa-bb688f6fd-7j5rp   3m           3Mi             
+nginx-hpa-bb688f6fd-99pfk   4m           3Mi             
+nginx-hpa-bb688f6fd-9v2vq   5m           3Mi             
+nginx-hpa-bb688f6fd-bsdcp   4m           3Mi             
+nginx-hpa-bb688f6fd-clddp   4m           3Mi             
+nginx-hpa-bb688f6fd-ftv5n   4m           3Mi             
+nginx-hpa-bb688f6fd-j8m4f   3m           3Mi             
+nginx-hpa-bb688f6fd-jn248   4m           3Mi             
+nginx-hpa-bb688f6fd-l69tl   4m           3Mi             
+nginx-hpa-bb688f6fd-lkqmp   4m           3Mi             
+nginx-hpa-bb688f6fd-m9klv   3m           3Mi             
+nginx-hpa-bb688f6fd-mswpn   4m           3Mi             
+nginx-hpa-bb688f6fd-rbtk4   4m           3Mi             
+nginx-hpa-bb688f6fd-sh9gz   3m           3Mi             
+nginx-hpa-bb688f6fd-spbbj   4m           3Mi             
+nginx-hpa-bb688f6fd-w6hbp   3m           3Mi             
+nginx-hpa-bb688f6fd-wrdv2   4m           3Mi             
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-30-239.ec2.internal   Ready    <none>   98s   v1.34.7-eks-4136f65
+ip-192-168-37-204.ec2.internal   Ready    <none>   52m   v1.34.7-eks-4136f65
+ip-192-168-55-153.ec2.internal   Ready    <none>   74s   v1.34.7-eks-4136f65
+ip-192-168-7-217.ec2.internal    Ready    <none>   52m   v1.34.7-eks-4136f65
+[ec2-user@ip-172-31-46-3 May11th-HPA-node-scaling]$ 
+
+all pods are running now 
+
+
+
+
