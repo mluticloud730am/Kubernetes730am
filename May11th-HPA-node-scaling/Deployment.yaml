@@ -61,7 +61,7 @@ spec:
         # image: The Docker image to use for this container
         # nginx:1.7.9 means use the nginx web server, version 1.7.9
         # Docker images are pre-built application environments
-        image: nginx:1.7.9
+        image: nginx
         
         # ports: Which network ports this container listens on
         ports:

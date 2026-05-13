@@ -40,7 +40,7 @@ spec:
   # maxReplicas: The MAXIMUM number of pods that can be created
   # The HPA will never scale beyond 10 pods, even if CPU is extremely high
   # This prevents unlimited cost and resource usage
-  maxReplicas: 10
+  maxReplicas: 30
 
   # metrics: This section defines the SCALING RULES (what triggers scaling)
   # You can have multiple metrics, and the HPA will scale based on all of them
