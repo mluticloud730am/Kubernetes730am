@@ -1,0 +1,13 @@
+
+https://medium.com/@veerababu.narni232/deployment-of-prometheus-and-grafana-using-helm-in-eks-cluster-22caee18a872
+
+
+ec2-user@ip-172-31-36-54 ~]$ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+[ec2-user@ip-172-31-36-54 ~]$  chmod 700 get_helm.sh
+[ec2-user@ip-172-31-36-54 ~]$  ./get_helm.sh
+[WARNING] Could not find git. It is required for plugin installation.
+Downloading https://get.helm.sh/helm-v3.20.2-linux-amd64.tar.gz
+Verifying checksum... Done.
+Preparing to install helm into /usr/local/bin
+helm installed into /usr/local/bin/helm
+[ec2-user@ip-172-31-36-54 ~]$ 
