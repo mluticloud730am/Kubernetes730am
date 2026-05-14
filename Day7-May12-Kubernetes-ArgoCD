@@ -15,11 +15,11 @@ developer push code --> docker file --> image push ---> ecr --> yaml push to git
 
 Jenkins ,github action ,gitlab (CI) and 
 
-medium blog -- https://medium.com/@veerababu.narni232/a-complete-overview-of-argocd-with-a-practical-example-f4a9a8488cf9
+medium blog -- https://medium.com/@veerababu.narni232/a-complete-overview-of-argocd-with-a-practical-example-f4a9a8488cf9  -----------------------------------------------------------
 
-ec2-user@ip-172-31-46-3 Kubernetes730am]$ kubectl create namespace argocd
+[ec2-user@ip-172-31-36-54 ~]$ kubectl create namespace argocd
 namespace/argocd created
-[ec2-user@ip-172-31-46-3 Kubernetes730am]$ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+[ec2-user@ip-172-31-36-54 ~]$ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 customresourcedefinition.apiextensions.k8s.io/applications.argoproj.io created
 customresourcedefinition.apiextensions.k8s.io/appprojects.argoproj.io created
 serviceaccount/argocd-application-controller created
@@ -79,70 +79,80 @@ networkpolicy.networking.k8s.io/argocd-redis-network-policy created
 networkpolicy.networking.k8s.io/argocd-repo-server-network-policy created
 networkpolicy.networking.k8s.io/argocd-server-network-policy created
 The CustomResourceDefinition "applicationsets.argoproj.io" is invalid: metadata.annotations: Too long: may not be more than 262144 bytes
-[ec2-user@ip-172-31-46-3 Kubernetes730am]$ 
-
-[ec2-user@ip-172-31-46-3 Kubernetes730am]$ kubectl get pods -n argocd
+[ec2-user@ip-172-31-36-54 ~]$ kubectl get pods -A
+NAMESPACE     NAME                                                READY   STATUS                       RESTARTS   AGE
+argocd        argocd-application-controller-0                     0/1     CreateContainerConfigError   0          11s
+argocd        argocd-applicationset-controller-76dbd99d7d-28rf8   1/1     Running                      0          12s
+argocd        argocd-dex-server-7d64856cff-8sh4z                  0/1     Init:0/1                     0          11s
+argocd        argocd-notifications-controller-7c88c479fd-hmgdn    1/1     Running                      0          11s
+argocd        argocd-redis-5bd688d4ff-vjxwm                       0/1     Init:0/1                     0          11s
+argocd        argocd-repo-server-787655f46d-7xhsh                 0/1     Init:0/1                     0          11s
+argocd        argocd-server-67fdbb46f4-qhxz9                      0/1     CreateContainerConfigError   0          11s
+kube-system   aws-node-dvjjt                                      2/2     Running                      0          105s
+kube-system   aws-node-zgt7w                                      2/2     Running                      0          117s
+kube-system   coredns-566b9b9d-pk9jz                              1/1     Running                      0          5m10s
+kube-system   coredns-566b9b9d-xrzpg                              1/1     Running                      0          5m10s
+kube-system   kube-proxy-29vr9                                    1/1     Running                      0          105s
+kube-system   kube-proxy-x6r2g                                    1/1     Running                      0          117s
+kube-system   metrics-server-6f49c4bc6c-kpjjn                     1/1     Running                      0          24s
+kube-system   metrics-server-6f49c4bc6c-lv5l6                     1/1     Running                      0          24s
+[ec2-user@ip-172-31-36-54 ~]$ kubectl get pods -n argocd
 NAME                                                READY   STATUS    RESTARTS   AGE
-argocd-application-controller-0                     0/1     Running   0          22s
-argocd-applicationset-controller-76dbd99d7d-5wrk9   1/1     Running   0          23s
-argocd-dex-server-7d64856cff-2jbtd                  1/1     Running   0          23s
-argocd-notifications-controller-7c88c479fd-5hxzh    1/1     Running   0          23s
-argocd-redis-5bd688d4ff-rgkfw                       1/1     Running   0          23s
-argocd-repo-server-787655f46d-slczw                 0/1     Running   0          23s
-argocd-server-67fdbb46f4-bxnh9                      0/1     Running   0          23s
-[ec2-user@ip-172-31-46-3 Kubernetes730am]$ 
-
-
-
-[ec2-user@ip-172-31-46-3 Kubernetes730am]$ kubectl get pods -n argocd
+argocd-application-controller-0                     0/1     Running   0          33s
+argocd-applicationset-controller-76dbd99d7d-28rf8   1/1     Running   0          34s
+argocd-dex-server-7d64856cff-8sh4z                  1/1     Running   0          33s
+argocd-notifications-controller-7c88c479fd-hmgdn    1/1     Running   0          33s
+argocd-redis-5bd688d4ff-vjxwm                       1/1     Running   0          33s
+argocd-repo-server-787655f46d-7xhsh                 1/1     Running   0          33s
+argocd-server-67fdbb46f4-qhxz9                      0/1     Running   0          33s
+[ec2-user@ip-172-31-36-54 ~]$ kubectl get pods -n argocd
 NAME                                                READY   STATUS    RESTARTS   AGE
-argocd-application-controller-0                     0/1     Running   0          22s
-argocd-applicationset-controller-76dbd99d7d-5wrk9   1/1     Running   0          23s
-argocd-dex-server-7d64856cff-2jbtd                  1/1     Running   0          23s
-argocd-notifications-controller-7c88c479fd-5hxzh    1/1     Running   0          23s
-argocd-redis-5bd688d4ff-rgkfw                       1/1     Running   0          23s
-argocd-repo-server-787655f46d-slczw                 0/1     Running   0          23s
-argocd-server-67fdbb46f4-bxnh9                      0/1     Running   0          23s
-[ec2-user@ip-172-31-46-3 Kubernetes730am]$ kubectl get all -n argocd
+argocd-application-controller-0                     1/1     Running   0          57s
+argocd-applicationset-controller-76dbd99d7d-28rf8   1/1     Running   0          58s
+argocd-dex-server-7d64856cff-8sh4z                  1/1     Running   0          57s
+argocd-notifications-controller-7c88c479fd-hmgdn    1/1     Running   0          57s
+argocd-redis-5bd688d4ff-vjxwm                       1/1     Running   0          57s
+argocd-repo-server-787655f46d-7xhsh                 1/1     Running   0          57s
+argocd-server-67fdbb46f4-qhxz9                      1/1     Running   0          57s
+[ec2-user@ip-172-31-36-54 ~]$ kubectl get all -n argocd
 NAME                                                    READY   STATUS    RESTARTS   AGE
-pod/argocd-application-controller-0                     1/1     Running   0          58s
-pod/argocd-applicationset-controller-76dbd99d7d-5wrk9   1/1     Running   0          59s
-pod/argocd-dex-server-7d64856cff-2jbtd                  1/1     Running   0          59s
-pod/argocd-notifications-controller-7c88c479fd-5hxzh    1/1     Running   0          59s
-pod/argocd-redis-5bd688d4ff-rgkfw                       1/1     Running   0          59s
-pod/argocd-repo-server-787655f46d-slczw                 1/1     Running   0          59s
-pod/argocd-server-67fdbb46f4-bxnh9                      1/1     Running   0          59s
+pod/argocd-application-controller-0                     1/1     Running   0          79s
+pod/argocd-applicationset-controller-76dbd99d7d-28rf8   1/1     Running   0          80s
+pod/argocd-dex-server-7d64856cff-8sh4z                  1/1     Running   0          79s
+pod/argocd-notifications-controller-7c88c479fd-hmgdn    1/1     Running   0          79s
+pod/argocd-redis-5bd688d4ff-vjxwm                       1/1     Running   0          79s
+pod/argocd-repo-server-787655f46d-7xhsh                 1/1     Running   0          79s
+pod/argocd-server-67fdbb46f4-qhxz9                      1/1     Running   0          79s
 
 NAME                                              TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
-service/argocd-applicationset-controller          ClusterIP   10.100.185.105   <none>        7000/TCP,8080/TCP            60s
-service/argocd-dex-server                         ClusterIP   10.100.88.61     <none>        5556/TCP,5557/TCP,5558/TCP   59s
-service/argocd-metrics                            ClusterIP   10.100.45.28     <none>        8082/TCP                     59s
-service/argocd-notifications-controller-metrics   ClusterIP   10.100.236.154   <none>        9001/TCP                     59s
-service/argocd-redis                              ClusterIP   10.100.150.60    <none>        6379/TCP                     59s
-service/argocd-repo-server                        ClusterIP   10.100.82.216    <none>        8081/TCP,8084/TCP            59s
-service/argocd-server                             ClusterIP   10.100.7.199     <none>        80/TCP,443/TCP               59s
-service/argocd-server-metrics                     ClusterIP   10.100.1.98      <none>        8083/TCP                     59s
+service/argocd-applicationset-controller          ClusterIP   10.100.194.196   <none>        7000/TCP,8080/TCP            80s
+service/argocd-dex-server                         ClusterIP   10.100.94.145    <none>        5556/TCP,5557/TCP,5558/TCP   80s
+service/argocd-metrics                            ClusterIP   10.100.198.41    <none>        8082/TCP                     80s
+service/argocd-notifications-controller-metrics   ClusterIP   10.100.14.174    <none>        9001/TCP                     80s
+service/argocd-redis                              ClusterIP   10.100.237.219   <none>        6379/TCP                     80s
+service/argocd-repo-server                        ClusterIP   10.100.54.226    <none>        8081/TCP,8084/TCP            80s
+service/argocd-server                             ClusterIP   10.100.188.56    <none>        80/TCP,443/TCP               80s
+service/argocd-server-metrics                     ClusterIP   10.100.171.158   <none>        8083/TCP                     80s
 
 NAME                                               READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/argocd-applicationset-controller   1/1     1            1           59s
-deployment.apps/argocd-dex-server                  1/1     1            1           59s
-deployment.apps/argocd-notifications-controller    1/1     1            1           59s
-deployment.apps/argocd-redis                       1/1     1            1           59s
-deployment.apps/argocd-repo-server                 1/1     1            1           59s
-deployment.apps/argocd-server                      1/1     1            1           59s
+deployment.apps/argocd-applicationset-controller   1/1     1            1           80s
+deployment.apps/argocd-dex-server                  1/1     1            1           80s
+deployment.apps/argocd-notifications-controller    1/1     1            1           80s
+deployment.apps/argocd-redis                       1/1     1            1           79s
+deployment.apps/argocd-repo-server                 1/1     1            1           79s
+deployment.apps/argocd-server                      1/1     1            1           79s
 
 NAME                                                          DESIRED   CURRENT   READY   AGE
-replicaset.apps/argocd-applicationset-controller-76dbd99d7d   1         1         1       59s
-replicaset.apps/argocd-dex-server-7d64856cff                  1         1         1       59s
-replicaset.apps/argocd-notifications-controller-7c88c479fd    1         1         1       59s
-replicaset.apps/argocd-redis-5bd688d4ff                       1         1         1       59s
-replicaset.apps/argocd-repo-server-787655f46d                 1         1         1       59s
-replicaset.apps/argocd-server-67fdbb46f4                      1         1         1       59s
+replicaset.apps/argocd-applicationset-controller-76dbd99d7d   1         1         1       80s
+replicaset.apps/argocd-dex-server-7d64856cff                  1         1         1       80s
+replicaset.apps/argocd-notifications-controller-7c88c479fd    1         1         1       79s
+replicaset.apps/argocd-redis-5bd688d4ff                       1         1         1       79s
+replicaset.apps/argocd-repo-server-787655f46d                 1         1         1       79s
+replicaset.apps/argocd-server-67fdbb46f4                      1         1         1       79s
 
 NAME                                             READY   AGE
-statefulset.apps/argocd-application-controller   1/1     59s
-[ec2-user@ip-172-31-46-3 Kubernetes730am]$ 
-
+statefulset.apps/argocd-application-controller   1/1     79s
+[ec2-user@ip-172-31-36-54 ~]$ 
 
 Now lets change cluster ip 
 
@@ -160,44 +170,309 @@ to
 service/argocd-server edited
 
 
-ec2-user@ip-172-31-46-3 Kubernetes730am]$ kubectl get svc -n argocd
-NAME                                      TYPE           CLUSTER-IP       EXTERNAL-IP                                                              PORT(S)                      AGE
-argocd-applicationset-controller          ClusterIP      10.100.185.105   <none>                                                                   7000/TCP,8080/TCP            3m55s
-argocd-dex-server                         ClusterIP      10.100.88.61     <none>                                                                   5556/TCP,5557/TCP,5558/TCP   3m54s
-argocd-metrics                            ClusterIP      10.100.45.28     <none>                                                                   8082/TCP                     3m54s
-argocd-notifications-controller-metrics   ClusterIP      10.100.236.154   <none>                                                                   9001/TCP                     3m54s
-argocd-redis                              ClusterIP      10.100.150.60    <none>                                                                   6379/TCP                     3m54s
-argocd-repo-server                        ClusterIP      10.100.82.216    <none>                                                                   8081/TCP,8084/TCP            3m54s
-argocd-server                             LoadBalancer   10.100.7.199     ab8b31b742e6d486d8722609197017d7-363169874.us-east-1.elb.amazonaws.com   80:32542/TCP,443:30553/TCP   3m54s
-argocd-server-metrics                     ClusterIP      10.100.1.98      <none>                                                                   8083/TCP                     3m54s
-[ec2-user@ip-172-31-46-3 Kubernetes730am]$ 
-
+[ec2-user@ip-172-31-36-54 ~]$ kubectl get svc -n argocd
+NAME                                      TYPE           CLUSTER-IP       EXTERNAL-IP                                                               PORT(S)                      AGE
+argocd-applicationset-controller          ClusterIP      10.100.194.196   <none>                                                                    7000/TCP,8080/TCP            3m21s
+argocd-dex-server                         ClusterIP      10.100.94.145    <none>                                                                    5556/TCP,5557/TCP,5558/TCP   3m21s
+argocd-metrics                            ClusterIP      10.100.198.41    <none>                                                                    8082/TCP                     3m21s
+argocd-notifications-controller-metrics   ClusterIP      10.100.14.174    <none>                                                                    9001/TCP                     3m21s
+argocd-redis                              ClusterIP      10.100.237.219   <none>                                                                    6379/TCP                     3m21s
+argocd-repo-server                        ClusterIP      10.100.54.226    <none>                                                                    8081/TCP,8084/TCP            3m21s
+argocd-server                             LoadBalancer   10.100.188.56    a65a7c83ec12c4af786399c5dc89321b-1188415642.us-east-1.elb.amazonaws.com   80:32471/TCP,443:31387/TCP   3m21s
+argocd-server-metrics                     ClusterIP      10.100.171.158   <none>                                                                    8083/TCP                     3m21s
 
 https://ab8b31b742e6d486d8722609197017d7-363169874.us-east-1.elb.amazonaws.com/applications
 
 Let's get stuff deployed!
 
 
-[ec2-user@ip-172-31-46-3 Kubernetes730am]$ kubectl get secret argocd-initial-admin-secret -n argocd -o yaml
+ec2-user@ip-172-31-36-54 ~]$ kubectl get secret argocd-initial-admin-secret -n argocd -o yaml
 apiVersion: v1
 data:
-  password: OUNRTGxjd3BMLVdNSU9qWA==
+  password: ZDUwSUJwUWpDQUkyVzNkVw==
 kind: Secret
 metadata:
-  creationTimestamp: "2026-05-13T18:54:22Z"
+  creationTimestamp: "2026-05-14T16:38:45Z"
   name: argocd-initial-admin-secret
   namespace: argocd
-  resourceVersion: "30823"
-  uid: ffdfaf3c-2060-4974-85c2-d3f2097dd9af
+  resourceVersion: "2046"
+  uid: 5121310c-d8e7-4674-9eea-d3cb01838278
 type: Opaque
-[ec2-user@ip-172-31-46-3 Kubernetes730am]$ echo "OUNRTGxjd3BMLVdNSU9qWA==" |base64 -d
+
+d50IBpQjCAI2W3dW
 
 
-9CQLlcwpL-WMIOjX
+http://a65a7c83ec12c4af786399c5dc89321b-1188415642.us-east-1.elb.amazonaws.com/
 
 
-https://ab8b31b742e6d486d8722609197017d7-363169874.us-east-1.elb.amazonaws.com/applications
+create new app in argocd ui
 
+GENERAL
+
+Dev
+Application Name
+default
+Project Name
+Sync Policy
+Automatic
+
+Enable Auto-Sync 
+Prune Resources 
+Self Heal 
+Set Deletion Finalizer 
+Sync Options
+Skip Schema Validation
+Auto-Create Namespace
+Apply Out of Sync Only
+Respect Ignore Differences
+Server-Side Apply
+Prune Last
+Prune Propagation Policy:
+foreground
+Prune:
+true
+Delete:
+true
+Replace
+Retry
+SOURCE
+
+https://github.com/CloudTechDevOps/Kubernetes-0730.git
+Repository URL
+GIT 
+
+main
+Revision
+Branches 
+
+Day-2-workernode-deployements-pod-replicaset-Deployement
+Path
+DESTINATION
+
+https://kubernetes.default.svc
+Cluster URL
+URL 
+
+default
+Namespace
+Directory 
+
+DIRECTORY
+
+DIRECTORY RECURSE
+
+TOP-LEVEL ARGUMENTS
+No items
+EXTERNAL VARIABLES
+No items
+INCLUDE
+EXCLUDE
+
+
+
+dev
+
+below project created 
+
+Project:
+default
+Labels:
+Status:
+ Progressing  Synced 
+Repository:
+https://github.com/CloudTechDevOps/Kubernetes-0730.git
+Target Revision:
+main
+Path:
+Day-2-workernode-deployements-pod-replicaset-Deployement
+Destination:
+in-cluster
+Namespace:
+default
+Created At:
+05/14/2026 22:20:22 (a few seconds ago)
+Last Sync:
+05/14/2026 22:20:24 (in a few seconds)
+
+
+Below pods created 
+[ec2-user@ip-172-31-36-54 ~]$ kubectl get pods -A
+NAMESPACE     NAME                                                READY   STATUS             RESTARTS      AGE
+argocd        argocd-application-controller-0                     1/1     Running            0             12m
+argocd        argocd-applicationset-controller-76dbd99d7d-28rf8   0/1     CrashLoopBackOff   4 (50s ago)   12m
+argocd        argocd-dex-server-7d64856cff-8sh4z                  1/1     Running            0             12m
+argocd        argocd-notifications-controller-7c88c479fd-hmgdn    1/1     Running            0             12m
+argocd        argocd-redis-5bd688d4ff-vjxwm                       1/1     Running            0             12m
+argocd        argocd-repo-server-787655f46d-7xhsh                 1/1     Running            0             12m
+argocd        argocd-server-67fdbb46f4-qhxz9                      1/1     Running            0             12m
+default       nginx-deployment-5464c69867-cp4k2                   1/1     Running            0             30s
+default       nginx-deployment-5464c69867-mjz9d                   1/1     Running            0             30s
+default       nginx-deployment-5464c69867-qfpm6                   1/1     Running            0             30s
+default       nginx-replicaset-6swtk                              1/1     Running            0             30s
+default       nginx-replicaset-74l7r                              1/1     Running            0             30s
+default       nginx-replicaset-8q7n7                              1/1     Running            0             30s
+kube-system   aws-node-dvjjt                                      2/2     Running            0             14m
+kube-system   aws-node-zgt7w                                      2/2     Running            0             14m
+kube-system   coredns-566b9b9d-pk9jz                              1/1     Running            0             17m
+kube-system   coredns-566b9b9d-xrzpg                              1/1     Running            0             17m
+kube-system   kube-proxy-29vr9                                    1/1     Running            0             14m
+kube-system   kube-proxy-x6r2g                                    1/1     Running            0             14m
+kube-system   metrics-server-6f49c4bc6c-kpjjn                     1/1     Running            0             12m
+kube-system   metrics-server-6f49c4bc6c-lv5l6                     1/1     Running            0             12m
+[ec2-user@ip-172-31-36-54 ~]$ date
+Thu May 14 16:51:05 UTC 2026
+[ec2-user@ip-172-31-36-54 ~]$ 
+
+
+[ec2-user@ip-172-31-36-54 ~]$ kubectl get all 
+NAME                                    READY   STATUS    RESTARTS   AGE
+pod/nginx-deployment-5464c69867-cp4k2   1/1     Running   0          2m29s
+pod/nginx-deployment-5464c69867-mjz9d   1/1     Running   0          2m29s
+pod/nginx-deployment-5464c69867-qfpm6   1/1     Running   0          2m29s
+pod/nginx-replicaset-6swtk              1/1     Running   0          2m29s
+pod/nginx-replicaset-74l7r              1/1     Running   0          2m29s
+pod/nginx-replicaset-8q7n7              1/1     Running   0          2m29s
+
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.100.0.1   <none>        443/TCP   21m
+
+NAME                               READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/nginx-deployment   3/3     3            3           2m29s
+
+NAME                                          DESIRED   CURRENT   READY   AGE
+replicaset.apps/nginx-deployment-5464c69867   3         3         3       2m29s
+replicaset.apps/nginx-replicaset              3         3         3       2m29s
+[ec2-user@ip-172-31-36-54 ~]$ 
+
+
+nginx-deployment
+4 minutesRev:1
+ReplicaSet
+rs
+nginx-deployment-5464c69867
+4 minutesRev:1
+Pod
+pod
+nginx-deployment-5464c69867-cp4k2
+4 minutesRunning1/1More
+Pod
+pod
+nginx-deployment-5464c69867-mjz9d
+4 minutesRunning1/1More
+Pod
+pod
+nginx-deployment-5464c69867-qfpm6
+4 minutesRunning1/1More
+
+dev
+4 minutes
+ReplicaSet
+rs
+nginx-replicaset
+4 minutes
+Pod
+pod
+nginx-replicaset-6swtk
+4 minutesRunning1/1More
+Pod
+pod
+nginx-replicaset-8q7n7
+4 minutesRunning1/1More
+Pod
+pod
+nginx-replicaset-74l7r
+4 minutesRunning1/1More
+
+
+https://github.com/CloudTechDevOps/Kubernetes-0730/tree/main/Day-2-workernode-deployements-pod-replicaset-Deployement
+
+
+Deployment yaml
+
+# Kubernetes API version being used for this resource
+apiVersion: apps/v1
+# Type of Kubernetes resource - Deployment manages ReplicaSets and provides declarative updates
+kind: Deployment
+# Metadata section contains information about the Deployment
+metadata:
+  # Name of the Deployment
+  name: nginx-deployment
+# Specification section defines the desired state of the Deployment
+spec:
+  # Number of pod replicas to maintain
+  replicas: 3
+  # Selector used to identify which pods this Deployment manages
+  selector:
+    # Labels that must match for pods to be managed by this Deployment
+    matchLabels:
+      # Label key-value pair for matching pods
+      app: nginx
+  # Template for creating pods managed by this Deployment
+  template:
+    # Metadata for the pods created from this template
+    metadata:
+      # Labels applied to each pod created from this template
+      labels:
+        # Label indicating this pod runs an nginx application
+        app: nginx
+    # Specification for the pods
+    spec:
+      # List of containers in each pod
+      containers:
+      # First container definition
+      - name: nginx-container
+        # Docker image to use for this container
+        image: nginx:latest
+        # Ports exposed by this container
+        ports:
+        # Container listens on port 81
+        - containerPort: 81
+
+REPLICA SET YAML 
+
+# Kubernetes API version being used for this resource
+apiVersion: apps/v1
+# Type of Kubernetes resource - ReplicaSet ensures a specified number of pod replicas are running
+kind: ReplicaSet
+# Metadata section contains information about the ReplicaSet
+metadata:
+  # Name of the ReplicaSet
+  name: nginx-replicaset
+# Specification section defines the desired state of the ReplicaSet
+spec:
+  # Number of pod replicas to maintain
+  replicas: 3
+  # Selector used to identify which pods this ReplicaSet manages
+  selector:
+    # Labels that must match for pods to be managed by this ReplicaSet
+    matchLabels:
+      # Label key-value pair for matching pods
+      app: nginx
+  # Template for creating pods managed by this ReplicaSet
+  template:
+    # Metadata for the pods created from this template
+    metadata:
+      # Labels applied to each pod created from this template
+      labels:
+        # Label indicating this pod runs an nginx application
+        app: nginx
+    # Specification for the pods
+    spec:
+      # List of containers in each pod
+      containers:
+      # First container definition
+      - name: nginx-container
+        # Docker image to use for this container
+        image: nginx:latest
+        # Ports exposed by this container
+        ports:
+          # Container listens on port 80
+          - containerPort: 80
+
+
+Few more concepts didcussed on namespace and creation of pod in one yaml
+
+and how to delete namespace also 
 
 
 
