@@ -1,0 +1,783 @@
+install kubectl
+install eksctl
+create cluster
+create namespcae argocd
+install argocd
+edit svc with kind cluster to LoadBalancer 
+
+login argocd with loadbalancer url svc
+login with admin and password 
+
+https://killercoda.com/ -- you can use this for cluster creation
+
+v3.4.2
+Argo
+Applications
+Settings
+User Info
+Documentation
+SettingsRepositories
+Repositories
+Log out
+Type: all  
+Project: all  
+Status: all  
+Search Name
+TYPE
+NAME
+PROJECT
+REPOSITORY
+CONNECTION STATUS
+git
+test
+default
+git@github.com:mluticloud730am/Kubernetes730am.git
+ Successful
+
+
+take private key and then go to settings -- > connect repo -> give project url--git@github.com:mluticloud730am/Kubernetes730am.git and the provate key above is info 
+
+
+So argo cd always watch your repo if any changes it will deploy the changes automatically sync 
+
+
+ENable auto sync -- If any changes are their in github ymls argocd sync automatically applies those changes 
+self heal --- after argo cd applies changes if any one doe changes manually inside the cluster again those chnages over ridden by github yml chnages (source of truth)
+prune resources ex if i delete yml from github so automatically irrespectve of deplyoment also deleted 
+
+-------------
+
+GENERAL
+
+test
+Application Name
+default
+Project Name
+Sync Policy
+Automatic
+
+Enable Auto-Sync 
+Prune Resources 
+Self Heal 
+Set Deletion Finalizer 
+Sync Options
+Skip Schema Validation
+Auto-Create Namespace
+Apply Out of Sync Only
+Respect Ignore Differences
+Server-Side Apply
+Prune Last
+Prune Propagation Policy:
+foreground
+Prune:
+true
+Delete:
+true
+Replace
+Retry
+SOURCE
+
+git@github.com:mluticloud730am/Repos_730am.git
+Repository URL
+GIT 
+
+main
+Revision
+Branches 
+
+Repos_730am/Kubernetes-main/day-12-argocd
+Path
+DESTINATION
+
+https://kubernetes.default.svc
+Cluster URL
+URL 
+
+default
+Namespace
+Directory 
+
+DIRECTORY
+
+DIRECTORY RECURSE
+
+TOP-LEVEL ARGUMENTS
+No items
+EXTERNAL VARIABLES
+No items
+INCLUDE
+EXCLUDE
+
+
+now create new app with below 
+
+SOURCE
+
+https://github.com/mluticloud730am/Repos_730am.git
+Repository URL
+GIT 
+
+master
+Revision
+Branches 
+
+Repos_730am/Kubernetes-main/day-12-argocd
+
+
+
+test
+
+
+Project:
+default
+Labels:
+Status:
+ Progressing  Synced 
+Repository:
+https://github.com/mluticloud730am/Repos_730am.git
+Target Revision:
+master
+Path:
+Repos_730am/Kubernetes-main/day-12-argocd
+Destination:
+in-cluster
+Namespace:
+default
+Created At:
+05/14/2026 23:13:06 (a minute ago)
+Last Sync:
+05/14/2026 23:13:06 (a minute ago)
+  
+ 
+GROUP BY: 
+node
+node
+ip-192-168-3-230.ec2.internal
+Kernel Version:
+6.12.80-106.156.amzn2023.x86_64
+OS/Arch:
+linux/amd64
+CPU
+MEM
+PODS
+node
+node
+ip-192-168-39-78.ec2.internal
+Kernel Version:
+6.12.80-106.156.amzn2023.x86_64
+OS/Arch:
+linux/amd64
+CPU
+MEM
+PODS
+
+
+[ec2-user@ip-172-31-36-54 ~]$ kubectl get ns
+NAME              STATUS   AGE
+argocd            Active   68m
+default           Active   75m
+kube-node-lease   Active   75m
+kube-public       Active   75m
+kube-system       Active   75m
+test              Active   40m
+[ec2-user@ip-172-31-36-54 ~]$ kubectl get deploy
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment   3/3     3            3           56m
+swiggy-app         13/15   15           13          3m55s
+[ec2-user@ip-172-31-36-54 ~]$ 
+
+
+
+edited replicas from 15 to 2
+
+ec2-user@ip-172-31-36-54 ~]$ kubectl edit deploy swiggy-app
+deployment.apps/swiggy-app edited
+[ec2-user@ip-172-31-36-54 ~]$ 
+
+------------------------
+
+[ec2-user@ip-172-31-36-54 ~]$ kubectl get deployment -o yaml
+apiVersion: v1
+items:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: dev:apps/Deployment:default/nginx-deployment
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{"argocd.argoproj.io/tracking-id":"dev:apps/Deployment:default/nginx-deployment"},"name":"nginx-deployment","namespace":"default"},"spec":{"replicas":3,"selector":{"matchLabels":{"app":"nginx"}},"template":{"metadata":{"labels":{"app":"nginx"}},"spec":{"containers":[{"image":"nginx:latest","name":"nginx-container","ports":[{"containerPort":81}]}]}}}}
+    creationTimestamp: "2026-05-14T16:50:24Z"
+    generation: 1
+    name: nginx-deployment
+    namespace: default
+    resourceVersion: "4185"
+    uid: 5bd1a158-3eca-4324-920b-f78452a996cd
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 3
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: nginx
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app: nginx
+      spec:
+        containers:
+        - image: nginx:latest
+          imagePullPolicy: Always
+          name: nginx-container
+          ports:
+          - containerPort: 81
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 3
+    conditions:
+    - lastTransitionTime: "2026-05-14T16:50:30Z"
+      lastUpdateTime: "2026-05-14T16:50:30Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2026-05-14T16:50:24Z"
+      lastUpdateTime: "2026-05-14T16:50:30Z"
+      message: ReplicaSet "nginx-deployment-5464c69867" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 1
+    readyReplicas: 3
+    replicas: 3
+    updatedReplicas: 3
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      argocd.argoproj.io/tracking-id: test:apps/Deployment:default/swiggy-app
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{"argocd.argoproj.io/tracking-id":"test:apps/Deployment:default/swiggy-app"},"labels":{"app":"swiggy-app"},"name":"swiggy-app","namespace":"default"},"spec":{"replicas":15,"selector":{"matchLabels":{"app":"swiggy-app"}},"template":{"metadata":{"labels":{"app":"swiggy-app"}},"spec":{"containers":[{"image":"httpd","imagePullPolicy":"Always","name":"swiggy-app"}],"terminationGracePeriodSeconds":30}}}}
+    creationTimestamp: "2026-05-14T17:43:06Z"
+    generation: 2
+    labels:
+      app: swiggy-app
+    name: swiggy-app
+    namespace: default
+    resourceVersion: "14299"
+    uid: 7254ad3c-2160-466a-9b24-e412d90747c2
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 2
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: swiggy-app
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app: swiggy-app
+      spec:
+        containers:
+        - image: httpd
+          imagePullPolicy: Always
+          name: swiggy-app
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 2
+    conditions:
+    - lastTransitionTime: "2026-05-14T17:43:09Z"
+      lastUpdateTime: "2026-05-14T17:43:09Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2026-05-14T17:43:06Z"
+      lastUpdateTime: "2026-05-14T17:48:43Z"
+      message: ReplicaSet "swiggy-app-85689ccd44" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 2
+    readyReplicas: 2
+    replicas: 2
+    updatedReplicas: 2
+kind: List
+metadata:
+  resourceVersion: ""
+[ec2-user@ip-172-31-36-54 ~]$ 
+
+------------------------
+
+[ec2-user@ip-172-31-36-54 ~]$ kubectl get pods -A | grep -i swigg
+default       swiggy-app-85689ccd44-45kqt                         1/1     Running            0               7m
+default       swiggy-app-85689ccd44-d4m5m                         1/1     Running            0               7m
+[ec2-user@ip-172-31-36-54 ~]$ 
+
+
+APP HEALTH
+ Healthy
+SYNC STATUS
+ OutOfSync
+from master (db97bd4) 
+Auto sync is enabled.
+Author:
+Rakesh Arveti <multicloud730am@gmail.com> -
+Comment:
+Converted Kubernetes-main from submodule to normal folder
+LAST SYNC
+ Sync OK
+to db97bd4 
+Succeeded 7 minutes ago (Thu May 14 2026 23:13:06 GMT+0530)
+Author:
+Rakesh Arveti <multicloud730am@gmail.com> -
+Comment:
+Converted Kubernetes-main from submodule to normal folder
+Service
+svc
+swiggy-app
+7 minutes
+
+test
+7 minutes
+Deployment
+deploy
+swiggy-app
+7 minutesRev:1
+ReplicaSet
+rs
+swiggy-app-85689ccd44
+
+
+
+so now only 2 pods running where github 15 pods are running 
+
+now click sync 
+
+
+Refresh
+
+Log out
+APP HEALTH
+ Progressing
+SYNC STATUS
+ Synced
+to master (db97bd4) 
+Auto sync is enabled.
+Author:
+Rakesh Arveti <multicloud730am@gmail.com> -
+Comment:
+Converted Kubernetes-main from submodule to normal folder
+LAST SYNC
+ Sync OK
+to db97bd4 
+Succeeded a few seconds ago (Thu May 14 2026 23:23:20 GMT+0530)
+Author:
+Rakesh Arveti <multicloud730am@gmail.com> -
+Comment:
+Converted Kubernetes-main from submodule to normal folder
+Service
+svc
+swiggy-app
+10 minutes
+
+test
+10 minutes
+Deployment
+deploy
+swiggy-app
+10 minutesRev:1
+ReplicaSet
+rs
+swiggy-app-85689ccd44
+
+
+they it will bring as per github
+
+Now go to details --> enable self heal option
+
+ec2-user@ip-172-31-36-54 ~]$ kubectl get pods -A | grep -i swigg
+default       swiggy-app-85689ccd44-28ln2                         1/1     Running   0               55s
+default       swiggy-app-85689ccd44-45kqt                         1/1     Running   0               11m
+default       swiggy-app-85689ccd44-4dhzc                         1/1     Running   0               55s
+default       swiggy-app-85689ccd44-4pm6p                         1/1     Running   0               55s
+default       swiggy-app-85689ccd44-69sp9                         0/1     Pending   0               55s
+default       swiggy-app-85689ccd44-74gl6                         1/1     Running   0               55s
+default       swiggy-app-85689ccd44-cvdth                         1/1     Running   0               55s
+default       swiggy-app-85689ccd44-d4m5m                         1/1     Running   0               11m
+default       swiggy-app-85689ccd44-d6rdk                         1/1     Running   0               55s
+default       swiggy-app-85689ccd44-h97tl                         1/1     Running   0               55s
+default       swiggy-app-85689ccd44-j77nz                         1/1     Running   0               55s
+default       swiggy-app-85689ccd44-ncp9g                         0/1     Pending   0               55s
+default       swiggy-app-85689ccd44-rg8q4                         1/1     Running   0               55s
+default       swiggy-app-85689ccd44-tkqlv                         1/1     Running   0               55s
+default       swiggy-app-85689ccd44-zhtbq                         1/1     Running   0               55s
+
+Again i changed to 1 replica
+
+[ec2-user@ip-172-31-36-54 ~]$ kubectl edit deploy swiggy-app
+deployment.apps/swiggy-app edited
+[ec2-user@ip-172-31-36-54 ~]$ 
+
+and also disable auto sync option in argocd from details section 
+
+APP HEALTH
+ Healthy
+SYNC STATUS
+ OutOfSync
+from master (db97bd4) 
+Auto sync is enabled.
+Author:
+Rakesh Arveti <multicloud730am@gmail.com> -
+Comment:
+Converted Kubernetes-main from submodule to normal folder
+LAST SYNC
+ Sync OK
+to db97bd4 
+Succeeded 4 minutes ago (Thu May 14 2026 23:23:20 GMT+0530)
+Author:
+Rakesh Arveti <multicloud730am@gmail.com> -
+Comment:
+Converted Kubernetes-main from submodule to normal folder
+Service
+svc
+swiggy-app
+14 minutes
+
+test
+14 minutes
+Deployment
+deploy
+swiggy-app
+14 minutesRev:1
+ReplicaSet
+rs
+swiggy-app-85689ccd44
+
+
+default       swiggy-app-85689ccd44-d4m5m                         1/1     Running            0              13m
+
+check in diff
+
+
+Compact diffInline diff
+apps/Deployment/default/swiggy-app
+
+spec:	spec:
+  progressDeadlineSeconds: 600	  progressDeadlineSeconds: 600
+  replicas: 1	  replicas: 15
+  revisionHistoryLimit: 10	  revisionHistoryLimit: 10
+  selector:	  selector:
+
+
+Diff option will bve disable when sync is enabled always 
+
+is suppose yaml file delepeted deploy.yaml in github and new commit will created 
+
+but difference is out of sync and diff you can see complete file will be deleted
+
+source truth is git 
+
+--------------------------
+
+
+
+Deploy yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swiggy-app
+  labels:
+    app: swiggy-app
+spec:
+  replicas: 15
+  selector:
+    matchLabels:
+      app: swiggy-app
+  template:
+    metadata:
+      labels:
+        app: swiggy-app
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: swiggy-app
+        #image: veeranarni/hotstar:latest
+        image: httpd
+        imagePullPolicy: "Always"
+
+
+SVC YAML
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: swiggy-app
+  labels:
+    app: swiggy-app
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: swiggy-app
+
+--
+Repos_730am/Kubernetes-main/day-12-argocd/argomanifest/argo.yml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: myapp-argo-application
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/CloudTechDevOps/Kubernetes.git
+    targetRevision: HEAD
+    path: day-14-argocd
+  destination: 
+    server: https://kubernetes.default.svc
+    namespace: myapp
+
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+
+    automated:
+      selfHeal: true
+      prune: true
+
+
+these codes used 
+
+
+
+history roll back option we can go back to previous commit 
+
+so no need worry lets explore more options on the same thanks 
+
+
+again when deleted deploy yaml is deleted then it will sycn back 
+
+
+---
+
+https://medium.com/@veerababu.narni232/a-complete-overview-of-argocd-with-a-practical-example-f4a9a8488cf9
+
+
+[ec2-user@ip-172-31-36-54 ~]$ cat argo.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: myapp-argo-application
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/mluticloud730am/Repos_730am.git
+    targetRevision: HEAD
+    path: Repos_730am/Kubernetes-main/day-12-argocd
+  destination: 
+    server: https://kubernetes.default.svc
+    namespace: myapp
+
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+
+    automated:
+      selfHeal: true
+      prune: true
+[ec2-user@ip-172-31-36-54 ~]$ kubectl apply -f argo.yaml 
+application.argoproj.io/myapp-argo-application created
+[ec2-user@ip-172-31-36-54 ~]$ 
+
+
+myapp-argo-application
+
+
+Project:
+default
+Labels:
+Status:
+ Progressing  Synced 
+Repository:
+https://github.com/mluticloud730am/Repos_730am.git
+Target Revision:
+HEAD
+Path:
+Repos_730am/Kubernetes-main/day-12-argocd
+Destination:
+in-cluster
+Namespace:
+myapp
+Created At:
+05/14/2026 23:40:54 (a few seconds ago)
+Last Sync:
+05/14/2026 23:40:55 (a few seconds ago)
+  
+[ec2-user@ip-172-31-36-54 ~]$ kubectl get pods -o wide -A | grep -i swiggy
+myapp         swiggy-app-85689ccd44-5wghm                         1/1     Running            0                3m3s   192.168.46.11    ip-192-168-39-78.ec2.internal   <none>           <none>
+myapp         swiggy-app-85689ccd44-778fj                         1/1     Running            0                3m3s   192.168.0.214    ip-192-168-3-230.ec2.internal   <none>           <none>
+myapp         swiggy-app-85689ccd44-7sm5x                         1/1     Running            0                3m3s   192.168.30.199   ip-192-168-3-230.ec2.internal   <none>           <none>
+myapp         swiggy-app-85689ccd44-bgphw                         0/1     Pending            0                3m3s   <none>           <none>                          <none>           <none>
+myapp         swiggy-app-85689ccd44-fxbcn                         0/1     Pending            0                3m3s   <none>           <none>                          <none>           <none>
+myapp         swiggy-app-85689ccd44-hgq59                         1/1     Running            0                3m3s   192.168.33.114   ip-192-168-39-78.ec2.internal   <none>           <none>
+myapp         swiggy-app-85689ccd44-qzzf5                         1/1     Running            0                3m3s   192.168.41.45    ip-192-168-39-78.ec2.internal   <none>           <none>
+myapp         swiggy-app-85689ccd44-r66t7                         1/1     Running            0                3m3s   192.168.53.55    ip-192-168-39-78.ec2.internal   <none>           <none>
+myapp         swiggy-app-85689ccd44-t96xm                         1/1     Running            0                3m3s   192.168.10.172   ip-192-168-3-230.ec2.internal   <none>           <none>
+myapp         swiggy-app-85689ccd44-tsjh9                         1/1     Running            0                3m3s   192.168.17.150   ip-192-168-3-230.ec2.internal   <none>           <none>
+myapp         swiggy-app-85689ccd44-txkfw                         1/1     Running            0                3m3s   192.168.38.170   ip-192-168-39-78.ec2.internal   <none>           <none>
+myapp         swiggy-app-85689ccd44-vxh27                         1/1     Running            0                3m3s   192.168.7.37     ip-192-168-3-230.ec2.internal   <none>           <none>
+myapp         swiggy-app-85689ccd44-wr7t9                         1/1     Running            0                3m3s   192.168.61.228   ip-192-168-39-78.ec2.internal   <none>           <none>
+myapp         swiggy-app-85689ccd44-x7tx7                         1/1     Running            0                3m3s   192.168.32.224   ip-192-168-39-78.ec2.internal   <none>           <none>
+myapp         swiggy-app-85689ccd44-zfvh2                         1/1     Running            0                3m3s   192.168.11.205   ip-192-168-3-230.ec2.internal   <none>           <none>
+
+
+
+Refresh
+
+Log out
+APP HEALTH
+ Progressing
+SYNC STATUS
+ Synced
+to HEAD (db97bd4) 
+Auto sync is enabled.
+Author:
+Rakesh Arveti <multicloud730am@gmail.com> -
+Comment:
+Converted Kubernetes-main from submodule to normal folder
+LAST SYNC
+ Sync OK
+to db97bd4 
+Succeeded 3 minutes ago (Thu May 14 2026 23:40:55 GMT+0530)
+Author:
+Rakesh Arveti <multicloud730am@gmail.com> -
+Comment:
+Converted Kubernetes-main from submodule to normal folder
+Service
+svc
+swiggy-app
+3 minutes
+
+myapp-argo-application
+3 minutes
+Deployment
+deploy
+swiggy-app
+3 minutesRev:1
+ReplicaSet
+rs
+swiggy-app-85689ccd44
+
+
+
+Events
+
+SUMMARYPARAMETERSMANIFESTEVENTS
+REASON
+MESSAGE
+COUNT
+FIRST OCCURRED
+LAST OCCURRED
+OperationCompleted
+Sync operation to db97bd48b032805f417018afb38616281294f2bf succeeded
+1
+4m ago
+Today at 11:40 PM
+4m ago
+Today at 11:40 PM
+ResourceUpdated
+Updated sync status: OutOfSync -> Synced
+1
+4m ago
+Today at 11:40 PM
+4m ago
+Today at 11:40 PM
+ResourceUpdated
+Updated health status: Missing -> Progressing
+1
+4m ago
+Today at 11:40 PM
+4m ago
+Today at 11:40 PM
+OperationStarted
+Initiated automated sync to 'db97bd48b032805f417018afb38616281294f2bf'
+1
+4m ago
+Today at 11:40 PM
+4m ago
+Today at 11:40 PM
+ResourceUpdated
+Updated sync status: -> OutOfSync
+1
+4m ago
+Today at 11:40 PM
+4m ago
+Today at 11:40 PM
+ResourceUpdated
+Updated health status: -> Missing
+1
+4m ago
+Today at 11:40 PM
+4m ago
+Today at 11:40 PM
+
+
+pod
+swiggy-app-85689ccd44-7sm5x
+ SUMMARY EVENTS LOGS
+containing
+AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 192.168.30.199. Set the 'ServerName' directive globally to suppress this message
+AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 192.168.30.199. Set the 'ServerName' directive globally to suppress this message
+[Thu May 14 18:13:34.536212 2026] [mpm_event:notice] [pid 1:tid 1] AH00489: Apache/2.4.67 (Unix) configured -- resuming normal operations
+[Thu May 14 18:13:34.537864 2026] [core:notice] [pid 1:tid 1] AH00094: Command line: 'httpd -D FOREGROUND'
+
+
+-------------------
+TASK 
+What is application set and how it will help for argocd deployments?
+
+heads up 
+
+my end 25+ ,micro services dpeloyed 
+if argocd pod is deleted 
+
+create one dedicted yaml group of all and in single applocation dedicated yaml 
+
+generates and manage applciation
+Check on this ion this concept and add notes 
+
+
+
