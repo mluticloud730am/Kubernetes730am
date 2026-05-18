@@ -1,0 +1,627 @@
+Schedulers :
+
+
+1.DaemonSet
+2.Node Selector
+3.Node Affinity
+Prefferd
+Required
+4.Taint and tolerations 
+
+1.DaemonSet -- Schedule Pod on Each Node
+If you create any deployment from daemon set controller it will set scheduler pod on each node
+
+i want to deploy node exporter. -- NOde exporter should deploy each node we cannot go through Deployment or replication set yaml and it cannot deploy each pod in each node so we will go with daemon set 
+SUppose example scheduler may schedule the pods in both node exporter in same node only based on the eixtisng node cacpacity and all so it willn not have knowledge that this node exporter should be deployed on each node so that metrics 
+can exported only if it is deployed in each node.
+In Daemon set we have below 
+Desired state = NOde count to match daemoneset create pods 
+
+
+If i Deploy app through daemon set if i delete pod alter immediately pod will be created (Desired state = 2((as it will be always equal to no of pods 
+)
+Another important point if nodes are running on particualr instance type do we can change the instance type example 
+t2.medium to some other type we can update throgh ASG version upgrade options please explore this option 
+
+
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get pods
+No resources found in default namespace.
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl apply -f daemonset.yaml
+daemonset.apps/simple-nginx-daemonset created
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get pods -o wide
+NAME                           READY   STATUS    RESTARTS   AGE   IP               NODE                            NOMINATED NODE   READINESS GATES
+simple-nginx-daemonset-fv47l   1/1     Running   0          8s    192.168.29.107   ip-192-168-27-64.ec2.internal   <none>           <none>
+simple-nginx-daemonset-t5lbp   1/1     Running   0          8s    192.168.63.123   ip-192-168-38-87.ec2.internal   <none>           <none>
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ cat daemonset.yaml 
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: simple-nginx-daemonset
+  labels:
+    app: nginx
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ 
+
+ now i changing below let see result 
+
+Group size
+Specify the size of the Auto Scaling group by changing the desired capacity. You can also specify minimum and maximum scaling limits.
+
+
+Desired capacity type
+Choose the unit of measurement for the desired capacity value. vCPUs and Memory(GiB) are only supported for mixed instances groups configured with a set of instance attributes.
+
+Units (number of instances)
+Desired capacity
+Specify your group size.
+3
+Scaling limits
+Set limits on how much your desired capacity can be increased or decreased.
+
+Min desired capacity
+2
+Equal or less than desired capacity
+Max desired capacity
+3
+Equal or greater than desired capacity
+
+-  [ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get pods -o wide
+NAME                           READY   STATUS              RESTARTS   AGE    IP               NODE                            NOMINATED NODE   READINESS GATES
+simple-nginx-daemonset-5lsj4   0/1     ContainerCreating   0          3s     <none>           ip-192-168-21-30.ec2.internal   <none>           <none>
+simple-nginx-daemonset-fv47l   1/1     Running             0          3m3s   192.168.29.107   ip-192-168-27-64.ec2.internal   <none>           <none>
+simple-nginx-daemonset-t5lbp   1/1     Running             0          3m3s   192.168.63.123   ip-192-168-38-87.ec2.internal   <none>           <none>
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ 
+
+==============================================
+
+2.Node Selector
+ we can use this metthod to schedule pod on required node 
+
+example their may be dependcny a pod should on particualr node 
+
+we have labels the node and we can use dpeloyment yaml to scheule pod with lableed node only 
+
+POD Schedule on node with matching labels -- SO first we have to label the node and we can use same label for pod deployment yaml so now pod can schedule on same node as labeles matching 
+If labels are mismatch or unlabled node pod go for pending state this all process we are comnunicating to scheduler 
+
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ cat nodeselector.yaml 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-deployment
+  labels:
+    app: webapp
+    type: front-end
+spec:
+  replicas: 2  # You can change the number of replicas as needed
+  selector:
+    matchLabels:
+      app: webapp
+  template:
+    metadata:
+      labels:
+        app: webapp
+        type: front-end
+    spec:
+      containers:
+      - name: nginx-container
+        image: nginx
+      nodeSelector:
+        clr: white 
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ history
+    1  curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+    2  chmod +x ./kubectl  
+    3  sudo mv ./kubectl /usr/local/bin/kubectl
+    4     curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+    5     sudo mv /tmp/eksctl /usr/local/bin
+    6     eksctl version
+    7     eksctl create cluster --name test       --region us-east-1    --node-type t2.medium \
+    8  sudo yum install git -y
+    9  git clone https://github.com/CloudTechDevOps/Kubernetes-main.git
+   10  cd Kubernetes-main/
+   11  cd day-8-schedules/
+   12  ll
+   13  vi nodeselector.yaml 
+   14  cat nodeselector.yaml 
+   15  history
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ pwd
+/home/ec2-user/Kubernetes-main/day-8-schedules
+
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get pods
+NAME                                READY   STATUS    RESTARTS   AGE
+myapp-deployment-7fb5f76d7c-4fmlz   0/1     Pending   0          7s
+myapp-deployment-7fb5f76d7c-xgmb9   0/1     Pending   0          7s
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl describe pod myapp-deployment-7fb5f76d7c-4fmlz
+Name:             myapp-deployment-7fb5f76d7c-4fmlz
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             <none>
+Labels:           app=webapp
+                  pod-template-hash=7fb5f76d7c
+                  type=front-end
+Annotations:      <none>
+Status:           Pending
+IP:               
+IPs:              <none>
+Controlled By:    ReplicaSet/myapp-deployment-7fb5f76d7c
+Containers:
+  nginx-container:
+    Image:        nginx
+    Port:         <none>
+    Host Port:    <none>
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-qdcns (ro)
+Conditions:
+  Type           Status
+  PodScheduled   False 
+Volumes:
+  kube-api-access-qdcns:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              clr=white
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason            Age   From               Message
+  ----     ------            ----  ----               -------
+  Warning  FailedScheduling  30s   default-scheduler  0/2 nodes are available: 2 node(s) didn't match Pod's node affinity/selector. no new claims to deallocate, preemption: 0/2 nodes are available: 2 Preemption is not helpful for scheduling.
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ 
+
+
+So we will label nodes now 
+
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get nodes
+NAME                            STATUS   ROLES    AGE     VERSION
+ip-192-168-27-64.ec2.internal   Ready    <none>   6m16s   v1.34.7-eks-7fcd7ec
+ip-192-168-38-87.ec2.internal   Ready    <none>   6m14s   v1.34.7-eks-7fcd7ec
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl label nodes ip-192-168-27-64.ec2.internal clr=white
+node/ip-192-168-27-64.ec2.internal labeled
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get pods
+NAME                                READY   STATUS    RESTARTS   AGE
+myapp-deployment-7fb5f76d7c-4fmlz   1/1     Running   0          2m11s
+myapp-deployment-7fb5f76d7c-xgmb9   1/1     Running   0          2m11s
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get pods -o wide
+NAME                                READY   STATUS    RESTARTS   AGE     IP               NODE                            NOMINATED NODE   READINESS GATES
+myapp-deployment-7fb5f76d7c-4fmlz   1/1     Running   0          2m19s   192.168.6.244    ip-192-168-27-64.ec2.internal   <none>           <none>
+myapp-deployment-7fb5f76d7c-xgmb9   1/1     Running   0          2m19s   192.168.29.107   ip-192-168-27-64.ec2.internal   <none>           <none>
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ 
+
+-----
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl label nodes ip-192-168-27-64.ec2.internal clr=black
+error: 'clr' already has a value (white), and --overwrite is false
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl label nodes ip-192-168-27-64.ec2.internal clr=black --overwrite
+node/ip-192-168-27-64.ec2.internal labeled
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get pods -o wide
+NAME                                READY   STATUS    RESTARTS   AGE     IP               NODE                            NOMINATED NODE   READINESS GATES
+myapp-deployment-7fb5f76d7c-4fmlz   1/1     Running   0          4m49s   192.168.6.244    ip-192-168-27-64.ec2.internal   <none>           <none>
+myapp-deployment-7fb5f76d7c-xgmb9   1/1     Running   0          4m49s   192.168.29.107   ip-192-168-27-64.ec2.internal   <none>           <none>
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl delete pod myapp-deployment-7fb5f76d7c-4fmlz
+pod "myapp-deployment-7fb5f76d7c-4fmlz" deleted
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get pods -o wide
+NAME                                READY   STATUS    RESTARTS   AGE     IP               NODE                            NOMINATED NODE   READINESS GATES
+myapp-deployment-7fb5f76d7c-5tmhf   0/1     Pending   0          17s     <none>           <none>                          <none>           <none>
+myapp-deployment-7fb5f76d7c-xgmb9   1/1     Running   0          5m17s   192.168.29.107   ip-192-168-27-64.ec2.internal   <none>           <none>
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl describe pod myapp-deployment-7fb5f76d7c-5tmhf
+Name:             myapp-deployment-7fb5f76d7c-5tmhf
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             <none>
+Labels:           app=webapp
+                  pod-template-hash=7fb5f76d7c
+                  type=front-end
+Annotations:      <none>
+Status:           Pending
+IP:               
+IPs:              <none>
+Controlled By:    ReplicaSet/myapp-deployment-7fb5f76d7c
+Containers:
+  nginx-container:
+    Image:        nginx
+    Port:         <none>
+    Host Port:    <none>
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-czbkp (ro)
+Conditions:
+  Type           Status
+  PodScheduled   False 
+Volumes:
+  kube-api-access-czbkp:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              clr=white
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason            Age   From               Message
+  ----     ------            ----  ----               -------
+  Warning  FailedScheduling  32s   default-scheduler  0/2 nodes are available: 2 node(s) didn't match Pod's node affinity/selector. no new claims to deallocate, preemption: 0/2 nodes are available: 2 Preemption is not helpful for scheduling.
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ --
+
+
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl label nodes ip-192-168-27-64.ec2.internal clr=black
+error: 'clr' already has a value (white), and --overwrite is false
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl label nodes ip-192-168-27-64.ec2.internal clr=black --overwrite
+node/ip-192-168-27-64.ec2.internal labeled
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get pods -o wide
+NAME                                READY   STATUS    RESTARTS   AGE     IP               NODE                            NOMINATED NODE   READINESS GATES
+myapp-deployment-7fb5f76d7c-4fmlz   1/1     Running   0          4m49s   192.168.6.244    ip-192-168-27-64.ec2.internal   <none>           <none>
+myapp-deployment-7fb5f76d7c-xgmb9   1/1     Running   0          4m49s   192.168.29.107   ip-192-168-27-64.ec2.internal   <none>           <none>
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl delete pod myapp-deployment-7fb5f76d7c-4fmlz
+pod "myapp-deployment-7fb5f76d7c-4fmlz" deleted
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get pods -o wide
+NAME                                READY   STATUS    RESTARTS   AGE     IP               NODE                            NOMINATED NODE   READINESS GATES
+myapp-deployment-7fb5f76d7c-5tmhf   0/1     Pending   0          17s     <none>           <none>                          <none>           <none>
+myapp-deployment-7fb5f76d7c-xgmb9   1/1     Running   0          5m17s   192.168.29.107   ip-192-168-27-64.ec2.internal   <none>           <none>
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl describe pod myapp-deployment-7fb5f76d7c-5tmhf
+Name:             myapp-deployment-7fb5f76d7c-5tmhf
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             <none>
+Labels:           app=webapp
+                  pod-template-hash=7fb5f76d7c
+                  type=front-end
+Annotations:      <none>
+Status:           Pending
+IP:               
+IPs:              <none>
+Controlled By:    ReplicaSet/myapp-deployment-7fb5f76d7c
+Containers:
+  nginx-container:
+    Image:        nginx
+    Port:         <none>
+    Host Port:    <none>
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-czbkp (ro)
+Conditions:
+  Type           Status
+  PodScheduled   False 
+Volumes:
+  kube-api-access-czbkp:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              clr=white
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason            Age   From               Message
+  ----     ------            ----  ----               -------
+  Warning  FailedScheduling  32s   default-scheduler  0/2 nodes are available: 2 node(s) didn't match Pod's node affinity/selector. no new claims to deallocate, preemption: 0/2 nodes are available: 2 Preemption is not helpful for scheduling.
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ 
+
+
+1.Nodeselector 
+
+NodeSelector is the simplest recommended form of node selection constraint. You can add the nodeSelector field to your Pod specification and specify the node labels you want the target node to have. Kubernetes only schedules the Pod onto nodes that have each of the labels you specify.
+
+==> unlabeled pod can schedule on labeled node 
+
+===> labeled pod can schedule on unlabeled node ? no
+
+===> if we can unlabeled the node after scheduled the pod on matched label node --No impact on running time even labels miss-match pod already scheduled  
+
+
+# to label the node 
+kubectl label nodes <node-name> <label-key>=<label-value>
+
+
+Example: 
+
+kubectl label nodes ip-192-168-60-75.ec2.internal clr=black
+
+kubectl label nodes ip-192-168-4-19.ec2.internal size=small
+
+
+# to unlabel
+kubectl label nodes <node-name> <label-key>=<label-value>-
+kubectl label nodes ip-192-168-24-53.us-west-2.compute.internal clr-
+
+# to list 
+
+kubectl get nodes --show-labels
+
+Labels are case sensitive  
+
+
+Ex:Below Pod node selector 
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+  labels:
+      app: webapp
+      type: front-end
+spec:
+  containers:
+  - name: nginx-container 
+    image: nginx
+  nodeSelector:
+    size: Large
+
+A Kubernetes node selector is a simple way to constrain which nodes your pods can be scheduled on, based on node labels. By using node selectors, you can ensure that certain pods run only on nodes that meet specific criteria
+     if my pod label is not matching it will not schedule on any node always trying to schedule on labeled node only otherwise it will not scheduled remains pending state.
+
+------------------
+
+
+
+
+
+
+3.Node Affinity
+Prefferd  -- Pod can try to schedule on matching label node but if node found with same label still pod can shceudle any node instead of go for pending state 
+
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ cat node-affinity-preffered.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-pref-deployment
+  labels:
+    key: app
+    value: blue
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      key: app
+      value: blue
+  template:
+    metadata:
+      labels:
+        key: app
+        value: blue
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: size
+                operator: In
+                values:
+                - medium
+          - weight: 50
+            preference:
+              matchExpressions:
+              - key: size
+                operator: In
+                values:
+                - small
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ 
+
+
+requiredDuringSchedulingIgnoredDuringExecution: Ensures pods are scheduled only on nodes matching specific labels, but does not evict them if the labels change.
+
+preferredDuringSchedulingIgnoredDuringExecution: Prefers nodes with specific labels but can schedule pods on any available nodes if necessary.
+
+requiredDuringSchedulingRequiredDuringExecution: Not directly supported, but similar behavior can be achieved with taints and tolerations to ensure pods are scheduled and evicted based on node conditions.(taint toleration)
+
+
+Node affinity is conceptually similar to nodeSelector, allowing you to constrain which nodes your Pod can be scheduled on based on node labels. There are two types of node affinity:
+
+a.requiredDuringSchedulingIgnoredDuringExecution: The scheduler can't schedule the Pod unless the rule is met. This functions like nodeSelector, but with a more expressive syntax.
+b.preferredDuringSchedulingIgnoredDuringExecution: The scheduler tries to find a node that meets the rule. If a matching node is not available, the scheduler still schedules the Pod any other node.
+
+  
+
+a.requiredDuringSchedulingIgnoredDuringExecution
+***it will schedule if matches the pod and node label only otherwise it will not schedule
+
+preferredDuringSchedulingIgnoredDuringExecution:  ------------
+
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ cat node-affinity-preffered.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-pref-deployment
+  labels:
+    key: app
+    value: blue
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      key: app
+      value: blue
+  template:
+    metadata:
+      labels:
+        key: app
+        value: blue
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: clr
+                operator: In
+                values:
+                - white
+          - weight: 50
+            preference:
+              matchExpressions:
+              - key: clr
+                operator: In
+                values:
+                - green
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get nodes -o wide
+NAME                            STATUS   ROLES    AGE     VERSION               INTERNAL-IP     EXTERNAL-IP     OS-IMAGE                        KERNEL-VERSION                    CONTAINER-RUNTIME
+ip-192-168-21-30.ec2.internal   Ready    <none>   4m11s   v1.34.7-eks-7fcd7ec   192.168.21.30   54.211.35.188   Amazon Linux 2023.11.20260509   6.12.83-113.160.amzn2023.x86_64   containerd://2.2.3+unknown
+ip-192-168-27-64.ec2.internal   Ready    <none>   22m     v1.34.7-eks-7fcd7ec   192.168.27.64   52.90.209.71    Amazon Linux 2023.11.20260509   6.12.83-113.160.amzn2023.x86_64   containerd://2.2.3+unknown
+ip-192-168-38-87.ec2.internal   Ready    <none>   22m     v1.34.7-eks-7fcd7ec   192.168.38.87   100.55.24.126   Amazon Linux 2023.11.20260509   6.12.83-113.160.amzn2023.x86_64   containerd://2.2.3+unknown
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get nodes --show-lables 
+error: unknown flag: --show-lables
+See 'kubectl get --help' for usage.
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get nodes --show-labels
+NAME                            STATUS   ROLES    AGE     VERSION               LABELS
+ip-192-168-21-30.ec2.internal   Ready    <none>   4m42s   v1.34.7-eks-7fcd7ec   alpha.eksctl.io/cluster-name=test,alpha.eksctl.io/nodegroup-name=ng-ab7c3c69,beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=t2.medium,beta.kubernetes.io/os=linux,eks.amazonaws.com/capacityType=ON_DEMAND,eks.amazonaws.com/nodegroup-image=ami-0c8d26d7808278cc3,eks.amazonaws.com/nodegroup=ng-ab7c3c69,eks.amazonaws.com/sourceLaunchTemplateId=lt-099b32a53a1913c98,eks.amazonaws.com/sourceLaunchTemplateVersion=1,failure-domain.beta.kubernetes.io/region=us-east-1,failure-domain.beta.kubernetes.io/zone=us-east-1a,k8s.io/cloud-provider-aws=854eb3ccf34504388259f69f42e91894,kubernetes.io/arch=amd64,kubernetes.io/hostname=ip-192-168-21-30.ec2.internal,kubernetes.io/os=linux,node.kubernetes.io/instance-type=t2.medium,topology.k8s.aws/zone-id=use1-az6,topology.kubernetes.io/region=us-east-1,topology.kubernetes.io/zone=us-east-1a
+ip-192-168-27-64.ec2.internal   Ready    <none>   23m     v1.34.7-eks-7fcd7ec   alpha.eksctl.io/cluster-name=test,alpha.eksctl.io/nodegroup-name=ng-ab7c3c69,beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=t2.medium,beta.kubernetes.io/os=linux,clr=black,eks.amazonaws.com/capacityType=ON_DEMAND,eks.amazonaws.com/nodegroup-image=ami-0c8d26d7808278cc3,eks.amazonaws.com/nodegroup=ng-ab7c3c69,eks.amazonaws.com/sourceLaunchTemplateId=lt-099b32a53a1913c98,eks.amazonaws.com/sourceLaunchTemplateVersion=1,failure-domain.beta.kubernetes.io/region=us-east-1,failure-domain.beta.kubernetes.io/zone=us-east-1a,k8s.io/cloud-provider-aws=854eb3ccf34504388259f69f42e91894,kubernetes.io/arch=amd64,kubernetes.io/hostname=ip-192-168-27-64.ec2.internal,kubernetes.io/os=linux,node.kubernetes.io/instance-type=t2.medium,topology.k8s.aws/zone-id=use1-az6,topology.kubernetes.io/region=us-east-1,topology.kubernetes.io/zone=us-east-1a
+ip-192-168-38-87.ec2.internal   Ready    <none>   23m     v1.34.7-eks-7fcd7ec   alpha.eksctl.io/cluster-name=test,alpha.eksctl.io/nodegroup-name=ng-ab7c3c69,beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=t2.medium,beta.kubernetes.io/os=linux,eks.amazonaws.com/capacityType=ON_DEMAND,eks.amazonaws.com/nodegroup-image=ami-0c8d26d7808278cc3,eks.amazonaws.com/nodegroup=ng-ab7c3c69,eks.amazonaws.com/sourceLaunchTemplateId=lt-099b32a53a1913c98,eks.amazonaws.com/sourceLaunchTemplateVersion=1,failure-domain.beta.kubernetes.io/region=us-east-1,failure-domain.beta.kubernetes.io/zone=us-east-1c,k8s.io/cloud-provider-aws=854eb3ccf34504388259f69f42e91894,kubernetes.io/arch=amd64,kubernetes.io/hostname=ip-192-168-38-87.ec2.internal,kubernetes.io/os=linux,node.kubernetes.io/instance-type=t2.medium,topology.k8s.aws/zone-id=use1-az2,topology.kubernetes.io/region=us-east-1,topology.kubernetes.io/zone=us-east-1c
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl label nodes ip-192-168-21-30.ec2.internal clr=white
+node/ip-192-168-21-30.ec2.internal labeled
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get nodes --show-labels
+NAME                            STATUS   ROLES    AGE    VERSION               LABELS
+ip-192-168-21-30.ec2.internal   Ready    <none>   7m4s   v1.34.7-eks-7fcd7ec   alpha.eksctl.io/cluster-name=test,alpha.eksctl.io/nodegroup-name=ng-ab7c3c69,beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=t2.medium,beta.kubernetes.io/os=linux,clr=white,eks.amazonaws.com/capacityType=ON_DEMAND,eks.amazonaws.com/nodegroup-image=ami-0c8d26d7808278cc3,eks.amazonaws.com/nodegroup=ng-ab7c3c69,eks.amazonaws.com/sourceLaunchTemplateId=lt-099b32a53a1913c98,eks.amazonaws.com/sourceLaunchTemplateVersion=1,failure-domain.beta.kubernetes.io/region=us-east-1,failure-domain.beta.kubernetes.io/zone=us-east-1a,k8s.io/cloud-provider-aws=854eb3ccf34504388259f69f42e91894,kubernetes.io/arch=amd64,kubernetes.io/hostname=ip-192-168-21-30.ec2.internal,kubernetes.io/os=linux,node.kubernetes.io/instance-type=t2.medium,topology.k8s.aws/zone-id=use1-az6,topology.kubernetes.io/region=us-east-1,topology.kubernetes.io/zone=us-east-1a
+ip-192-168-27-64.ec2.internal   Ready    <none>   25m    v1.34.7-eks-7fcd7ec   alpha.eksctl.io/cluster-name=test,alpha.eksctl.io/nodegroup-name=ng-ab7c3c69,beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=t2.medium,beta.kubernetes.io/os=linux,clr=black,eks.amazonaws.com/capacityType=ON_DEMAND,eks.amazonaws.com/nodegroup-image=ami-0c8d26d7808278cc3,eks.amazonaws.com/nodegroup=ng-ab7c3c69,eks.amazonaws.com/sourceLaunchTemplateId=lt-099b32a53a1913c98,eks.amazonaws.com/sourceLaunchTemplateVersion=1,failure-domain.beta.kubernetes.io/region=us-east-1,failure-domain.beta.kubernetes.io/zone=us-east-1a,k8s.io/cloud-provider-aws=854eb3ccf34504388259f69f42e91894,kubernetes.io/arch=amd64,kubernetes.io/hostname=ip-192-168-27-64.ec2.internal,kubernetes.io/os=linux,node.kubernetes.io/instance-type=t2.medium,topology.k8s.aws/zone-id=use1-az6,topology.kubernetes.io/region=us-east-1,topology.kubernetes.io/zone=us-east-1a
+ip-192-168-38-87.ec2.internal   Ready    <none>   25m    v1.34.7-eks-7fcd7ec   alpha.eksctl.io/cluster-name=test,alpha.eksctl.io/nodegroup-name=ng-ab7c3c69,beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=t2.medium,beta.kubernetes.io/os=linux,eks.amazonaws.com/capacityType=ON_DEMAND,eks.amazonaws.com/nodegroup-image=ami-0c8d26d7808278cc3,eks.amazonaws.com/nodegroup=ng-ab7c3c69,eks.amazonaws.com/sourceLaunchTemplateId=lt-099b32a53a1913c98,eks.amazonaws.com/sourceLaunchTemplateVersion=1,failure-domain.beta.kubernetes.io/region=us-east-1,failure-domain.beta.kubernetes.io/zone=us-east-1c,k8s.io/cloud-provider-aws=854eb3ccf34504388259f69f42e91894,kubernetes.io/arch=amd64,kubernetes.io/hostname=ip-192-168-38-87.ec2.internal,kubernetes.io/os=linux,node.kubernetes.io/instance-type=t2.medium,topology.k8s.aws/zone-id=use1-az2,topology.kubernetes.io/region=us-east-1,topology.kubernetes.io/zone=us-east-1c
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get nodes --show-labels | grep clr
+ip-192-168-21-30.ec2.internal   Ready    <none>   7m21s   v1.34.7-eks-7fcd7ec   alpha.eksctl.io/cluster-name=test,alpha.eksctl.io/nodegroup-name=ng-ab7c3c69,beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=t2.medium,beta.kubernetes.io/os=linux,clr=white,eks.amazonaws.com/capacityType=ON_DEMAND,eks.amazonaws.com/nodegroup-image=ami-0c8d26d7808278cc3,eks.amazonaws.com/nodegroup=ng-ab7c3c69,eks.amazonaws.com/sourceLaunchTemplateId=lt-099b32a53a1913c98,eks.amazonaws.com/sourceLaunchTemplateVersion=1,failure-domain.beta.kubernetes.io/region=us-east-1,failure-domain.beta.kubernetes.io/zone=us-east-1a,k8s.io/cloud-provider-aws=854eb3ccf34504388259f69f42e91894,kubernetes.io/arch=amd64,kubernetes.io/hostname=ip-192-168-21-30.ec2.internal,kubernetes.io/os=linux,node.kubernetes.io/instance-type=t2.medium,topology.k8s.aws/zone-id=use1-az6,topology.kubernetes.io/region=us-east-1,topology.kubernetes.io/zone=us-east-1a
+ip-192-168-27-64.ec2.internal   Ready    <none>   25m     v1.34.7-eks-7fcd7ec   alpha.eksctl.io/cluster-name=test,alpha.eksctl.io/nodegroup-name=ng-ab7c3c69,beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=t2.medium,beta.kubernetes.io/os=linux,clr=black,eks.amazonaws.com/capacityType=ON_DEMAND,eks.amazonaws.com/nodegroup-image=ami-0c8d26d7808278cc3,eks.amazonaws.com/nodegroup=ng-ab7c3c69,eks.amazonaws.com/sourceLaunchTemplateId=lt-099b32a53a1913c98,eks.amazonaws.com/sourceLaunchTemplateVersion=1,failure-domain.beta.kubernetes.io/region=us-east-1,failure-domain.beta.kubernetes.io/zone=us-east-1a,k8s.io/cloud-provider-aws=854eb3ccf34504388259f69f42e91894,kubernetes.io/arch=amd64,kubernetes.io/hostname=ip-192-168-27-64.ec2.internal,kubernetes.io/os=linux,node.kubernetes.io/instance-type=t2.medium,topology.k8s.aws/zone-id=use1-az6,topology.kubernetes.io/region=us-east-1,topology.kubernetes.io/zone=us-east-1a
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl label nodes ip-192-168-21-30.ec2.internal clr=
+error: 'clr' already has a value (white), and --overwrite is false
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl label nodes ip-192-168-21-30.ec2.internal clr= --overwrite
+node/ip-192-168-21-30.ec2.internal labeled
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get nodes --show-labels | grep clr
+ip-192-168-21-30.ec2.internal   Ready    <none>   8m    v1.34.7-eks-7fcd7ec   alpha.eksctl.io/cluster-name=test,alpha.eksctl.io/nodegroup-name=ng-ab7c3c69,beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=t2.medium,beta.kubernetes.io/os=linux,clr=,eks.amazonaws.com/capacityType=ON_DEMAND,eks.amazonaws.com/nodegroup-image=ami-0c8d26d7808278cc3,eks.amazonaws.com/nodegroup=ng-ab7c3c69,eks.amazonaws.com/sourceLaunchTemplateId=lt-099b32a53a1913c98,eks.amazonaws.com/sourceLaunchTemplateVersion=1,failure-domain.beta.kubernetes.io/region=us-east-1,failure-domain.beta.kubernetes.io/zone=us-east-1a,k8s.io/cloud-provider-aws=854eb3ccf34504388259f69f42e91894,kubernetes.io/arch=amd64,kubernetes.io/hostname=ip-192-168-21-30.ec2.internal,kubernetes.io/os=linux,node.kubernetes.io/instance-type=t2.medium,topology.k8s.aws/zone-id=use1-az6,topology.kubernetes.io/region=us-east-1,topology.kubernetes.io/zone=us-east-1a
+ip-192-168-27-64.ec2.internal   Ready    <none>   26m   v1.34.7-eks-7fcd7ec   alpha.eksctl.io/cluster-name=test,alpha.eksctl.io/nodegroup-name=ng-ab7c3c69,beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=t2.medium,beta.kubernetes.io/os=linux,clr=black,eks.amazonaws.com/capacityType=ON_DEMAND,eks.amazonaws.com/nodegroup-image=ami-0c8d26d7808278cc3,eks.amazonaws.com/nodegroup=ng-ab7c3c69,eks.amazonaws.com/sourceLaunchTemplateId=lt-099b32a53a1913c98,eks.amazonaws.com/sourceLaunchTemplateVersion=1,failure-domain.beta.kubernetes.io/region=us-east-1,failure-domain.beta.kubernetes.io/zone=us-east-1a,k8s.io/cloud-provider-aws=854eb3ccf34504388259f69f42e91894,kubernetes.io/arch=amd64,kubernetes.io/hostname=ip-192-168-27-64.ec2.internal,kubernetes.io/os=linux,node.kubernetes.io/instance-type=t2.medium,topology.k8s.aws/zone-id=use1-az6,topology.kubernetes.io/region=us-east-1,topology.kubernetes.io/zone=us-east-1a
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ ll
+total 20
+-rw-r--r--. 1 ec2-user ec2-user 342 May 18 02:52 daemonset.yaml
+-rw-r--r--. 1 ec2-user ec2-user 802 May 18 03:11 node-affinity-preffered.yaml
+-rw-r--r--. 1 ec2-user ec2-user 711 May 18 02:52 node-affinity-required.yaml
+-rw-r--r--. 1 ec2-user ec2-user 399 May 18 03:02 nodeselector.yaml
+-rw-r--r--. 1 ec2-user ec2-user 415 May 18 02:52 taint_tolerations.yaml
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl apply -f node-affinity-preffered.yaml
+deployment.apps/nginx-pref-deployment created
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get pods -o wide
+NAME                                     READY   STATUS    RESTARTS   AGE   IP               NODE                            NOMINATED NODE   READINESS GATES
+nginx-pref-deployment-75fc56cbd8-2lrx6   1/1     Running   0          14s   192.168.20.72    ip-192-168-21-30.ec2.internal   <none>           <none>
+nginx-pref-deployment-75fc56cbd8-dzzjv   1/1     Running   0          14s   192.168.6.244    ip-192-168-27-64.ec2.internal   <none>           <none>
+nginx-pref-deployment-75fc56cbd8-x57k8   1/1     Running   0          14s   192.168.63.123   ip-192-168-38-87.ec2.internal   <none>           <none>
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl label nodes ip-192-168-21-30.ec2.internal clr=white --overwrite
+node/ip-192-168-21-30.ec2.internal labeled
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get pods -o wide
+NAME                                     READY   STATUS    RESTARTS   AGE   IP               NODE                            NOMINATED NODE   READINESS GATES
+nginx-pref-deployment-75fc56cbd8-2lrx6   1/1     Running   0          56s   192.168.20.72    ip-192-168-21-30.ec2.internal   <none>           <none>
+nginx-pref-deployment-75fc56cbd8-dzzjv   1/1     Running   0          56s   192.168.6.244    ip-192-168-27-64.ec2.internal   <none>           <none>
+nginx-pref-deployment-75fc56cbd8-x57k8   1/1     Running   0          56s   192.168.63.123   ip-192-168-38-87.ec2.internal   <none>           <none>
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl delete -f node-affinity-preffered.yaml
+deployment.apps "nginx-pref-deployment" deleted
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get pods -o wide
+No resources found in default namespace.
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl apply -f node-affinity-preffered.yaml
+deployment.apps/nginx-pref-deployment created
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get pods -o wide
+NAME                                     READY   STATUS    RESTARTS   AGE   IP              NODE                            NOMINATED NODE   READINESS GATES
+nginx-pref-deployment-75fc56cbd8-m2snn   1/1     Running   0          6s    192.168.20.72   ip-192-168-21-30.ec2.internal   <none>           <none>
+nginx-pref-deployment-75fc56cbd8-nzntv   1/1     Running   0          6s    192.168.5.218   ip-192-168-21-30.ec2.internal   <none>           <none>
+nginx-pref-deployment-75fc56cbd8-svjdc   1/1     Running   0          6s    192.168.13.68   ip-192-168-21-30.ec2.internal   <none>           <none>
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ 
+
+Required
+
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ cat node-affinity-required.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: webapp
+    type: front-end
+spec:
+  replicas: 3  # Number of pod replicas
+  selector:
+    matchLabels:
+      app: webapp
+      type: front-end
+  template:
+    metadata:
+      labels:
+        app: webapp
+        type: front-end
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:latest
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: clr
+                    operator: In
+                    values:
+                      - black
+                      - yellow
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl apply -f node-affinity-required.yaml
+deployment.apps/nginx-deployment created
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get pods
+NAME                                     READY   STATUS    RESTARTS   AGE
+nginx-deployment-797f7577c6-g5svn        1/1     Running   0          6s
+nginx-deployment-797f7577c6-l6k54        1/1     Running   0          6s
+nginx-deployment-797f7577c6-tfghd        1/1     Running   0          6s
+nginx-pref-deployment-75fc56cbd8-m2snn   1/1     Running   0          6m14s
+nginx-pref-deployment-75fc56cbd8-nzntv   1/1     Running   0          6m14s
+nginx-pref-deployment-75fc56cbd8-svjdc   1/1     Running   0          6m14s
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get nodes --show-labels | grep clr
+ip-192-168-21-30.ec2.internal   Ready    <none>   17m   v1.34.7-eks-7fcd7ec   alpha.eksctl.io/cluster-name=test,alpha.eksctl.io/nodegroup-name=ng-ab7c3c69,beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=t2.medium,beta.kubernetes.io/os=linux,clr=,eks.amazonaws.com/capacityType=ON_DEMAND,eks.amazonaws.com/nodegroup-image=ami-0c8d26d7808278cc3,eks.amazonaws.com/nodegroup=ng-ab7c3c69,eks.amazonaws.com/sourceLaunchTemplateId=lt-099b32a53a1913c98,eks.amazonaws.com/sourceLaunchTemplateVersion=1,failure-domain.beta.kubernetes.io/region=us-east-1,failure-domain.beta.kubernetes.io/zone=us-east-1a,k8s.io/cloud-provider-aws=854eb3ccf34504388259f69f42e91894,kubernetes.io/arch=amd64,kubernetes.io/hostname=ip-192-168-21-30.ec2.internal,kubernetes.io/os=linux,node.kubernetes.io/instance-type=t2.medium,topology.k8s.aws/zone-id=use1-az6,topology.kubernetes.io/region=us-east-1,topology.kubernetes.io/zone=us-east-1a
+ip-192-168-27-64.ec2.internal   Ready    <none>   35m   v1.34.7-eks-7fcd7ec   alpha.eksctl.io/cluster-name=test,alpha.eksctl.io/nodegroup-name=ng-ab7c3c69,beta.kubernetes.io/arch=amd64,beta.kubernetes.io/instance-type=t2.medium,beta.kubernetes.io/os=linux,clr=black,eks.amazonaws.com/capacityType=ON_DEMAND,eks.amazonaws.com/nodegroup-image=ami-0c8d26d7808278cc3,eks.amazonaws.com/nodegroup=ng-ab7c3c69,eks.amazonaws.com/sourceLaunchTemplateId=lt-099b32a53a1913c98,eks.amazonaws.com/sourceLaunchTemplateVersion=1,failure-domain.beta.kubernetes.io/region=us-east-1,failure-domain.beta.kubernetes.io/zone=us-east-1a,k8s.io/cloud-provider-aws=854eb3ccf34504388259f69f42e91894,kubernetes.io/arch=amd64,kubernetes.io/hostname=ip-192-168-27-64.ec2.internal,kubernetes.io/os=linux,node.kubernetes.io/instance-type=t2.medium,topology.k8s.aws/zone-id=use1-az6,topology.kubernetes.io/region=us-east-1,topology.kubernetes.io/zone=us-east-1a
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ kubectl get pods -o wide
+NAME                                     READY   STATUS    RESTARTS   AGE     IP               NODE                            NOMINATED NODE   READINESS GATES
+nginx-deployment-797f7577c6-g5svn        1/1     Running   0          43s     192.168.29.107   ip-192-168-27-64.ec2.internal   <none>           <none>
+nginx-deployment-797f7577c6-l6k54        1/1     Running   0          43s     192.168.3.3      ip-192-168-27-64.ec2.internal   <none>           <none>
+nginx-deployment-797f7577c6-tfghd        1/1     Running   0          43s     192.168.6.244    ip-192-168-27-64.ec2.internal   <none>           <none>
+nginx-pref-deployment-75fc56cbd8-m2snn   1/1     Running   0          6m51s   192.168.20.72    ip-192-168-21-30.ec2.internal   <none>           <none>
+nginx-pref-deployment-75fc56cbd8-nzntv   1/1     Running   0          6m51s   192.168.5.218    ip-192-168-21-30.ec2.internal   <none>           <none>
+nginx-pref-deployment-75fc56cbd8-svjdc   1/1     Running   0          6m51s   192.168.13.68    ip-192-168-21-30.ec2.internal   <none>           <none>
+[ec2-user@ip-172-31-22-33 day-8-schedules]$ 
+
+
+
+4.Taint and  tolerations -- tomorrow sir will dicsuss on this one 
+
+
+
+5. cordon 
+
+kubectl cordon <node-name> -- any upgration on cluster and not accept any deployments until cluster upgratdion 
+
+uncordon node to make nodes availiable 
+kubectl uncordon <node-name>
+
+pratise and add real time examples on this one 
+
+
+
+
