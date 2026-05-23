@@ -1,0 +1,2085 @@
+In EKS, Kubernetes access management is mainly controlled using:
+
+IAM (AWS Authentication)
+aws-auth ConfigMap / Access Entries
+RBAC (Authorization inside Kubernetes)
+
+Complete flow looks like this:
+
+IAM User / IAM Role
+        ↓
+Authentication to EKS API Server
+        ↓
+aws-auth ConfigMap / EKS Access Entry
+        ↓
+Mapped to Kubernetes User/Group
+        ↓
+RBAC Roles / ClusterRoles
+        ↓
+RoleBinding / ClusterRoleBinding
+        ↓
+Permissions inside cluster
+1. Authentication vs Authorization
+
+Very important concept.
+
+Component	Purpose
+IAM	Authentication
+RBAC	Authorization
+Authentication
+
+Checks:
+
+Who are you?
+
+Handled by:
+
+AWS IAM
+aws-auth ConfigMap
+EKS Access Entries
+Authorization
+
+Checks:
+
+What are you allowed to do?
+
+Handled by:
+
+Role
+ClusterRole
+RoleBinding
+ClusterRoleBinding
+2. aws-auth ConfigMap (Traditional Method)
+
+In EKS:
+
+IAM users/roles cannot directly access Kubernetes cluster.
+They must be mapped.
+
+This mapping happens in:
+
+kube-system/aws-auth
+
+View:
+
+kubectl edit configmap aws-auth -n kube-system
+
+Example:
+
+mapUsers: |
+  - userarn: arn:aws:iam::123456789012:user/dev-user
+    username: dev-user
+    groups:
+      - developers
+
+mapRoles: |
+  - rolearn: arn:aws:iam::123456789012:role/eks-admin-role
+    username: eks-admin
+    groups:
+      - system:masters
+3. system:masters Group
+
+Most powerful Kubernetes group.
+
+If mapped here:
+
+groups:
+  - system:masters
+
+User gets:
+
+Full cluster admin access
+
+Equivalent to:
+
+cluster-admin
+
+Can:
+
+create namespaces
+delete nodes
+deploy apps
+modify secrets
+manage RBAC
+everything in cluster
+4. RBAC Components
+Role
+
+Namespace-scoped permissions.
+
+Example:
+
+kind: Role
+
+Can access only:
+
+specific namespace
+
+Example:
+
+pod read access in dev namespace only.
+ClusterRole
+
+Cluster-wide permissions.
+
+Example:
+
+kind: ClusterRole
+
+Can manage:
+
+nodes
+namespaces
+cluster resources
+all namespaces
+RoleBinding
+
+Attaches:
+
+Role → User/Group/ServiceAccount
+
+Namespace scoped.
+
+Example:
+
+kind: RoleBinding
+ClusterRoleBinding
+
+Attaches:
+
+ClusterRole → User/Group/ServiceAccount
+
+Cluster-wide.
+
+Example:
+
+kind: ClusterRoleBinding
+5. Complete Cluster Admin Access Example
+Step 1 — Map IAM user in aws-auth
+mapUsers: |
+  - userarn: arn:aws:iam::123456789012:user/rakesh
+    username: rakesh
+    groups:
+      - eks-admins
+Step 2 — Create ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: eks-admin-binding
+
+subjects:
+- kind: Group
+  name: eks-admins
+  apiGroup: rbac.authorization.k8s.io
+
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+
+Apply:
+
+kubectl apply -f clusterrolebinding.yaml
+Result
+
+That IAM user now gets:
+
+Complete cluster-level access
+
+Can run:
+
+kubectl get nodes
+kubectl get pods -A
+kubectl delete namespace
+kubectl create deployment
+
+everything.
+
+6. Real-Time Enterprise Access Model
+
+Usually companies follow:
+
+Team	Access
+DevOps/Admin	cluster-admin
+Developers	namespace limited
+QA	read-only
+CI/CD	service account limited
+Monitoring tools	specific permissions
+7. Modern EKS Access Entries (New Method)
+
+AWS now recommends:
+
+EKS Access Entries
+
+instead of manually editing aws-auth.
+
+Example:
+
+aws eks create-access-entry \
+  --cluster-name ecommerce \
+  --principal-arn arn:aws:iam::123456789012:user/rakesh
+
+Then associate policy:
+
+aws eks associate-access-policy \
+  --cluster-name ecommerce \
+  --principal-arn arn:aws:iam::123456789012:user/rakesh \
+  --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy \
+  --access-scope type=cluster
+
+This gives:
+
+cluster admin access
+without editing aws-auth.
+8. Full Real-Time Flow
+IAM User logs in
+        ↓
+aws eks update-kubeconfig
+        ↓
+kubectl generates token using IAM
+        ↓
+EKS API Server validates IAM identity
+        ↓
+aws-auth / access entry mapping checked
+        ↓
+Mapped Kubernetes group identified
+        ↓
+RBAC policies evaluated
+        ↓
+Request allowed/denied
+Important Commands
+
+Check access:
+
+kubectl auth can-i '*' '*' --all-namespaces
+
+Check bindings:
+
+kubectl get clusterrolebinding
+
+Check roles:
+
+kubectl get clusterroles
+
+Check aws-auth:
+
+kubectl get configmap aws-auth -n kube-system -o yaml
+Most Important Interview Concept
+IAM authenticates users to EKS.
+RBAC authorizes actions inside Kubernetes.
+
+
+[ec2-user@ip-172-31-46-163 ~]$ curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x ./kubectl && sudo mv ./kubectl /usr/local/bin/kubectl && curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp && sudo mv /tmp/eksctl /usr/local/bin && eksctl version && sudo yum install git -y && eksctl create cluster --name ecommerce --region us-east-1 --node-type t2.medium --nodes 6
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 55060k 100 55060k   0     0 112.9M     0  --:--:-- --:--:-- --:--:-- 112.9M
+0.226.0
+Last metadata expiration check: 0:02:05 ago on Sat May 23 02:42:35 2026.
+Package git-2.50.1-1.amzn2023.0.1.x86_64 is already installed.
+Dependencies resolved.
+Nothing to do.
+Complete!
+Error: checking AWS STS access – cannot get role ARN for current session: operation error STS: GetCallerIdentity, get identity: get credentials: failed to refresh cached credentials, no EC2 IMDS role found, operation error ec2imds: GetMetadata, http response error StatusCode: 404, request to EC2 IMDS failed
+[ec2-user@ip-172-31-46-163 ~]$ curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x ./kubectl && sudo mv ./kubectl /usr/local/bin/kubectl && curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp && sudo mv /tmp/eksctl /usr/local/bin && eksctl version && sudo yum install git -y && eksctl create cluster --name ecommerce --region us-east-1 --node-type t2.medium --nodes 6
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 55060k 100 55060k   0     0 71139k     0  --:--:-- --:--:-- --:--:-- 71229k
+0.226.0
+Last metadata expiration check: 0:02:22 ago on Sat May 23 02:42:35 2026.
+Package git-2.50.1-1.amzn2023.0.1.x86_64 is already installed.
+Dependencies resolved.
+Nothing to do.
+Complete!
+2026-05-23 02:44:57 [ℹ]  eksctl version 0.226.0
+2026-05-23 02:44:57 [ℹ]  using region us-east-1
+2026-05-23 02:44:58 [ℹ]  setting availability zones to [us-east-1a us-east-1c]
+2026-05-23 02:44:58 [ℹ]  subnets for us-east-1a - public:192.168.0.0/19 private:192.168.64.0/19
+2026-05-23 02:44:58 [ℹ]  subnets for us-east-1c - public:192.168.32.0/19 private:192.168.96.0/19
+2026-05-23 02:44:58 [ℹ]  nodegroup "ng-a5b35b69" will use "" [AmazonLinux2023/1.34]
+2026-05-23 02:44:58 [!]  Auto Mode will be enabled by default in an upcoming release of eksctl. This means managed node groups and managed networking add-ons will no longer be created by default. To maintain current behavior, explicitly set 'autoModeConfig.enabled: false' in your cluster configuration. Learn more: https://eksctl.io/usage/auto-mode/
+2026-05-23 02:44:58 [ℹ]  using Kubernetes version 1.34
+2026-05-23 02:44:58 [ℹ]  creating EKS cluster "ecommerce" in "us-east-1" region with managed nodes
+2026-05-23 02:44:58 [ℹ]  will create 2 separate CloudFormation stacks for cluster itself and the initial managed nodegroup
+2026-05-23 02:44:58 [ℹ]  if you encounter any issues, check CloudFormation console or try 'eksctl utils describe-stacks --region=us-east-1 --cluster=ecommerce'
+2026-05-23 02:44:58 [ℹ]  Kubernetes API endpoint access will use default of {publicAccess=true, privateAccess=false} for cluster "ecommerce" in "us-east-1"
+2026-05-23 02:44:58 [ℹ]  CloudWatch logging will not be enabled for cluster "ecommerce" in "us-east-1"
+2026-05-23 02:44:58 [ℹ]  you can enable it with 'eksctl utils update-cluster-logging --enable-types={SPECIFY-YOUR-LOG-TYPES-HERE (e.g. all)} --region=us-east-1 --cluster=ecommerce'
+2026-05-23 02:44:58 [ℹ]  default addons metrics-server, vpc-cni, kube-proxy, coredns were not specified, will install them as EKS addons
+2026-05-23 02:44:58 [ℹ]  
+2 sequential tasks: { create cluster control plane "ecommerce", 
+    2 sequential sub-tasks: { 
+        2 sequential sub-tasks: { 
+            1 task: { create addons },
+            wait for control plane to become ready,
+        },
+        create managed nodegroup "ng-a5b35b69",
+    } 
+}
+2026-05-23 02:44:58 [ℹ]  building cluster stack "eksctl-ecommerce-cluster"
+2026-05-23 02:44:58 [ℹ]  deploying stack "eksctl-ecommerce-cluster"
+2026-05-23 02:45:28 [ℹ]  waiting for CloudFormation stack "eksctl-ecommerce-cluster"
+2026-05-23 02:45:58 [ℹ]  waiting for CloudFormation stack "eksctl-ecommerce-cluster"
+2026-05-23 02:46:58 [ℹ]  waiting for CloudFormation stack "eksctl-ecommerce-cluster"
+2026-05-23 02:47:58 [ℹ]  waiting for CloudFormation stack "eksctl-ecommerce-cluster"
+2026-05-23 02:48:58 [ℹ]  waiting for CloudFormation stack "eksctl-ecommerce-cluster"
+2026-05-23 02:49:58 [ℹ]  waiting for CloudFormation stack "eksctl-ecommerce-cluster"
+2026-05-23 02:50:58 [ℹ]  waiting for CloudFormation stack "eksctl-ecommerce-cluster"
+2026-05-23 02:51:58 [ℹ]  waiting for CloudFormation stack "eksctl-ecommerce-cluster"
+2026-05-23 02:52:58 [ℹ]  waiting for CloudFormation stack "eksctl-ecommerce-cluster"
+2026-05-23 02:53:58 [ℹ]  waiting for CloudFormation stack "eksctl-ecommerce-cluster"
+2026-05-23 02:54:58 [ℹ]  waiting for CloudFormation stack "eksctl-ecommerce-cluster"
+2026-05-23 02:54:59 [!]  recommended policies were found for "vpc-cni" addon, but since OIDC is disabled on the cluster, eksctl cannot configure the requested permissions; the recommended way to provide IAM permissions for "vpc-cni" addon is via pod identity associations; after addon creation is completed, add all recommended policies to the config file, under `addon.PodIdentityAssociations`, and run `eksctl update addon`
+2026-05-23 02:54:59 [ℹ]  creating addon: vpc-cni
+2026-05-23 02:55:00 [ℹ]  successfully created addon: vpc-cni
+2026-05-23 02:55:00 [ℹ]  creating addon: kube-proxy
+2026-05-23 02:55:00 [ℹ]  successfully created addon: kube-proxy
+2026-05-23 02:55:01 [ℹ]  creating addon: coredns
+2026-05-23 02:55:01 [ℹ]  successfully created addon: coredns
+2026-05-23 02:57:01 [ℹ]  building managed nodegroup stack "eksctl-ecommerce-nodegroup-ng-a5b35b69"
+2026-05-23 02:57:02 [ℹ]  deploying stack "eksctl-ecommerce-nodegroup-ng-a5b35b69"
+2026-05-23 02:57:02 [ℹ]  waiting for CloudFormation stack "eksctl-ecommerce-nodegroup-ng-a5b35b69"
+2026-05-23 02:57:32 [ℹ]  waiting for CloudFormation stack "eksctl-ecommerce-nodegroup-ng-a5b35b69"
+2026-05-23 02:58:17 [ℹ]  waiting for CloudFormation stack "eksctl-ecommerce-nodegroup-ng-a5b35b69"
+2026-05-23 02:59:58 [ℹ]  waiting for CloudFormation stack "eksctl-ecommerce-nodegroup-ng-a5b35b69"
+2026-05-23 02:59:58 [ℹ]  waiting for the control plane to become ready
+2026-05-23 02:59:59 [✔]  saved kubeconfig as "/home/ec2-user/.kube/config"
+2026-05-23 02:59:59 [ℹ]  no tasks
+2026-05-23 02:59:59 [✔]  all EKS cluster resources for "ecommerce" have been created
+2026-05-23 02:59:59 [ℹ]  nodegroup "ng-a5b35b69" has 6 node(s)
+2026-05-23 02:59:59 [ℹ]  node "ip-192-168-13-23.ec2.internal" is ready
+2026-05-23 02:59:59 [ℹ]  node "ip-192-168-30-222.ec2.internal" is ready
+2026-05-23 02:59:59 [ℹ]  node "ip-192-168-50-82.ec2.internal" is ready
+2026-05-23 02:59:59 [ℹ]  node "ip-192-168-59-168.ec2.internal" is ready
+2026-05-23 02:59:59 [ℹ]  node "ip-192-168-61-243.ec2.internal" is ready
+2026-05-23 02:59:59 [ℹ]  node "ip-192-168-9-84.ec2.internal" is ready
+2026-05-23 02:59:59 [ℹ]  waiting for at least 6 node(s) to become ready in "ng-a5b35b69"
+2026-05-23 02:59:59 [ℹ]  nodegroup "ng-a5b35b69" has 6 node(s)
+2026-05-23 02:59:59 [ℹ]  node "ip-192-168-13-23.ec2.internal" is ready
+2026-05-23 02:59:59 [ℹ]  node "ip-192-168-30-222.ec2.internal" is ready
+2026-05-23 02:59:59 [ℹ]  node "ip-192-168-50-82.ec2.internal" is ready
+2026-05-23 02:59:59 [ℹ]  node "ip-192-168-59-168.ec2.internal" is ready
+2026-05-23 02:59:59 [ℹ]  node "ip-192-168-61-243.ec2.internal" is ready
+2026-05-23 02:59:59 [ℹ]  node "ip-192-168-9-84.ec2.internal" is ready
+2026-05-23 02:59:59 [✔]  created 1 managed nodegroup(s) in cluster "ecommerce"
+2026-05-23 03:00:00 [ℹ]  creating addon: metrics-server
+2026-05-23 03:00:00 [ℹ]  successfully created addon: metrics-server
+2026-05-23 03:00:01 [ℹ]  kubectl command should work with "/home/ec2-user/.kube/config", try 'kubectl get nodes'
+2026-05-23 03:00:01 [✔]  EKS cluster "ecommerce" in "us-east-1" region is ready
+[ec2-user@ip-172-31-46-163 ~]$ kubectl get nodes
+NAME                             STATUS   ROLES    AGE     VERSION
+ip-192-168-13-23.ec2.internal    Ready    <none>   2m28s   v1.34.8-eks-3385e9b
+ip-192-168-30-222.ec2.internal   Ready    <none>   2m23s   v1.34.8-eks-3385e9b
+ip-192-168-50-82.ec2.internal    Ready    <none>   2m44s   v1.34.8-eks-3385e9b
+ip-192-168-59-168.ec2.internal   Ready    <none>   2m44s   v1.34.8-eks-3385e9b
+ip-192-168-61-243.ec2.internal   Ready    <none>   2m33s   v1.34.8-eks-3385e9b
+ip-192-168-9-84.ec2.internal     Ready    <none>   2m41s   v1.34.8-eks-3385e9b
+[ec2-user@ip-172-31-46-163 ~]$ date 
+Sat May 23 03:01:14 UTC 2026
+[ec2-user@ip-172-31-46-163 ~]$ 
+
+
+
+Create another ec2
+
+aws eks update-kubeconfig -name naresh --region us-east-1
+
+aws configure --- taken from pluralsight 
+
+[ec2-user@ip-172-31-32-246 ~]$ curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x ./kubectl && sudo mv ./kubectl /usr/local/bin/kubectl && curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp && sudo mv /tmp/eksctl /usr/local/bin && eksctl version && sudo yum install git -y &&
+> ^V^C
+[ec2-user@ip-172-31-32-246 ~]$ ^C
+[ec2-user@ip-172-31-32-246 ~]$ 
+[ec2-user@ip-172-31-32-246 ~]$ 
+[ec2-user@ip-172-31-32-246 ~]$ curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x ./kubectl && sudo mv ./kubectl /usr/local/bin/kubectl && curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp && sudo mv /tmp/eksctl /usr/local/bin && eksctl version && sudo yum install git -y 
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 55060k 100 55060k   0     0 119.8M     0  --:--:-- --:--:-- --:--:-- 120.0M
+0.226.0
+Amazon Linux 2023 Kernel Livepatch repository                                                                                                                                      293 kB/s |  38 kB     00:00    
+Dependencies resolved.
+===================================================================================================================================================================================================================
+ Package                                             Architecture                              Version                                                        Repository                                      Size
+===================================================================================================================================================================================================================
+Installing:
+ git                                                 x86_64                                    2.50.1-1.amzn2023.0.1                                          amazonlinux                                     53 k
+Installing dependencies:
+ git-core                                            x86_64                                    2.50.1-1.amzn2023.0.1                                          amazonlinux                                    4.9 M
+ git-core-doc                                        noarch                                    2.50.1-1.amzn2023.0.1                                          amazonlinux                                    2.8 M
+ perl-Error                                          noarch                                    1:0.17030-2.amzn2023.0.1                                       amazonlinux                                     42 k
+ perl-File-Find                                      noarch                                    1.37-477.amzn2023.0.8                                          amazonlinux                                     25 k
+ perl-Git                                            noarch                                    2.50.1-1.amzn2023.0.1                                          amazonlinux                                     41 k
+ perl-TermReadKey                                    x86_64                                    2.38-9.amzn2023.0.2                                            amazonlinux                                     36 k
+ perl-lib                                            x86_64                                    0.65-477.amzn2023.0.8                                          amazonlinux                                     15 k
+
+Transaction Summary
+===================================================================================================================================================================================================================
+Install  8 Packages
+
+Total download size: 7.9 M
+Installed size: 41 M
+Downloading Packages:
+(1/8): git-2.50.1-1.amzn2023.0.1.x86_64.rpm                                                                                                                                        1.1 MB/s |  53 kB     00:00    
+(2/8): perl-Error-0.17030-2.amzn2023.0.1.noarch.rpm                                                                                                                                1.3 MB/s |  42 kB     00:00    
+(3/8): git-core-doc-2.50.1-1.amzn2023.0.1.noarch.rpm                                                                                                                                29 MB/s | 2.8 MB     00:00    
+(4/8): perl-File-Find-1.37-477.amzn2023.0.8.noarch.rpm                                                                                                                             917 kB/s |  25 kB     00:00    
+(5/8): git-core-2.50.1-1.amzn2023.0.1.x86_64.rpm                                                                                                                                    35 MB/s | 4.9 MB     00:00    
+(6/8): perl-Git-2.50.1-1.amzn2023.0.1.noarch.rpm                                                                                                                                   866 kB/s |  41 kB     00:00    
+(7/8): perl-TermReadKey-2.38-9.amzn2023.0.2.x86_64.rpm                                                                                                                             886 kB/s |  36 kB     00:00    
+(8/8): perl-lib-0.65-477.amzn2023.0.8.x86_64.rpm                                                                                                                                   542 kB/s |  15 kB     00:00    
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Total                                                                                                                                                                               37 MB/s | 7.9 MB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                                                                                                                                           1/1 
+  Installing       : git-core-2.50.1-1.amzn2023.0.1.x86_64                                                                                                                                                     1/8 
+  Installing       : git-core-doc-2.50.1-1.amzn2023.0.1.noarch                                                                                                                                                 2/8 
+  Installing       : perl-lib-0.65-477.amzn2023.0.8.x86_64                                                                                                                                                     3/8 
+  Installing       : perl-TermReadKey-2.38-9.amzn2023.0.2.x86_64                                                                                                                                               4/8 
+  Installing       : perl-File-Find-1.37-477.amzn2023.0.8.noarch                                                                                                                                               5/8 
+  Installing       : perl-Error-1:0.17030-2.amzn2023.0.1.noarch                                                                                                                                                6/8 
+  Installing       : perl-Git-2.50.1-1.amzn2023.0.1.noarch                                                                                                                                                     7/8 
+  Installing       : git-2.50.1-1.amzn2023.0.1.x86_64                                                                                                                                                          8/8 
+  Running scriptlet: git-2.50.1-1.amzn2023.0.1.x86_64                                                                                                                                                          8/8 
+  Verifying        : git-2.50.1-1.amzn2023.0.1.x86_64                                                                                                                                                          1/8 
+  Verifying        : git-core-2.50.1-1.amzn2023.0.1.x86_64                                                                                                                                                     2/8 
+  Verifying        : git-core-doc-2.50.1-1.amzn2023.0.1.noarch                                                                                                                                                 3/8 
+  Verifying        : perl-Error-1:0.17030-2.amzn2023.0.1.noarch                                                                                                                                                4/8 
+  Verifying        : perl-File-Find-1.37-477.amzn2023.0.8.noarch                                                                                                                                               5/8 
+  Verifying        : perl-Git-2.50.1-1.amzn2023.0.1.noarch                                                                                                                                                     6/8 
+  Verifying        : perl-TermReadKey-2.38-9.amzn2023.0.2.x86_64                                                                                                                                               7/8 
+  Verifying        : perl-lib-0.65-477.amzn2023.0.8.x86_64                                                                                                                                                     8/8 
+
+Installed:
+  git-2.50.1-1.amzn2023.0.1.x86_64                      git-core-2.50.1-1.amzn2023.0.1.x86_64           git-core-doc-2.50.1-1.amzn2023.0.1.noarch             perl-Error-1:0.17030-2.amzn2023.0.1.noarch          
+  perl-File-Find-1.37-477.amzn2023.0.8.noarch           perl-Git-2.50.1-1.amzn2023.0.1.noarch           perl-TermReadKey-2.38-9.amzn2023.0.2.x86_64           perl-lib-0.65-477.amzn2023.0.8.x86_64               
+
+Complete!
+[ec2-user@ip-172-31-32-246 ~]$ kubectl get nodes
+E0523 03:04:38.459773   15525 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"http://localhost:8080/api?timeout=32s\": dial tcp 127.0.0.1:8080: connect: connection refused"
+E0523 03:04:38.466132   15525 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"http://localhost:8080/api?timeout=32s\": dial tcp 127.0.0.1:8080: connect: connection refused"
+E0523 03:04:38.467511   15525 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"http://localhost:8080/api?timeout=32s\": dial tcp 127.0.0.1:8080: connect: connection refused"
+E0523 03:04:38.468872   15525 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"http://localhost:8080/api?timeout=32s\": dial tcp 127.0.0.1:8080: connect: connection refused"
+E0523 03:04:38.470479   15525 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"http://localhost:8080/api?timeout=32s\": dial tcp 127.0.0.1:8080: connect: connection refused"
+The connection to the server localhost:8080 was refused - did you specify the right host or port?
+[ec2-user@ip-172-31-32-246 ~]$ aws eks update-kubeconfig -name naresh --region us-east-1
+
+aws: [ERROR]: the following arguments are required: --name
+
+usage: aws [options] <command> <subcommand> [<subcommand> ...] [parameters]
+To see help text, you can run:
+
+  aws help
+  aws <command> help
+  aws <command> <subcommand> help
+
+[ec2-user@ip-172-31-32-246 ~]$ aws eks update-kubeconfig --name ecommerce --region us-east-1
+Added new context arn:aws:eks:us-east-1:101553891888:cluster/ecommerce to /home/ec2-user/.kube/config
+[ec2-user@ip-172-31-32-246 ~]$ kubcetl get pods
+-bash: kubcetl: command not found
+[ec2-user@ip-172-31-32-246 ~]$ kubcetl get nodes
+-bash: kubcetl: command not found
+[ec2-user@ip-172-31-32-246 ~]$ kubectl get nodes
+E0523 03:06:57.055633   27485 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: the server has asked for the client to provide credentials"
+E0523 03:06:57.830934   27485 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: the server has asked for the client to provide credentials"
+E0523 03:06:58.572100   27485 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: the server has asked for the client to provide credentials"
+^C
+[ec2-user@ip-172-31-32-246 ~]$ ^C
+[ec2-user@ip-172-31-32-246 ~]$ ^C
+[ec2-user@ip-172-31-32-246 ~]$ kubectl get nodes
+E0523 03:08:03.702361   27572 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: the server has asked for the client to provide credentials"
+E0523 03:08:04.477537   27572 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: the server has asked for the client to provide credentials"
+E0523 03:08:05.238279   27572 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: the server has asked for the client to provide credentials"
+E0523 03:08:05.996830   27572 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: the server has asked for the client to provide credentials"
+^C
+[ec2-user@ip-172-31-32-246 ~]$ ^C
+[ec2-user@ip-172-31-32-246 ~]$ aws configure AKIARPJIVNIYAAFPGJNL
+
+aws: [ERROR]: argument subcommand: Found invalid choice 'AKIARPJIVNIYAAFPGJNL'
+
+
+usage: aws [options] <command> <subcommand> [<subcommand> ...] [parameters]
+To see help text, you can run:
+
+  aws help
+  aws <command> help
+  aws <command> <subcommand> help
+
+[ec2-user@ip-172-31-32-246 ~]$ aws configure
+AWS Access Key ID [****************GJNL]: AKIARPJIVNIYAAFPGJNL
+AWS Secret Access Key [****************avHX]: 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
+Default region name [us-east-1]: Default output format [json]: [ec2-user@ip-172-31-32-246 ~]$ 
+[ec2-user@ip-172-31-32-246 ~]$ 
+[ec2-user@ip-172-31-32-246 ~]$ kubectl get nodes
+E0523 03:08:59.399696   27608 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: the server has asked for the client to provide credentials"
+E0523 03:09:00.166125   27608 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: the server has asked for the client to provide credentials"
+E0523 03:09:00.922556   27608 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: the server has asked for the client to provide credentials"
+^C
+[ec2-user@ip-172-31-32-246 ~]$ ^C
+[ec2-user@ip-172-31-32-246 ~]$ aws sts get-caller-identity
+{
+    "UserId": "AIDARPJIVNIYGQZSZZT2H",
+    "Account": "101553891888",
+    "Arn": "arn:aws:iam::101553891888:user/cloud_user"
+}
+[ec2-user@ip-172-31-32-246 ~]$ aws eks create-access-entry \
+  --cluster-name ecommerce \
+  --principal-arn arn:aws:iam::101553891888:user/cloud_user
+{
+    "accessEntry": {
+        "clusterName": "ecommerce",
+        "principalArn": "arn:aws:iam::101553891888:user/cloud_user",
+        "kubernetesGroups": [],
+        "accessEntryArn": "arn:aws:eks:us-east-1:101553891888:access-entry/ecommerce/user/101553891888/cloud_user/14cf2967-e028-16a4-4c7c-379816de6cac",
+        "createdAt": "2026-05-23T03:10:07.491000+00:00",
+        "modifiedAt": "2026-05-23T03:10:07.491000+00:00",
+        "tags": {},
+        "username": "arn:aws:iam::101553891888:user/cloud_user",
+        "type": "STANDARD"
+    }
+}
+[ec2-user@ip-172-31-32-246 ~]$ aws eks associate-access-policy \
+  --cluster-name ecommerce \
+  --principal-arn arn:aws:iam::101553891888:user/cloud_user \
+  --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy \
+  --access-scope type=cluster
+{
+    "clusterName": "ecommerce",
+    "principalArn": "arn:aws:iam::101553891888:user/cloud_user",
+    "associatedAccessPolicy": {
+        "policyArn": "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy",
+        "accessScope": {
+            "type": "cluster",
+            "namespaces": []
+        },
+        "associatedAt": "2026-05-23T03:10:17.895000+00:00",
+        "modifiedAt": "2026-05-23T03:10:17.895000+00:00"
+    }
+}
+[ec2-user@ip-172-31-32-246 ~]$ kubectl get nodes
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-13-23.ec2.internal    Ready    <none>   11m   v1.34.8-eks-3385e9b
+ip-192-168-30-222.ec2.internal   Ready    <none>   11m   v1.34.8-eks-3385e9b
+ip-192-168-50-82.ec2.internal    Ready    <none>   11m   v1.34.8-eks-3385e9b
+ip-192-168-59-168.ec2.internal   Ready    <none>   11m   v1.34.8-eks-3385e9b
+ip-192-168-61-243.ec2.internal   Ready    <none>   11m   v1.34.8-eks-3385e9b
+ip-192-168-9-84.ec2.internal     Ready    <none>   11m   v1.34.8-eks-3385e9b
+[ec2-user@ip-172-31-32-246 ~]$ 
+
+
+----------------------------------------------------------------------
+
+
+Example Take below example 
+
+
+Frontend pod     and    Backend Pod 
+
+Frontend and backend pod commnunicate with CLuster IP 
+frontend will have loadbalancer 
+
+backend pod and DB container will be communicating with again cluster ip 
+
+DB container will have both 1 master node and 2 reader nodes 
+
+put ,post get methods are managed between backend and DB 
+cluster ip will act as loadbalancer 
+
+
+above condition cluster IP can send traffic to any DB pod but backend pod has to connect reader or writer as per API Request we have to track the state of the pod like which one is master and which one is reader 
+and let backend pod know this ----------- this is one problem 
+
+
+suppose if we created ec2 and host mysql also and create another ec2 and host mysql does both will sync or not 
+
+so we have write data sync roles master to replica 
+
+SO instead of cluster ip we use headless services - benefit is allow to communicate pod  directly connect to db pod access
+
+so in this case 
+
+Backend pod --> BY USING HEADLESS SERVICE -- >Master 
+Backend Pod --> BY USING HEADLESS SERVICE -- > Reader 
+
+so above is stateful applications -- 100 percent interview  question on this area
+
+
+Stateful application will have minimum one master and 2 replicas
+
+
+
+If my DB only one POD running as a master without any replicas so we can use cluster ip services as well or headless also we can use --- point is cluster ip is also possible 
+
+we are using pod name as connection 
+
+Suppose  pods name of master - writer -is mysql0
+reader pod 1 - name is mysql1
+reader pod 2  - name is mysql2
+
+if use deployment yaml then it will change name 
+
+so we need to use statefulset yaml -- benefit is Follow order and unique label for pod names 
+
+
+Name is okay but what about DATA ?
+
+Snapshot will come into picture
+SYNC Rules will come into picture 
+
+some times pod gone down and bringing up example reader node pod while coming back some issue sliek it will be not part of cluster,data ambiguty and many more problems 
+
+SO what about Data  
+
+
+For giving storage provisions - 
+
+if example while working on docker the storage is been attached to volume of ec2 
+
+but when ec2 is deleted or node is deleted attached volume also will be deleted 
+
+
+so wehave 2 options in AWS called EBS and EFS '
+
+Suppose we have EBS --> 
+
+
+for aws RDS --> 10GB storage --> Autoscaling for storage 
+
+while creating read replica only credentials we can have control 
+
+
+so on this case also AWS EBS  -- required 3 volumes like 
+
+one for master and 2 other for readers 
+
+AWS 
+
+EBS -0 -- Master writer 
+EBS -1 -- reader 
+EBS -2 -- reader 
+
+
+Elastic search 
+
+
+So we need to create -- if we are using DB On conatinerisation platform 
+1. Statefulset 
+2.Headless SVC if replica count  is more than 1
+3.STorage provision is required 
+4. we have to enable master to read sync rules 
+
+
+Data always you need to see only do security data consitency and more not on COST 
+
+
+Problems -------------
+backups
+replciation
+failover
+storage persisitance
+upgrdes
+monitoring 
+disater recover 
+
+
+
+
+just clusterip none mean headless thats it 
+
+
+
+
+------------------
+
+
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ cat -n statefulset.yml 
+     1  apiVersion: apps/v1
+     2  kind: StatefulSet
+     3  metadata:
+     4    name: mysql
+     5  spec:
+     6    replicas: 2
+     7    serviceName: mysql
+     8    selector:
+     9      matchLabels:
+    10        app: mysql
+    11    template:
+    12      metadata:
+    13        labels:
+    14          app: mysql
+    15      spec:
+    16        containers:
+    17        - image: mysql:8.0.39
+    18          name: mysql
+    19          env:
+    20           - name: MYSQL_ROOT_PASSWORD
+    21             valueFrom: 
+    22              secretKeyRef: 
+    23               key: ROOT_PASSWORD
+    24               name: mysecret
+    25          ports:
+    26          - containerPort: 3306
+    27            name: mysql
+    28          volumeMounts:
+    29          - name: mysql-persistent-storage
+    30            mountPath: /var/lib/mysql
+    31        volumes:
+    32        - name: mysql-persistent-storage
+    33          persistentVolumeClaim:
+    34            claimName: mysql-pv-claim
+    35  ---
+    36  apiVersion: v1
+    37  kind: Service
+    38  metadata:
+    39    name: mysql
+    40  spec:
+    41    ports:
+    42    - port: 3306
+    43    selector:
+    44      app: mysql
+    45    clusterIP: None  #headless service
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ pwd
+/home/ec2-user/Kubernetes-main/day-13-statefull-headless
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ 
+
+
+Suppose 
+
+Backend one pod
+
+DB pod only acts as master/replica
+
+pod name :mysql-dheyr
+
+lets say both connected to clusterip
+
+if deleted and created db pod with difference name -- backend pod connecting to DB pod through services --- service will take care of connecting thats it 
+
+but why cluster ip is not been used when multiple DB pods are used -- as conditon is their in backend inside means writer means go to master and read means go to reader 
+
+so let see differnece 
+
+
+between yamls
+
+Stateful set
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+
+spec:
+  serviceName: mysql-headless
+  replicas: 3
+
+  selector:
+    matchLabels:
+      app: mysql
+
+  template:
+    metadata:
+      labels:
+        app: mysql
+
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+
+          ports:
+            - containerPort: 3306
+
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-root-password
+
+            - name: MYSQL_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-config
+                  key: MYSQL_USER
+
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-user-password
+
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-config
+                  key: MYSQL_DATABASE
+
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-data
+
+      spec:
+        accessModes:
+          - ReadWriteOnce
+
+        storageClassName: ebs-storage
+
+        resources:
+          requests:
+            storage: 1Gi
+
+
+
+clusterip yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-clusterip
+spec:
+  selector:
+    app: mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
+  type: ClusterIP        # Default type
+
+
+
+---------------------------
+
+
+now mysql0 will write data into aws ebs 0
+
+mysql1 will connect to ebs1
+
+how pod will connect cluster external resource EBS : 
+
+SUppose take thsi example 
+
+
+Ec2 want to connect s3 (Then Create IAM role Attach s3 permission and attach the role to required ec2 )
+
+SO background temp creds created and iam roles keys and everything will be connected 
+
+
+Now in place of Ec2 we have POD and if pod trying to access outside services to S3,EBS,EFS -- in this case pod is running on NODE 
+so whenever node is created node group IAM role is created so ideally pod can be connected to outside resources
+
+so connecting purpose EBS CSI drivers will be used
+
+so but problem is if one more pod is inside the node then all permissions will be applicable for all other pods also as those are again par of same node
+
+if in this case if i want to give specific pod to given access for outside services so we use -- SERVICE ACCOUNT 
+
+
+CREATE Policy and attach to Service Account and add this indide pod --> pod yaml need to service account which is created 
+ now in this way pod alone can be connect to S3 example by this way 
+----
+
+Below is chat GPT for above info
+
+
+Yes — your understanding is becoming very close to real enterprise Kubernetes + AWS architecture.
+
+You are connecting multiple advanced concepts correctly:
+
+EKS Nodes
+IAM Roles
+EBS CSI Driver
+IRSA (IAM Roles for Service Accounts)
+Pod-level permissions
+Stateful workloads
+External AWS service access
+
+Let’s refine the architecture deeply.
+
+1. EC2 → S3 Access Model
+
+You already understood this correctly.
+
+EC2
+ ↓
+IAM Role attached to EC2
+ ↓
+Temporary credentials generated by AWS STS
+ ↓
+SDK/API calls signed automatically
+ ↓
+Access S3
+
+No hardcoded keys required.
+
+2. In EKS Pods Run Inside Nodes
+
+Architecture:
+
+EKS Node (EC2)
+   ↓
+Pods
+   ↓
+Containers
+
+Initially:
+
+Pods inherit node IAM permissions
+
+because pod runs on node.
+
+This creates security problem.
+
+3. Problem Without IRSA
+
+Suppose Node IAM Role has:
+
+AmazonS3FullAccess
+
+Then:
+
+ALL pods on that node can access S3
+
+Even malicious pod.
+
+This violates:
+
+Principle of Least Privilege
+
+Huge security risk in enterprises.
+
+4. Solution → IRSA (IAM Roles for Service Accounts)
+
+AWS introduced:
+
+IRSA = IAM Roles for Service Accounts
+
+This enables:
+
+Pod-level IAM permissions
+
+instead of:
+
+node-level permissions.
+5. Real Flow with IRSA
+Pod
+ ↓
+Kubernetes Service Account
+ ↓
+OIDC Identity Token
+ ↓
+AssumeRoleWithWebIdentity
+ ↓
+Temporary AWS Credentials
+ ↓
+Access S3/EBS/EFS
+6. Your Understanding is Correct
+
+You said:
+
+Create Policy
+Attach to IAM Role
+Attach IAM Role to Service Account
+Mention Service Account in Pod YAML
+
+YES — exactly correct.
+
+That is real production architecture.
+
+7. Example Architecture
+Without IRSA
+Node IAM Role
+   ↓
+All Pods inherit permissions
+
+Bad security.
+
+With IRSA
+Pod-A → S3 Read Only
+Pod-B → DynamoDB Access
+Pod-C → No AWS Access
+
+Each pod gets isolated AWS permissions.
+
+Enterprise-grade security.
+
+8. Example Real-Time Flow
+Step 1 — Create IAM Policy
+
+Example:
+
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+Step 2 — Create IAM Role
+
+Trust relationship:
+
+EKS OIDC Provider
+
+allowed to assume role.
+
+Step 3 — Create Kubernetes Service Account
+
+Example:
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: s3-reader
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/s3-reader-role
+Step 4 — Attach Service Account in Pod
+spec:
+  serviceAccountName: s3-reader
+Result
+
+Only that pod can access:
+
+S3
+EFS
+DynamoDB
+Secrets Manager
+whatever role allows.
+9. Now Coming to EBS CSI Driver
+
+Very important distinction.
+
+EBS Access Is Different
+
+Pods DO NOT directly call EBS APIs usually.
+
+Instead:
+
+Kubernetes
+   ↓
+CSI Driver
+   ↓
+AWS EBS APIs
+   ↓
+Volume Attach/Mount
+10. EBS CSI Driver Purpose
+
+CSI Driver manages:
+
+create EBS volume
+attach EBS to node
+mount inside pod
+detach/delete volumes
+
+Automatically.
+
+11. Real Flow for StatefulSet
+
+Example:
+
+mysql-0
+   ↓
+PVC
+   ↓
+StorageClass
+   ↓
+EBS CSI Driver
+   ↓
+Creates EBS volume
+   ↓
+Attaches to worker node
+   ↓
+Mounted inside container
+12. Important Real-Time Concept
+
+EBS attaches to:
+
+NODE
+
+NOT directly to pod.
+
+Then kubelet mounts volume into pod container.
+
+Flow:
+
+EBS
+ ↓
+EC2 Node OS
+ ↓
+Container Runtime
+ ↓
+Pod Mount Path
+13. Why EBS CSI Driver Needs IAM Permissions
+
+Because driver itself calls AWS APIs:
+
+CreateVolume
+AttachVolume
+DeleteVolume
+DescribeVolumes
+
+So:
+
+CSI Controller Pod
+needs AWS IAM permissions.
+
+Usually via:
+
+IRSA Service Account.
+14. Real-Time Enterprise Pattern
+Component	IAM Method
+Application Pod	IRSA
+EBS CSI Driver	IRSA
+ALB Controller	IRSA
+ExternalDNS	IRSA
+FluentBit	IRSA
+
+Modern EKS heavily uses IRSA.
+
+15. Final Architecture
+Application Pod
+    ↓
+Service Account
+    ↓
+IAM Role via IRSA
+    ↓
+Temporary STS Credentials
+    ↓
+AWS Services
+
+Storage flow:
+
+StatefulSet
+   ↓
+PVC
+   ↓
+EBS CSI Driver
+   ↓
+EBS Volume
+   ↓
+Mounted into Node
+   ↓
+Mounted into Pod
+This Is Exactly How Real Companies Run EKS
+
+Used by:
+
+fintech companies
+SaaS platforms
+banks
+healthcare platforms
+AI workloads
+enterprise Kubernetes platforms
+
+especially with:
+
+least privilege security
+zero hardcoded AWS keys
+pod-level identity isolation.
+
+------------------------------
+
+Service account is = Simlar AWS iAM ROLE 
+
+
+
+POD Identity plugin will take care
+
+
+https://us-east-1.console.aws.amazon.com/eks/clusters/ecommerce?region=us-east-1&selectedTab=cluster-add-ons-tab
+
+-------------
+
+ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ kubectl apply -f .
+service/mysql-clusterip created
+configmap/mysql-config created
+service/mysql-headless created
+storageclass.storage.k8s.io/ebs-storage created
+secret/mysql-secret created
+statefulset.apps/mysql created
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ kubectl get pods
+NAME      READY   STATUS    RESTARTS   AGE
+mysql-0   0/1     Pending   0          8s
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ kubectl get pods
+NAME      READY   STATUS    RESTARTS   AGE
+mysql-0   0/1     Pending   0          37s
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ kubectl get pods
+NAME      READY   STATUS    RESTARTS   AGE
+mysql-0   0/1     Pending   0          60s
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ kubectl get pods
+NAME      READY   STATUS    RESTARTS   AGE
+mysql-0   0/1     Pending   0          102s
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ kubectl describe pod mysql-0
+Name:             mysql-0
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             <none>
+Labels:           app=mysql
+                  apps.kubernetes.io/pod-index=0
+                  controller-revision-hash=mysql-7b7887d584
+                  statefulset.kubernetes.io/pod-name=mysql-0
+Annotations:      <none>
+Status:           Pending
+IP:               
+IPs:              <none>
+Controlled By:    StatefulSet/mysql
+Containers:
+  mysql:
+    Image:      mysql:8.0
+    Port:       3306/TCP
+    Host Port:  0/TCP
+    Environment:
+      MYSQL_ROOT_PASSWORD:  <set to the key 'mysql-root-password' in secret 'mysql-secret'>  Optional: false
+      MYSQL_USER:           <set to the key 'MYSQL_USER' of config map 'mysql-config'>       Optional: false
+      MYSQL_PASSWORD:       <set to the key 'mysql-user-password' in secret 'mysql-secret'>  Optional: false
+      MYSQL_DATABASE:       <set to the key 'MYSQL_DATABASE' of config map 'mysql-config'>   Optional: false
+    Mounts:
+      /var/lib/mysql from mysql-data (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-dgj47 (ro)
+Volumes:
+  mysql-data:
+    Type:       PersistentVolumeClaim (a reference to a PersistentVolumeClaim in the same namespace)
+    ClaimName:  mysql-data-mysql-0
+    ReadOnly:   false
+  kube-api-access-dgj47:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:                      <none>
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ kubectl get pods
+NAME      READY   STATUS    RESTARTS   AGE
+mysql-0   0/1     Pending   0          2m6s
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ kubectl get pods
+NAME      READY   STATUS    RESTARTS   AGE
+mysql-0   0/1     Pending   0          2m52s
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ kubectl get pods
+NAME      READY   STATUS    RESTARTS   AGE
+mysql-0   0/1     Pending   0          3m39s
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ kubectl get pods
+NAME      READY   STATUS    RESTARTS   AGE
+mysql-0   0/1     Pending   0          4m53s
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ kubectl describe pod mysql-0
+Name:             mysql-0
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             <none>
+Labels:           app=mysql
+                  apps.kubernetes.io/pod-index=0
+                  controller-revision-hash=mysql-7b7887d584
+                  statefulset.kubernetes.io/pod-name=mysql-0
+Annotations:      <none>
+Status:           Pending
+IP:               
+IPs:              <none>
+Controlled By:    StatefulSet/mysql
+Containers:
+  mysql:
+    Image:      mysql:8.0
+    Port:       3306/TCP
+    Host Port:  0/TCP
+    Environment:
+      MYSQL_ROOT_PASSWORD:  <set to the key 'mysql-root-password' in secret 'mysql-secret'>  Optional: false
+      MYSQL_USER:           <set to the key 'MYSQL_USER' of config map 'mysql-config'>       Optional: false
+      MYSQL_PASSWORD:       <set to the key 'mysql-user-password' in secret 'mysql-secret'>  Optional: false
+      MYSQL_DATABASE:       <set to the key 'MYSQL_DATABASE' of config map 'mysql-config'>   Optional: false
+    Mounts:
+      /var/lib/mysql from mysql-data (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-dgj47 (ro)
+Volumes:
+  mysql-data:
+    Type:       PersistentVolumeClaim (a reference to a PersistentVolumeClaim in the same namespace)
+    ClaimName:  mysql-data-mysql-0
+    ReadOnly:   false
+  kube-api-access-dgj47:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:                      <none>
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ kubectl describe pvc mysql-data-mysql-0
+Name:          mysql-data-mysql-0
+Namespace:     default
+StorageClass:  ebs-storage
+Status:        Pending
+Volume:        
+Labels:        app=mysql
+Annotations:   volume.beta.kubernetes.io/storage-provisioner: ebs.csi.aws.com
+               volume.kubernetes.io/selected-node: ip-192-168-13-23.ec2.internal
+               volume.kubernetes.io/storage-provisioner: ebs.csi.aws.com
+Finalizers:    [kubernetes.io/pvc-protection]
+Capacity:      
+Access Modes:  
+VolumeMode:    Filesystem
+Used By:       mysql-0
+Events:
+  Type    Reason                Age                   From                         Message
+  ----    ------                ----                  ----                         -------
+  Normal  WaitForFirstConsumer  5m56s                 persistentvolume-controller  waiting for first consumer to be created before binding
+  Normal  ExternalProvisioning  15s (x24 over 5m56s)  persistentvolume-controller  Waiting for a volume to be created either by the external provisioner 'ebs.csi.aws.com' or manually by the system administrator. If volume creation is delayed, please verify that the provisioner is running and correctly registered.
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ eksctl utils associate-iam-oidc-provider \
+  --region us-east-1 \
+  --cluster ecommerce \
+  --approve
+2026-05-23 04:38:05 [ℹ]  will create IAM Open ID Connect provider for cluster "ecommerce" in "us-east-1"
+2026-05-23 04:38:05 [✔]  created IAM Open ID Connect provider for cluster "ecommerce" in "us-east-1"
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ eksctl create iamserviceaccount \
+  --name ebs-csi-controller-sa \
+  --namespace kube-system \
+  --cluster ecommerce \
+  --region us-east-1 \
+  --role-name AmazonEKS_EBS_CSI_DriverRole \
+  --role-only \
+  --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
+  --approve
+2026-05-23 04:38:17 [ℹ]  1 iamserviceaccount (kube-system/ebs-csi-controller-sa) was included (based on the include/exclude rules)
+2026-05-23 04:38:17 [!]  serviceaccounts in Kubernetes will not be created or modified, since the option --role-only is used
+2026-05-23 04:38:17 [ℹ]  1 task: { create IAM role for serviceaccount "kube-system/ebs-csi-controller-sa" }
+2026-05-23 04:38:17 [ℹ]  building iamserviceaccount stack "eksctl-ecommerce-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
+2026-05-23 04:38:17 [ℹ]  deploying stack "eksctl-ecommerce-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
+2026-05-23 04:38:17 [ℹ]  waiting for CloudFormation stack "eksctl-ecommerce-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
+2026-05-23 04:38:47 [ℹ]  waiting for CloudFormation stack "eksctl-ecommerce-addon-iamserviceaccount-kube-system-ebs-csi-controller-sa"
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ eksctl delete addon \
+  --cluster ecommerce \
+  --name aws-ebs-csi-driver \
+  --region us-east-1
+2026-05-23 04:38:52 [ℹ]  Kubernetes version "1.34" in use by cluster "ecommerce"
+2026-05-23 04:38:52 [ℹ]  deleting addon: aws-ebs-csi-driver
+2026-05-23 04:38:53 [ℹ]  deleted addon: aws-ebs-csi-driver
+2026-05-23 04:38:53 [ℹ]  no associated IAM stacks found
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ eksctl create addon \
+  --name aws-ebs-csi-driver \
+  --cluster ecommerce \
+  --region us-east-1 \
+  --service-account-role-arn arn:aws:iam::101553891888:role/AmazonEKS_EBS_CSI_DriverRole \
+  --force
+2026-05-23 04:39:00 [ℹ]  Kubernetes version "1.34" in use by cluster "ecommerce"
+2026-05-23 04:39:00 [ℹ]  IRSA is set for "aws-ebs-csi-driver" addon; will use this to configure IAM permissions
+2026-05-23 04:39:00 [!]  the recommended way to provide IAM permissions for "aws-ebs-csi-driver" addon is via pod identity associations; after addon creation is completed, run `eksctl utils migrate-to-pod-identity`
+2026-05-23 04:39:00 [ℹ]  using provided ServiceAccountRoleARN "arn:aws:iam::101553891888:role/AmazonEKS_EBS_CSI_DriverRole"
+2026-05-23 04:39:00 [ℹ]  creating addon: aws-ebs-csi-driver
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ kubectl get pods -n kube-system | grep ebs
+ebs-csi-controller-7674558b8c-j6qpb   0/6     ContainerCreating   0          1s
+ebs-csi-controller-7674558b8c-qjj55   0/6     ContainerCreating   0          1s
+ebs-csi-node-8wc88                    0/3     ContainerCreating   0          1s
+ebs-csi-node-b8ck5                    3/3     Running             0          1s
+ebs-csi-node-hw4ft                    2/3     Running             0          1s
+ebs-csi-node-q7ndj                    0/3     ContainerCreating   0          1s
+ebs-csi-node-z6t47                    0/3     ContainerCreating   0          1s
+ebs-csi-node-z9k8r                    3/3     Running             0          1s
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ kubectl get pvc
+NAME                 STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+mysql-data-mysql-0   Bound    pvc-2dea9d96-3ee2-495b-a1a2-c3a75b0f591f   1Gi        RWO            ebs-storage    <unset>                 9m34s
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ kubectl get pods
+NAME      READY   STATUS              RESTARTS   AGE
+mysql-0   1/1     Running             0          9m51s
+mysql-1   0/1     ContainerCreating   0          14s
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ kubectl get pods
+NAME      READY   STATUS    RESTARTS   AGE
+mysql-0   1/1     Running   0          10m
+mysql-1   1/1     Running   0          70s
+mysql-2   1/1     Running   0          51s
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ cat *
+import mysql.connector
+
+# -------------------------------
+# Connect via ClusterIP Service
+# -------------------------------
+clusterip_db = mysql.connector.connect(
+    host="mysqll.default.svc.cluster.local",  # ClusterIP service
+    user="root",
+    password="rootpassword",
+    database="testdb",
+    port=3306
+)
+
+cursor = clusterip_db.cursor()
+cursor.execute("SELECT @@hostname;")
+print("ClusterIP service hits Pod:", cursor.fetchone()[0])
+clusterip_db.close()
+
+# -------------------------------
+# Connect via Headless Service
+# -------------------------------
+# For StatefulSet Pod 1
+headless_db_1 = mysql.connector.connect(
+    host="mysql-1.mysql.default.svc.cluster.local",  # Headless service
+    user="root",
+    password="rootpassword",
+    database="testdb",
+    port=3306
+)
+
+cursor = headless_db_1.cursor()
+cursor.execute("SELECT @@hostname;")
+print("Headless service Pod 1:", cursor.fetchone()[0])
+headless_db_1.close()
+
+# For StatefulSet Pod 0
+headless_db_0 = mysql.connector.connect(
+    host="mysql-0.mysql.default.svc.cluster.local",  # Headless service
+    user="root",
+    password="rootpassword",
+    database="testdb",
+    port=3306
+)
+
+cursor = headless_db_0.cursor()
+cursor.execute("SELECT @@hostname;")
+print("Headless service Pod 0:", cursor.fetchone()[0])
+headless_db_0.close()
+from flask import Flask, request, jsonify
+import mysql.connector
+import time
+
+app = Flask(__name__)
+
+# -------------------------------
+# Database Configuration
+# -------------------------------
+DB_CONFIG = {
+    "user": "root",
+    "password": "rootpassword",
+    "database": "testdb",
+    "port": 3306
+}
+
+# Writer (mysql-0) and Reader (mysql-1)
+WRITER_HOST = "mysql-0.mysql.default.svc.cluster.local"
+READER_HOST = "mysql-1.mysql.default.svc.cluster.local"
+
+
+# -------------------------------
+# Database Helpers
+# -------------------------------
+def query_db(host, sql, params=None, write=False):
+    try:
+        conn = mysql.connector.connect(host=host, **DB_CONFIG)
+        cursor = conn.cursor()
+        cursor.execute(sql, params or ())
+        if write:
+            conn.commit()
+        else:
+            result = cursor.fetchall()
+            return result
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# -------------------------------
+# Routes
+# -------------------------------
+
+@app.route("/read", methods=["GET"])
+def read_data():
+    """GET endpoint → routes to mysql-1 (reader)"""
+    try:
+        rows = query_db(READER_HOST, "SELECT @@hostname, NOW();")
+        return jsonify({
+            "target": READER_HOST,
+            "pod_hostname": rows[0][0],
+            "timestamp": str(rows[0][1])
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/write", methods=["POST"])
+def write_data():
+    """POST endpoint → routes to mysql-0 (writer)"""
+    try:
+        timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+        query_db(WRITER_HOST, "INSERT INTO test_table (data, created_at) VALUES (%s, %s)", ("test-write", timestamp), write=True)
+        rows = query_db(WRITER_HOST, "SELECT @@hostname, NOW();")
+        return jsonify({
+            "target": WRITER_HOST,
+            "pod_hostname": rows[0][0],
+            "timestamp": str(rows[0][1]),
+            "message": "Write successful"
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/", methods=["GET"])
+def index():
+    return jsonify({
+        "message": "MySQL routing test service",
+        "endpoints": {
+            "GET /read": "Read from mysql-1 (reader)",
+            "POST /write": "Write to mysql-0 (writer)"
+        }
+    })
+
+
+# -------------------------------
+# Start Flask Server
+# -------------------------------
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dns-client
+spec:
+  containers:
+  - name: dns-client
+    image: busybox
+    command: ["sleep", "3600"]
+
+
+
+after apply login pod and test svc 
+
+kubectl exec -it dns-client -- sh
+
+nslookup <svcname>  # clusterIp
+#test both servcies headless and clusterip and observer how traffic is routing 
+
+<pod-name>.<headless-service-name>.<namespace>.svc.cluster.local
+
+nslookup mysql-0.mysql-clusterip.default.svc.cluster.local
+nslookup mysql-1.mysql-clusterip.default.svc.cluster.local
+nslookup mysql-2.mysql-clusterip.default.svc.cluster.local
+
+<podname><headless>.defualt.svc.cluster.local
+"mysql-0.mysql-clusterip.default.svc.cluster.local" 
+
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-clusterip
+spec:
+  selector:
+    app: mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
+  type: ClusterIP        # Default type
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config
+
+data:
+  MYSQL_USER: admin
+  MYSQL_DATABASE: mydb
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-headless
+spec:
+  clusterIP: None   # THIS makes it headless
+  selector:
+    app: mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+
+metadata:
+  name: ebs-storage
+
+provisioner: ebs.csi.aws.com
+
+allowVolumeExpansion: true   
+
+volumeBindingMode: WaitForFirstConsumer
+
+reclaimPolicy: Delete
+
+parameters:
+  type: gp3
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+type: Opaque
+
+data:
+  mysql-root-password: cGFzc3dvcmQ=
+  mysql-user-password: cGFzc3dvcmQ=
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+
+spec:
+  serviceName: mysql-headless
+  replicas: 3
+
+  selector:
+    matchLabels:
+      app: mysql
+
+  template:
+    metadata:
+      labels:
+        app: mysql
+
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+
+          ports:
+            - containerPort: 3306
+
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-root-password
+
+            - name: MYSQL_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-config
+                  key: MYSQL_USER
+
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-user-password
+
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-config
+                  key: MYSQL_DATABASE
+
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-data
+
+      spec:
+        accessModes:
+          - ReadWriteOnce
+
+        storageClassName: ebs-storage
+
+        resources:
+          requests:
+            storage: 1Gi
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ pwdc
+-bash: pwdc: command not found
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ pwd
+/home/ec2-user/Kubernetes-main/day-13-statefull-headless/Kubernetes-main/day-13-statefull-headless
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ 
+
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ kubectl get pvc
+NAME                 STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+mysql-data-mysql-0   Bound    pvc-2dea9d96-3ee2-495b-a1a2-c3a75b0f591f   1Gi        RWO            ebs-storage    <unset>                 12m
+mysql-data-mysql-1   Bound    pvc-4f9ffd9c-897f-4193-a417-eaf890072e2c   1Gi        RWO            ebs-storage    <unset>                 2m27s
+mysql-data-mysql-2   Bound    pvc-a97da143-ddaf-45ce-a3cd-c7f942619ec6   1Gi        RWO            ebs-storage    <unset>                 2m8s
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ kubectl get pv
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                        STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
+pvc-2dea9d96-3ee2-495b-a1a2-c3a75b0f591f   1Gi        RWO            Delete           Bound    default/mysql-data-mysql-0   ebs-storage    <unset>                          2m52s
+pvc-4f9ffd9c-897f-4193-a417-eaf890072e2c   1Gi        RWO            Delete           Bound    default/mysql-data-mysql-1   ebs-storage    <unset>                          2m28s
+pvc-a97da143-ddaf-45ce-a3cd-c7f942619ec6   1Gi        RWO            Delete           Bound    default/mysql-data-mysql-2   ebs-storage    <unset>                          2m9s
+[ec2-user@ip-172-31-46-163 day-13-statefull-headless]$ 
+
+-------------------------
+
+
+This is one of the MOST important concepts in Kubernetes.
+
+Once you deeply understand:
+
+PV
+PVC
+StorageClass
+CSI Driver
+StatefulSet
+
+you understand how Kubernetes manages persistent storage like real enterprise platforms.
+
+1. Why Kubernetes Needed PV/PVC
+
+Containers are:
+
+Ephemeral
+
+Meaning:
+
+Container restart → data lost
+
+But databases need:
+
+permanent storage
+recoverability
+stable disks
+
+So Kubernetes introduced abstraction layers.
+
+2. Core Components
+
+Architecture:
+
+Pod
+ ↓
+PVC (Request)
+ ↓
+PV (Actual Disk Mapping)
+ ↓
+StorageClass
+ ↓
+CSI Driver
+ ↓
+Cloud Storage (EBS/EFS/etc)
+3. Real-Life Analogy
+
+Think like apartment booking.
+
+PVC = Request Form
+"I need 1GB storage"
+
+Pod does NOT care:
+
+where storage exists
+which disk
+which AWS volume
+
+It only requests.
+
+PV = Actual Apartment
+
+Actual storage resource.
+
+Example:
+
+EBS Volume
+
+mapped into Kubernetes object.
+
+StorageClass = Rules/Blueprint
+
+Defines:
+
+gp2/gp3
+SSD/HDD
+encryption
+reclaim policy
+dynamic provisioning rules
+CSI Driver = Real Provisioner
+
+Actually talks to:
+
+AWS
+Azure
+GCP
+NetApp
+Ceph
+
+Creates real storage.
+
+4. Your Current Flow (Real Example)
+
+You created:
+
+StatefulSet MySQL
+
+Inside StatefulSet:
+
+volumeClaimTemplates:
+
+This automatically generated:
+
+PVCs
+5. Step-by-Step Internal Working
+STEP 1 — StatefulSet Created
+
+Example:
+
+replicas: 3
+
+Kubernetes automatically creates:
+
+mysql-0
+mysql-1
+mysql-2
+STEP 2 — PVC Auto Created
+
+For each pod:
+
+mysql-data-mysql-0
+mysql-data-mysql-1
+mysql-data-mysql-2
+
+Each pod gets separate disk.
+
+Very important for DB isolation.
+
+STEP 3 — PVC Says
+
+Example:
+
+storage: 1Gi
+storageClassName: ebs-storage
+
+Meaning:
+
+"I need 1GB EBS storage"
+STEP 4 — Kubernetes Checks StorageClass
+
+StorageClass:
+
+provisioner: ebs.csi.aws.com
+
+Meaning:
+
+Use AWS EBS CSI Driver
+STEP 5 — CSI Driver Triggered
+
+CSI Controller Pod receives request.
+
+Flow:
+
+PVC Created
+   ↓
+StorageClass identified
+   ↓
+CSI Driver notified
+STEP 6 — CSI Driver Calls AWS APIs
+
+Using IRSA permissions:
+
+CreateVolume API
+
+Actual EBS volume created in AWS.
+
+Example:
+
+vol-0abc123
+STEP 7 — PV Automatically Created
+
+Kubernetes now creates:
+
+PersistentVolume object
+
+mapping:
+
+PV ↔ Actual EBS Volume
+STEP 8 — PVC Bound to PV
+
+Now:
+
+PVC STATUS = Bound
+
+Meaning:
+
+Storage request satisfied
+STEP 9 — Pod Scheduling Starts
+
+Scheduler now chooses node.
+
+Example:
+
+ip-192-168-13-23
+STEP 10 — EBS Attached to Node
+
+CSI Node Plugin:
+
+AttachVolume
+
+AWS attaches EBS disk to EC2 node.
+
+STEP 11 — Kubelet Mounts Disk
+
+Linux OS mounts EBS:
+
+/dev/nvme...
+
+Then mounted inside container path:
+
+/var/lib/mysql
+Final Result
+MySQL writes data
+        ↓
+Container path
+        ↓
+Mounted EBS
+        ↓
+Persistent AWS storage
+6. Why StatefulSet Uses Separate PVCs
+
+Very important.
+
+Each database pod needs isolated storage.
+
+Example:
+
+Pod	Volume
+mysql-0	ebs-0
+mysql-1	ebs-1
+mysql-2	ebs-2
+
+Otherwise:
+
+data corruption
+replication issues
+filesystem locking issues
+7. Important Access Modes
+RWO
+ReadWriteOnce
+
+Only one node can mount.
+
+EBS commonly uses this.
+
+RWX
+ReadWriteMany
+
+Multiple nodes can mount.
+
+Used with:
+
+EFS
+NFS
+8. Why EBS Cannot Be Shared Across Nodes Easily
+
+EBS is:
+
+AZ-specific block storage
+
+Can attach to:
+
+one node at a time typically.
+
+So:
+
+excellent performance
+low latency
+DB workloads
+9. Real Enterprise Architecture
+
+Example:
+
+mysql-0
+   ↓
+PVC
+   ↓
+PV
+   ↓
+EBS Volume
+   ↓
+Attached to Worker Node
+
+Same for each replica.
+
+10. What Happens If Pod Dies
+
+This is KEY advantage.
+
+Suppose:
+
+mysql-0 pod deleted
+
+Kubernetes recreates pod.
+
+But PVC/PV remain.
+
+So:
+
+Same EBS volume remounted
+
+Data persists.
+
+11. Difference Between Deployment vs StatefulSet
+Deployment	StatefulSet
+Stateless	Stateful
+Shared identity	Stable identity
+Random pod names	Fixed pod names
+Usually no PVC	Dedicated PVC
+Good for apps	Good for DBs
+12. Why CSI Driver Is Revolutionary
+
+Before CSI:
+
+each storage vendor custom plugins.
+
+Now universal standard:
+
+CSI = Container Storage Interface
+
+Works for:
+
+AWS EBS
+Azure Disk
+GCP PD
+Ceph
+NetApp
+Portworx
+13. Full Real-Time Flow
+StatefulSet
+   ↓
+PVC
+   ↓
+StorageClass
+   ↓
+CSI Driver
+   ↓
+AWS EBS API
+   ↓
+EBS Volume
+   ↓
+PV
+   ↓
+Bound PVC
+   ↓
+Attach to Node
+   ↓
+Mount into Pod
+   ↓
+MySQL Stores Data
+14. Real Enterprise Features Around This
+
+Companies additionally use:
+
+Feature	Purpose
+Snapshots	Backup
+Volume Expansion	Scale storage
+Encryption	Security
+Multi-AZ Replication	HA
+Velero	Backup restore
+CSI Snapshots	Recovery
+15. Your Current Understanding Level
+
+You are now understanding:
+
+real Kubernetes storage orchestration
+cloud-native persistent architecture
+enterprise stateful workload management
+EKS production storage design
