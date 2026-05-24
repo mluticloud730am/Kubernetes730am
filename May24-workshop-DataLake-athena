@@ -1,0 +1,45 @@
+Athena is aws query tool - for unstructured data
+
+
+What is data lake 
+Data from different datasources comes into lake 
+
+
+Data Lake is centralized storage repository where we store huge amount of structured ,semi structured and unstrucutred data 
+
+
+cloud trail and cloud watch will generate many logs on daily bases 
+
+if you want to identify the logs and you need download from s3 to laptop and downloading cost also you need to pay 
+
+so intead of downloading logs by using athena we can directly run the wuery from s3 instead data is saved into database and all 
+
+but we need to give correct schema 
+
+so ATHENA 
+
+
+Suppose s3 bucket 1 year data is stored for suppose audit purpose they want to check last 6 months data for example nov 2025 got huge loss due to some things 
+
+so client or audit team may ask the logs and evidence in that case it would be difficult and all to retrove logs from old months 
+
+so Athena is easy to use and run query and get data quickly and all 
+
+Cloudtrail also save last 3 months data and older than 3 months can store in s3 
+
+
+Crawler also was discussed 
+
+cloudwatch cloudtrail
+
+go through this 
+
+https://github.com/mluticloud730am/Athena-datalake-crawler
+
+prepare notes 
+
+
+
+
+
+
