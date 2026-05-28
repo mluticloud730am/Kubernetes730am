@@ -1,0 +1,1125 @@
+Helm is the package manager for the kubernetes - Like we can deploy any dependecnies even we can deploy the project 
+
+So Far we discussed about 
+
+Yaml file where we can hardcode the values like image name ,service name 
+
+BY using helm we can just manage the values by passing them and yamls files will be created by helm directly like terrafrom tfvars and all
+
+By using helm we can generate project automatically or later we can directly giveing values for the template 
+
+
+SO by using template we can run for different enviornments and all 
+
+
+https://medium.com/@veerababu.narni232/writing-your-first-helm-chart-for-hello-world-40c05fa4ac5a
+Check this medium block 
+
+Create role ec2 admin -- > Launch ec2  t2.medium and attach role -> Run below commands -->
+
+curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x ./kubectl && sudo mv ./kubectl /usr/local/bin/kubectl && curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp && sudo mv /tmp/eksctl /usr/local/bin && eksctl version && sudo yum install git -y && eksctl create cluster --name test --region us-east-1 --node-type t2.medium --nodes 4
+
+By Default helm will create sample image called nginix
+
+helm create project 
+
+helm install tree -y 
+
+tree
+so helm will create full project structure with different yamls and all 
+
+chart.yaml will take care of versions also 
+
+in yaml no values are harcoded and everything will be  taken care with help of values yaml file 
+
+So all values are refreerd 
+
+
+
+[ec2-user@ip-172-31-91-93 ~]$ curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x ./kubectl && sudo mv ./kubectl /usr/local/bin/kubectl && curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp && sudo mv /tmp/eksctl /usr/local/bin && eksctl version && sudo yum install git -y && eksctl create cluster --name test --region us-east-1 --node-type t2.medium --nodes 4
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 55060k 100 55060k   0     0 115.3M     0  --:--:-- --:--:-- --:--:-- 115.6M
+0.227.0
+Amazon Linux 2023 Kernel Livepatch repository                                                                                                                                      231 kB/s |  47 kB     00:00    
+Dependencies resolved.
+===================================================================================================================================================================================================================
+ Package                                             Architecture                              Version                                                        Repository                                      Size
+===================================================================================================================================================================================================================
+Installing:
+ git                                                 x86_64                                    2.50.1-1.amzn2023.0.1                                          amazonlinux                                     53 k
+Installing dependencies:
+ git-core                                            x86_64                                    2.50.1-1.amzn2023.0.1                                          amazonlinux                                    4.9 M
+ git-core-doc                                        noarch                                    2.50.1-1.amzn2023.0.1                                          amazonlinux                                    2.8 M
+ perl-Error                                          noarch                                    1:0.17030-2.amzn2023.0.1                                       amazonlinux                                     42 k
+ perl-File-Find                                      noarch                                    1.37-477.amzn2023.0.8                                          amazonlinux                                     25 k
+ perl-Git                                            noarch                                    2.50.1-1.amzn2023.0.1                                          amazonlinux                                     41 k
+ perl-TermReadKey                                    x86_64                                    2.38-9.amzn2023.0.3                                            amazonlinux                                     36 k
+ perl-lib                                            x86_64                                    0.65-477.amzn2023.0.8                                          amazonlinux                                     15 k
+
+Transaction Summary
+===================================================================================================================================================================================================================
+Install  8 Packages
+
+Total download size: 7.9 M
+Installed size: 41 M
+Downloading Packages:
+(1/8): git-2.50.1-1.amzn2023.0.1.x86_64.rpm                                                                                                                                        1.4 MB/s |  53 kB     00:00    
+(2/8): perl-Error-0.17030-2.amzn2023.0.1.noarch.rpm                                                                                                                                1.4 MB/s |  42 kB     00:00    
+(3/8): git-core-2.50.1-1.amzn2023.0.1.x86_64.rpm                                                                                                                                    45 MB/s | 4.9 MB     00:00    
+(4/8): perl-File-Find-1.37-477.amzn2023.0.8.noarch.rpm                                                                                                                             554 kB/s |  25 kB     00:00    
+(5/8): git-core-doc-2.50.1-1.amzn2023.0.1.noarch.rpm                                                                                                                                21 MB/s | 2.8 MB     00:00    
+(6/8): perl-Git-2.50.1-1.amzn2023.0.1.noarch.rpm                                                                                                                                   1.5 MB/s |  41 kB     00:00    
+(7/8): perl-TermReadKey-2.38-9.amzn2023.0.3.x86_64.rpm                                                                                                                             1.3 MB/s |  36 kB     00:00    
+(8/8): perl-lib-0.65-477.amzn2023.0.8.x86_64.rpm                                                                                                                                   626 kB/s |  15 kB     00:00    
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Total                                                                                                                                                                               38 MB/s | 7.9 MB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                                                                                                                                           1/1 
+  Installing       : git-core-2.50.1-1.amzn2023.0.1.x86_64                                                                                                                                                     1/8 
+  Installing       : git-core-doc-2.50.1-1.amzn2023.0.1.noarch                                                                                                                                                 2/8 
+  Installing       : perl-lib-0.65-477.amzn2023.0.8.x86_64                                                                                                                                                     3/8 
+  Installing       : perl-TermReadKey-2.38-9.amzn2023.0.3.x86_64                                                                                                                                               4/8 
+  Installing       : perl-File-Find-1.37-477.amzn2023.0.8.noarch                                                                                                                                               5/8 
+  Installing       : perl-Error-1:0.17030-2.amzn2023.0.1.noarch                                                                                                                                                6/8 
+  Installing       : perl-Git-2.50.1-1.amzn2023.0.1.noarch                                                                                                                                                     7/8 
+  Installing       : git-2.50.1-1.amzn2023.0.1.x86_64                                                                                                                                                          8/8 
+  Running scriptlet: git-2.50.1-1.amzn2023.0.1.x86_64                                                                                                                                                          8/8 
+  Verifying        : git-2.50.1-1.amzn2023.0.1.x86_64                                                                                                                                                          1/8 
+  Verifying        : git-core-2.50.1-1.amzn2023.0.1.x86_64                                                                                                                                                     2/8 
+  Verifying        : git-core-doc-2.50.1-1.amzn2023.0.1.noarch                                                                                                                                                 3/8 
+  Verifying        : perl-Error-1:0.17030-2.amzn2023.0.1.noarch                                                                                                                                                4/8 
+  Verifying        : perl-File-Find-1.37-477.amzn2023.0.8.noarch                                                                                                                                               5/8 
+  Verifying        : perl-Git-2.50.1-1.amzn2023.0.1.noarch                                                                                                                                                     6/8 
+  Verifying        : perl-TermReadKey-2.38-9.amzn2023.0.3.x86_64                                                                                                                                               7/8 
+  Verifying        : perl-lib-0.65-477.amzn2023.0.8.x86_64                                                                                                                                                     8/8 
+
+Installed:
+  git-2.50.1-1.amzn2023.0.1.x86_64                      git-core-2.50.1-1.amzn2023.0.1.x86_64           git-core-doc-2.50.1-1.amzn2023.0.1.noarch             perl-Error-1:0.17030-2.amzn2023.0.1.noarch          
+  perl-File-Find-1.37-477.amzn2023.0.8.noarch           perl-Git-2.50.1-1.amzn2023.0.1.noarch           perl-TermReadKey-2.38-9.amzn2023.0.3.x86_64           perl-lib-0.65-477.amzn2023.0.8.x86_64               
+
+Complete!
+2026-05-28 05:33:49 [ℹ]  eksctl version 0.227.0
+2026-05-28 05:33:49 [ℹ]  using region us-east-1
+2026-05-28 05:33:49 [ℹ]  setting availability zones to [us-east-1b us-east-1c]
+2026-05-28 05:33:49 [ℹ]  subnets for us-east-1b - public:192.168.0.0/19 private:192.168.64.0/19
+2026-05-28 05:33:49 [ℹ]  subnets for us-east-1c - public:192.168.32.0/19 private:192.168.96.0/19
+2026-05-28 05:33:49 [ℹ]  nodegroup "ng-121713a0" will use "" [AmazonLinux2023/1.34]
+2026-05-28 05:33:49 [!]  Auto Mode will be enabled by default in an upcoming release of eksctl. This means managed node groups and managed networking add-ons will no longer be created by default. To maintain current behavior, explicitly set 'autoModeConfig.enabled: false' in your cluster configuration. Learn more: https://eksctl.io/usage/auto-mode/
+2026-05-28 05:33:49 [ℹ]  using Kubernetes version 1.34
+2026-05-28 05:33:49 [ℹ]  creating EKS cluster "test" in "us-east-1" region with managed nodes
+2026-05-28 05:33:49 [ℹ]  will create 2 separate CloudFormation stacks for cluster itself and the initial managed nodegroup
+2026-05-28 05:33:49 [ℹ]  if you encounter any issues, check CloudFormation console or try 'eksctl utils describe-stacks --region=us-east-1 --cluster=test'
+2026-05-28 05:33:49 [ℹ]  Kubernetes API endpoint access will use default of {publicAccess=true, privateAccess=false} for cluster "test" in "us-east-1"
+2026-05-28 05:33:49 [ℹ]  CloudWatch logging will not be enabled for cluster "test" in "us-east-1"
+2026-05-28 05:33:49 [ℹ]  you can enable it with 'eksctl utils update-cluster-logging --enable-types={SPECIFY-YOUR-LOG-TYPES-HERE (e.g. all)} --region=us-east-1 --cluster=test'
+2026-05-28 05:33:49 [ℹ]  default addons metrics-server, vpc-cni, kube-proxy, coredns were not specified, will install them as EKS addons
+2026-05-28 05:33:49 [ℹ]  
+2 sequential tasks: { create cluster control plane "test", 
+    2 sequential sub-tasks: { 
+        2 sequential sub-tasks: { 
+            1 task: { create addons },
+            wait for control plane to become ready,
+        },
+        create managed nodegroup "ng-121713a0",
+    } 
+}
+2026-05-28 05:33:49 [ℹ]  building cluster stack "eksctl-test-cluster"
+2026-05-28 05:33:49 [ℹ]  deploying stack "eksctl-test-cluster"
+2026-05-28 05:34:19 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-28 05:34:49 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-28 05:35:49 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-28 05:36:49 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-28 05:37:49 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-28 05:38:50 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-28 05:39:50 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-28 05:40:50 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-28 05:41:50 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-28 05:42:50 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-28 05:42:51 [!]  recommended policies were found for "vpc-cni" addon, but since OIDC is disabled on the cluster, eksctl cannot configure the requested permissions; the recommended way to provide IAM permissions for "vpc-cni" addon is via pod identity associations; after addon creation is completed, add all recommended policies to the config file, under `addon.PodIdentityAssociations`, and run `eksctl update addon`
+2026-05-28 05:42:51 [ℹ]  creating addon: vpc-cni
+2026-05-28 05:42:51 [ℹ]  successfully created addon: vpc-cni
+2026-05-28 05:42:51 [ℹ]  creating addon: kube-proxy
+2026-05-28 05:42:52 [ℹ]  successfully created addon: kube-proxy
+2026-05-28 05:42:52 [ℹ]  creating addon: coredns
+2026-05-28 05:42:52 [ℹ]  successfully created addon: coredns
+2026-05-28 05:44:52 [ℹ]  building managed nodegroup stack "eksctl-test-nodegroup-ng-121713a0"
+2026-05-28 05:44:53 [ℹ]  deploying stack "eksctl-test-nodegroup-ng-121713a0"
+2026-05-28 05:44:53 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-121713a0"
+2026-05-28 05:45:23 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-121713a0"
+2026-05-28 05:45:56 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-121713a0"
+2026-05-28 05:47:46 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-121713a0"
+2026-05-28 05:47:46 [ℹ]  waiting for the control plane to become ready
+2026-05-28 05:47:48 [✔]  saved kubeconfig as "/home/ec2-user/.kube/config"
+2026-05-28 05:47:48 [ℹ]  no tasks
+2026-05-28 05:47:48 [✔]  all EKS cluster resources for "test" have been created
+2026-05-28 05:47:48 [ℹ]  nodegroup "ng-121713a0" has 4 node(s)
+2026-05-28 05:47:48 [ℹ]  node "ip-192-168-19-193.ec2.internal" is ready
+2026-05-28 05:47:48 [ℹ]  node "ip-192-168-20-144.ec2.internal" is ready
+2026-05-28 05:47:48 [ℹ]  node "ip-192-168-33-172.ec2.internal" is ready
+2026-05-28 05:47:48 [ℹ]  node "ip-192-168-46-165.ec2.internal" is ready
+2026-05-28 05:47:48 [ℹ]  waiting for at least 4 node(s) to become ready in "ng-121713a0"
+2026-05-28 05:47:48 [ℹ]  nodegroup "ng-121713a0" has 4 node(s)
+2026-05-28 05:47:48 [ℹ]  node "ip-192-168-19-193.ec2.internal" is ready
+2026-05-28 05:47:48 [ℹ]  node "ip-192-168-20-144.ec2.internal" is ready
+2026-05-28 05:47:48 [ℹ]  node "ip-192-168-33-172.ec2.internal" is ready
+2026-05-28 05:47:48 [ℹ]  node "ip-192-168-46-165.ec2.internal" is ready
+2026-05-28 05:47:48 [✔]  created 1 managed nodegroup(s) in cluster "test"
+2026-05-28 05:47:48 [ℹ]  creating addon: metrics-server
+2026-05-28 05:47:48 [ℹ]  successfully created addon: metrics-server
+2026-05-28 05:47:49 [ℹ]  kubectl command should work with "/home/ec2-user/.kube/config", try 'kubectl get nodes'
+2026-05-28 05:47:49 [✔]  EKS cluster "test" in "us-east-1" region is ready
+[ec2-user@ip-172-31-91-93 ~]$ 
+
+
+----------------------------
+
+
+
+
+[ec2-user@ip-172-31-91-93 ~]$ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+[ec2-user@ip-172-31-91-93 ~]$ chmod 700 get_helm.sh
+[ec2-user@ip-172-31-91-93 ~]$ ./get_helm.sh
+Downloading https://get.helm.sh/helm-v3.21.0-linux-amd64.tar.gz
+Verifying checksum... Done.
+Preparing to install helm into /usr/local/bin
+helm installed into /usr/local/bin/helm
+[ec2-user@ip-172-31-91-93 ~]$ helm version
+version.BuildInfo{Version:"v3.21.0", GitCommit:"e0878d41b711792be60777fd65ad23a101e6b85f", GitTreeState:"clean", GoVersion:"go1.25.10"}
+[ec2-user@ip-172-31-91-93 ~]$ helm create helloworld
+Creating helloworld
+[ec2-user@ip-172-31-91-93 ~]$ tree helloworld
+-bash: tree: command not found
+[ec2-user@ip-172-31-91-93 ~]$ helm install tree -y
+Error: unknown shorthand flag: 'y' in -y
+
+[ec2-user@ip-172-31-91-93 ~]$ sudo yum install tree -y
+Last metadata expiration check: 0:16:26 ago on Thu May 28 05:33:40 2026.
+Dependencies resolved.
+===================================================================================================================================================================================================================
+ Package                                     Architecture                                  Version                                                        Repository                                          Size
+===================================================================================================================================================================================================================
+Installing:
+ tree                                        x86_64                                        1.8.0-6.amzn2023.0.2                                           amazonlinux                                         56 k
+
+Transaction Summary
+===================================================================================================================================================================================================================
+Install  1 Package
+
+Total download size: 56 k
+Installed size: 113 k
+Downloading Packages:
+tree-1.8.0-6.amzn2023.0.2.x86_64.rpm                                                                                                                                               1.2 MB/s |  56 kB     00:00    
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Total                                                                                                                                                                              609 kB/s |  56 kB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                                                                                                                                           1/1 
+  Installing       : tree-1.8.0-6.amzn2023.0.2.x86_64                                                                                                                                                          1/1 
+  Running scriptlet: tree-1.8.0-6.amzn2023.0.2.x86_64                                                                                                                                                          1/1 
+  Verifying        : tree-1.8.0-6.amzn2023.0.2.x86_64                                                                                                                                                          1/1 
+
+Installed:
+  tree-1.8.0-6.amzn2023.0.2.x86_64                                                                                                                                                                                 
+
+Complete!
+[ec2-user@ip-172-31-91-93 ~]$ 
+
+
+[ec2-user@ip-172-31-91-93 ~]$ tree helloworld
+helloworld
+├── Chart.yaml
+├── charts
+├── templates
+│   ├── NOTES.txt
+│   ├── _helpers.tpl
+│   ├── deployment.yaml
+│   ├── hpa.yaml
+│   ├── httproute.yaml
+│   ├── ingress.yaml
+│   ├── service.yaml
+│   ├── serviceaccount.yaml
+│   └── tests
+│       └── test-connection.yaml
+└── values.yaml
+
+3 directories, 11 files
+
+
+values.yaml is heart of helm where all values passed centrall from here to all yamls files 
+
+
+YAML
+
+Install the Helm Chart using command — helm install
+
+Now after updating the values.yml, you can install the Helm Chart.
+
+The helm install command take two arguments -
+
+First argument — Release name that you pick
+Second argument — Chart you want to install
+It should look like -
+
+helm install <FIRST_ARGUMENT_RELEASE_NAME> <SECOND_ARGUMENT_CHART_NAME>
+
+
+ec2-user@ip-172-31-91-93 ~]$ helm install production helloworld
+NAME: production
+LAST DEPLOYED: Thu May 28 05:52:18 2026
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+NOTES:
+1. Get the application URL by running these commands:
+  export POD_NAME=$(kubectl get pods --namespace default -l "app.kubernetes.io/name=helloworld,app.kubernetes.io/instance=production" -o jsonpath="{.items[0].metadata.name}")
+  export CONTAINER_PORT=$(kubectl get pod --namespace default $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+  echo "Visit http://127.0.0.1:8080 to use your application"
+  kubectl --namespace default port-forward $POD_NAME 8080:$CONTAINER_PORT
+[ec2-user@ip-172-31-91-93 ~]$ pwd
+/home/ec2-user
+[ec2-user@ip-172-31-91-93 ~]$ ls -lrt
+total 12
+-rwx------. 1 ec2-user ec2-user 11929 May 28 05:48 get_helm.sh
+drwxr-xr-x. 4 ec2-user ec2-user    93 May 28 05:49 helloworld
+[ec2-user@ip-172-31-91-93 ~]$ kubectl get pods
+NAME                                    READY   STATUS    RESTARTS   AGE
+production-helloworld-fb7ffff84-glr5n   1/1     Running   0          24s
+[ec2-user@ip-172-31-91-93 ~]$ kubectl get all
+NAME                                        READY   STATUS    RESTARTS   AGE
+pod/production-helloworld-fb7ffff84-glr5n   1/1     Running   0          35s
+
+NAME                            TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes              ClusterIP   10.100.0.1       <none>        443/TCP   12m
+service/production-helloworld   ClusterIP   10.100.232.119   <none>        80/TCP    35s
+
+NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/production-helloworld   1/1     1            1           35s
+
+NAME                                              DESIRED   CURRENT   READY   AGE
+replicaset.apps/production-helloworld-fb7ffff84   1         1         1       35s
+[ec2-user@ip-172-31-91-93 ~]$ tree 
+.
+├── get_helm.sh
+└── helloworld
+    ├── Chart.yaml
+    ├── charts
+    ├── templates
+    │   ├── NOTES.txt
+    │   ├── _helpers.tpl
+    │   ├── deployment.yaml
+    │   ├── hpa.yaml
+    │   ├── httproute.yaml
+    │   ├── ingress.yaml
+    │   ├── service.yaml
+    │   ├── serviceaccount.yaml
+    │   └── tests
+    │       └── test-connection.yaml
+    └── values.yaml
+
+4 directories, 12 files
+[ec2-user@ip-172-31-91-93 ~]$ tree production
+production [error opening dir]
+
+0 directories, 0 files
+[ec2-user@ip-172-31-91-93 ~]$ ls -lrt
+total 12
+-rwx------. 1 ec2-user ec2-user 11929 May 28 05:48 get_helm.sh
+drwxr-xr-x. 4 ec2-user ec2-user    93 May 28 05:49 helloworld
+[ec2-user@ip-172-31-91-93 ~]$ 
+
+
+
+in values change 
+
+  type: ClusterIP 
+to 
+
+  type: LoadBalancer
+
+
+[ec2-user@ip-172-31-91-93 ~]$ helm upgrade production helloworld
+Release "production" has been upgraded. Happy Helming!
+NAME: production
+LAST DEPLOYED: Thu May 28 05:58:18 2026
+NAMESPACE: default
+STATUS: deployed
+REVISION: 2
+NOTES:
+1. Get the application URL by running these commands:
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch its status by running 'kubectl get --namespace default svc -w production-helloworld'
+  export SERVICE_IP=$(kubectl get svc --namespace default production-helloworld --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")
+  echo http://$SERVICE_IP:80
+[ec2-user@ip-172-31-91-93 ~]$ kubectl get all
+NAME                                        READY   STATUS    RESTARTS   AGE
+pod/production-helloworld-fb7ffff84-glr5n   1/1     Running   0          6m11s
+
+NAME                            TYPE           CLUSTER-IP       EXTERNAL-IP                                                            PORT(S)        AGE
+service/kubernetes              ClusterIP      10.100.0.1       <none>                                                                 443/TCP        17m
+service/production-helloworld   LoadBalancer   10.100.232.119   af12c4ad3c37342a5a98a7009212fa33-9954297.us-east-1.elb.amazonaws.com   80:30767/TCP   6m11s
+
+NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/production-helloworld   1/1     1            1           6m11s
+
+NAME                                              DESIRED   CURRENT   READY   AGE
+replicaset.apps/production-helloworld-fb7ffff84   1         1         1       6m11s
+[ec2-user@ip-172-31-91-93 ~]$ helm list -a
+NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
+production      default         2               2026-05-28 05:58:18.628941353 +0000 UTC deployed        helloworld-0.1.0        1.16.0     
+[ec2-user@ip-172-31-91-93 ~]$ 
+
+
+
+[ec2-user@ip-172-31-91-93 ~]$ helm install test helloworld
+NAME: test
+LAST DEPLOYED: Thu May 28 05:59:23 2026
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+NOTES:
+1. Get the application URL by running these commands:
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch its status by running 'kubectl get --namespace default svc -w test-helloworld'
+  export SERVICE_IP=$(kubectl get svc --namespace default test-helloworld --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")
+  echo http://$SERVICE_IP:80
+[ec2-user@ip-172-31-91-93 ~]$ kubectl get all
+NAME                                        READY   STATUS    RESTARTS   AGE
+pod/production-helloworld-fb7ffff84-glr5n   1/1     Running   0          7m13s
+pod/test-helloworld-5c5694f447-mbmgf        1/1     Running   0          8s
+
+NAME                            TYPE           CLUSTER-IP       EXTERNAL-IP                                                              PORT(S)        AGE
+service/kubernetes              ClusterIP      10.100.0.1       <none>                                                                   443/TCP        18m
+service/production-helloworld   LoadBalancer   10.100.232.119   af12c4ad3c37342a5a98a7009212fa33-9954297.us-east-1.elb.amazonaws.com     80:30767/TCP   7m13s
+service/test-helloworld         LoadBalancer   10.100.120.119   a72afbe193381449e9572bc160281ce4-559748171.us-east-1.elb.amazonaws.com   80:31753/TCP   8s
+
+NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/production-helloworld   1/1     1            1           7m13s
+deployment.apps/test-helloworld         1/1     1            1           8s
+
+NAME                                              DESIRED   CURRENT   READY   AGE
+replicaset.apps/production-helloworld-fb7ffff84   1         1         1       7m13s
+replicaset.apps/test-helloworld-5c5694f447        1         1         1       8s
+[ec2-user@ip-172-31-91-93 ~]$ helm list -a
+NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
+production      default         2               2026-05-28 05:58:18.628941353 +0000 UTC deployed        helloworld-0.1.0        1.16.0     
+test            default         1               2026-05-28 05:59:23.011382749 +0000 UTC deployed        helloworld-0.1.0        1.16.0     
+[ec2-user@ip-172-31-91-93 ~]$ 
+
+
+service/production-helloworld   LoadBalancer   10.100.232.119   af12c4ad3c37342a5a98a7009212fa33-9954297.us-east-1.elb.amazonaws.com     80:30767/TCP   7m13s
+service/test-helloworld         LoadBalancer   10.100.120.119   a72afbe193381449e9572bc160281ce4-559748171.us-east-1.elb.amazonaws.com   80:31753/TCP   8s
+
+
+load balancer showing 
+
+Welcome to nginx!
+If you see this page, the nginx web server is successfully installed and working. Further configuration is required.
+
+For online documentation and support please refer to nginx.org.
+Commercial support is available at nginx.com.
+
+Thank you for using nginx.
+
+
+in values.yaml
+
+    9 image:
+ 10   repository: nginix
+ 11   # This sets the pull policy for images.ountto a Pod.
+
+  9 image:
+ 10   repository: rakesharveti/multicloud730am
+ 11   # This sets the pull policy for images.ountto a Pod.
+
+[ec2-user@ip-172-31-91-93 helloworld]$ vi values.yaml 
+
+saved 
+
+also port changed from 80 to 3000
+
+[ec2-user@ip-172-31-91-93 ~]$ helm upgrade production helloworld
+Release "production" has been upgraded. Happy Helming!
+NAME: production
+LAST DEPLOYED: Thu May 28 06:10:26 2026
+NAMESPACE: default
+STATUS: deployed
+REVISION: 3
+NOTES:
+1. Get the application URL by running these commands:
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch its status by running 'kubectl get --namespace default svc -w production-helloworld'
+  export SERVICE_IP=$(kubectl get svc --namespace default production-helloworld --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")
+  echo http://$SERVICE_IP:80
+[ec2-user@ip-172-31-91-93 ~]$ kubectl get pods
+NAME                                     READY   STATUS         RESTARTS   AGE
+production-helloworld-64b5d9b984-qjwj9   0/1     ErrImagePull   0          6s
+production-helloworld-fb7ffff84-glr5n    1/1     Running        0          18m
+test-helloworld-5c5694f447-mbmgf         1/1     Running        0          11m
+[ec2-user@ip-172-31-91-93 ~]$ 
+
+[ec2-user@ip-172-31-91-93 ~]$ kubectl describe pod production-helloworld-64b5d9b984-qjwj9
+Name:             production-helloworld-64b5d9b984-qjwj9
+Namespace:        default
+Priority:         0
+Service Account:  production-helloworld
+Node:             ip-192-168-19-193.ec2.internal/192.168.19.193
+Start Time:       Thu, 28 May 2026 06:10:26 +0000
+Labels:           app.kubernetes.io/instance=production
+                  app.kubernetes.io/managed-by=Helm
+                  app.kubernetes.io/name=helloworld
+                  app.kubernetes.io/version=1.16.0
+                  helm.sh/chart=helloworld-0.1.0
+                  pod-template-hash=64b5d9b984
+Annotations:      <none>
+Status:           Pending
+IP:               192.168.26.87
+IPs:
+  IP:           192.168.26.87
+Controlled By:  ReplicaSet/production-helloworld-64b5d9b984
+Containers:
+  helloworld:
+    Container ID:   
+    Image:          rakesharveti/multicloud730am:1.16.0
+    Image ID:       
+    Port:           80/TCP
+    Host Port:      0/TCP
+    State:          Waiting
+      Reason:       ErrImagePull
+    Ready:          False
+    Restart Count:  0
+    Liveness:       http-get http://:http/ delay=0s timeout=1s period=10s #success=1 #failure=3
+    Readiness:      http-get http://:http/ delay=0s timeout=1s period=10s #success=1 #failure=3
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-jxq5q (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       False 
+  ContainersReady             False 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-jxq5q:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age                From               Message
+  ----     ------     ----               ----               -------
+  Normal   Scheduled  67s                default-scheduler  Successfully assigned default/production-helloworld-64b5d9b984-qjwj9 to ip-192-168-19-193.ec2.internal
+  Normal   Pulling    27s (x3 over 66s)  kubelet            Pulling image "rakesharveti/multicloud730am:1.16.0"
+  Warning  Failed     27s (x3 over 66s)  kubelet            Failed to pull image "rakesharveti/multicloud730am:1.16.0": rpc error: code = NotFound desc = failed to pull and unpack image "docker.io/rakesharveti/multicloud730am:1.16.0": failed to resolve reference "docker.io/rakesharveti/multicloud730am:1.16.0": docker.io/rakesharveti/multicloud730am:1.16.0: not found
+  Warning  Failed     27s (x3 over 66s)  kubelet            Error: ErrImagePull
+  Normal   BackOff    12s (x3 over 65s)  kubelet            Back-off pulling image "rakesharveti/multicloud730am:1.16.0"
+  Warning  Failed     12s (x3 over 65s)  kubelet            Error: ImagePullBackOff
+[ec2-user@ip-172-31-91-93 ~]$ 
+
+
+in deployment .yaml it is showingf as --           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+
+in charrt.yaml this is the data -- appVersion: "1.16.0"
+
+
+ujpdate deployment yaml to this values 
+
+          image: "{{ .Values.image.repository }}"
+
+
+
+
+
+I have to try updating image ,port,liveiness probe to be commented in project and see if the required pod is up or not this is gthe task we need to follow and also check this task 
+
+Mainly need to explore how helm is used in realtime enterprise 
+
+when you push helm files helm will run kubectl apply not argo cd apply kubectgl 
+
+
+so when pished automatiucally 
+
+source path you need to give valuesyaml of helm file 
+
+
+in argo cd you can pass diff values and argocd will take values dev yaml 
+
+also you can add paramter block also 
+
+also oveerride indidvisual values with replicas 2 tp 3 
+
+
+so by using we have doifff options in argo cdd by using help
+
+Need to explore more on helm and argocd collabaration and integration how it works and all 
+
+
+=====================
+
+
+In realtime enterprise applications, Helm is mainly used to standardize, automate, version, and manage Kubernetes deployments across environments.
+
+Why Companies Use Helm
+
+Without Helm:
+
+huge YAML files
+duplicate configs
+manual updates
+difficult rollback
+environment mismatch
+
+With Helm:
+
+reusable templates
+parameterized configs
+versioned deployments
+easy upgrades/rollback
+environment-specific values
+Realtime Enterprise Flow
+1. Developer Creates Application
+
+Example:
+
+Java Spring Boot
+NodeJS
+Python
+React frontend
+
+Docker image built:
+
+docker build -t payment-service:v1 .
+
+Push image to:
+
+Amazon Web Services ECR
+Docker Hub
+JFrog Artifactory
+2. Helm Chart Created
+
+Structure:
+
+payment-service/
+│
+├── Chart.yaml
+├── values.yaml
+├── templates/
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   ├── ingress.yaml
+│   ├── hpa.yaml
+│   └── configmap.yaml
+3. Values Files Per Environment
+
+Very important in enterprises.
+
+Dev
+values-dev.yaml
+replicaCount: 1
+image:
+  tag: dev
+QA
+values-qa.yaml
+replicaCount: 2
+image:
+  tag: qa
+Production
+values-prod.yaml
+replicaCount: 10
+autoscaling:
+  enabled: true
+
+Same Helm chart reused everywhere.
+
+4. CI/CD Pipeline Uses Helm
+
+Usually:
+
+Jenkins
+GitHub Actions
+Argo CD
+GitLab
+
+Pipeline flow:
+
+Code Push
+   ↓
+Build Docker Image
+   ↓
+Push to Registry
+   ↓
+Helm Upgrade
+   ↓
+Deploy to Kubernetes
+5. Deployment Command in Realtime
+
+Example:
+
+helm upgrade --install payment-service ./chart \
+-f values-prod.yaml \
+--namespace production
+
+This updates:
+
+deployment
+service
+ingress
+configmaps
+secrets
+autoscaling
+
+all together.
+
+6. Rollback in Production
+
+Very powerful feature.
+
+If deployment fails:
+
+helm rollback payment-service 1
+
+Instant rollback to previous stable version.
+
+Huge advantage in enterprises.
+
+7. Realtime Enterprise Features
+
+Helm manages:
+
+Component	Usage
+Deployment	application pods
+Service	networking
+Ingress	routing
+ConfigMap	configs
+Secret	passwords
+HPA	autoscaling
+PVC	storage
+ServiceAccount	IAM/security
+8. Example Realtime Banking Setup
+
+Imagine banking app:
+
+banking-platform/
+├── payment-service
+├── customer-service
+├── account-service
+├── auth-service
+├── notification-service
+
+Each service:
+
+own Helm chart
+own values
+own namespace
+own pipeline
+9. How Teams Work
+Developers
+update code
+update image tag
+DevOps/SRE
+maintain Helm charts
+manage infra
+deployments
+rollback
+monitoring
+Production Support
+troubleshoot failed releases
+check Helm history
+rollback bad versions
+10. Helm Commands Used Daily
+Install
+helm install app .
+Upgrade
+helm upgrade app .
+Rollback
+helm rollback app 1
+History
+helm history app
+List releases
+helm list
+Realtime Example in Your Current Learning
+
+You are already doing enterprise-style deployment:
+
+Kubernetes cluster
+Docker image
+Helm chart
+values.yaml
+LoadBalancer
+replicas
+probes
+
+This is exactly the base foundation used in companies, just at much larger scale.
+
+Need to explore more on helm and argocd collabaration and integration how it works and all 
+
+Helm + Argo CD integration is one of the most important realtime enterprise DevOps patterns today.
+
+This is the actual architecture many companies use in:
+
+banking
+fintech
+ecommerce
+healthcare
+SaaS platforms
+Big Picture
+
+Helm:
+
+creates Kubernetes manifests dynamically
+
+ArgoCD:
+
+continuously deploys and syncs those manifests from Git
+
+Together:
+
+Helm = packaging/template engine
+ArgoCD = deployment automation/GitOps controller
+Traditional Deployment Problem
+
+Without ArgoCD:
+
+Developer
+   ↓
+Jenkins
+   ↓
+helm upgrade --install
+   ↓
+Kubernetes
+
+Problems:
+
+manual access needed
+kubectl credentials exposed
+drift between Git and cluster
+difficult auditing
+rollback complexity
+Modern GitOps Architecture
+
+With Helm + ArgoCD:
+
+Developer Pushes Code
+        ↓
+Git Repository Updated
+        ↓
+ArgoCD Detects Change
+        ↓
+Helm Templates Rendered
+        ↓
+Kubernetes Updated Automatically
+
+Git becomes:
+
+single source of truth
+Realtime Enterprise Flow
+Step 1 — Application Repo
+
+Example:
+
+payment-service/
+├── src/
+├── Dockerfile
+├── Jenkinsfile
+└── helm/
+Step 2 — CI Pipeline
+
+Usually:
+
+Jenkins
+GitHub Actions
+GitLab
+
+Pipeline:
+
+Code Commit
+   ↓
+Build Docker Image
+   ↓
+Push Image to ECR
+   ↓
+Update Helm values.yaml image tag
+   ↓
+Commit back to Git
+
+Example:
+
+image:
+  repository: company/payment-service
+  tag: v1.4.2
+Step 3 — ArgoCD Watches Git Repo
+
+ArgoCD continuously monitors Git repo.
+
+If Git changes:
+
+Git != Cluster State
+
+ArgoCD syncs automatically.
+
+Step 4 — Helm Rendering Inside ArgoCD
+
+Important concept.
+
+ArgoCD itself runs:
+
+helm template
+
+internally.
+
+It converts:
+
+deployment.yaml
+service.yaml
+ingress.yaml
+
+into actual Kubernetes manifests.
+
+Then applies them.
+
+Realtime ArgoCD Architecture
+GitHub/GitLab
+      ↓
+   ArgoCD
+      ↓
+Helm Chart Rendering
+      ↓
+Kubernetes API Server
+      ↓
+Pods/Services/Ingress
+How Enterprises Structure Repos
+Option 1 — App Repo + Helm Repo
+App Repo
+payment-service-code
+Helm Repo
+payment-service-helm
+
+Most common in enterprises.
+
+Option 2 — Monorepo
+platform-repo/
+├── services/
+├── helm-charts/
+├── environments/
+
+Common in startups.
+
+Realtime ArgoCD Application YAML
+
+Very important.
+
+Example:
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: payment-service
+spec:
+  destination:
+    namespace: production
+    server: https://kubernetes.default.svc
+
+  source:
+    repoURL: https://github.com/company/payment-helm.git
+    targetRevision: HEAD
+    path: .
+
+    helm:
+      valueFiles:
+        - values-prod.yaml
+
+  project: default
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+Important Enterprise Features
+1. Automated Sync
+
+If Git changes:
+
+auto deployment
+
+No manual kubectl needed.
+
+2. Self Heal
+
+If someone manually changes cluster:
+
+kubectl edit deployment
+
+ArgoCD detects drift.
+
+Reverts cluster back to Git state.
+
+Very important in enterprises.
+
+3. Rollback
+
+Rollback by:
+
+Git revert
+or ArgoCD rollback
+
+Very safe deployments.
+
+4. Multi Environment
+
+Same Helm chart:
+
+values-dev.yaml
+values-qa.yaml
+values-prod.yaml
+
+ArgoCD deploys separately.
+
+5. RBAC + Audit
+
+Everything tracked in Git:
+
+who changed
+when changed
+what changed
+
+Huge compliance advantage.
+
+6. Progressive Delivery
+
+Advanced setups use:
+
+Argo Rollouts
+canary deployments
+blue/green deployments
+
+with Helm + ArgoCD.
+
+Realtime Enterprise Example
+
+Imagine:
+
+200 microservices
+10 environments
+100 developers
+
+Without Helm + ArgoCD:
+
+impossible to manage manually
+
+With GitOps:
+
+scalable
+auditable
+automated
+reliable
+Typical Realtime Workflow
+Developer
+
+Updates code.
+
+CI/CD
+
+Builds image:
+
+payment:v2
+
+Updates Helm values:
+
+tag: v2
+
+Pushes to Git.
+
+ArgoCD
+
+Detects Git change:
+
+OutOfSync
+
+Then:
+
+Syncing
+
+Then:
+
+Healthy
+ArgoCD UI Realtime
+
+Shows:
+
+application health
+pod health
+sync status
+deployment history
+manifest diff
+rollback
+logs/events
+
+Very widely used by SRE teams.
+
+Realtime Production Issues You’ll See
+Common Problems
+Problem	Root Cause
+OutOfSync	manual kubectl changes
+ImagePullBackOff	wrong image tag
+Degraded	pods failing
+Sync Failed	bad Helm template
+CrashLoopBackOff	app issue
+Important Enterprise Concepts
+Helm Is NOT Deployment Automation
+
+Helm only:
+
+templates manifests
+packages apps
+
+ArgoCD:
+
+continuously deploys
+reconciles state
+
+This distinction is extremely important.
+
+Best Way for You to Learn
+Phase 1
+
+Learn:
+
+Helm templating
+values.yaml
+chart structure
+Phase 2
+
+Install ArgoCD on EKS.
+
+Phase 3
+
+Connect GitHub repo.
+
+Phase 4
+
+Deploy Helm chart through ArgoCD.
+
+Phase 5
+
+Change values.yaml and watch auto sync.
+
+That is the real enterprise workflow.
+
+
+
+
+
+
