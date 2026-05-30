@@ -2,12 +2,593 @@
 https://medium.com/@veerababu.narni232/deployment-of-prometheus-and-grafana-using-helm-in-eks-cluster-22caee18a872
 
 
-ec2-user@ip-172-31-36-54 ~]$ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-[ec2-user@ip-172-31-36-54 ~]$  chmod 700 get_helm.sh
-[ec2-user@ip-172-31-36-54 ~]$  ./get_helm.sh
+ec2-user@ip-172-31-31-136 ~]$  curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+[ec2-user@ip-172-31-31-136 ~]$ chmod 700 get_helm.sh
+[ec2-user@ip-172-31-31-136 ~]$  ./get_helm.sh
 [WARNING] Could not find git. It is required for plugin installation.
-Downloading https://get.helm.sh/helm-v3.20.2-linux-amd64.tar.gz
+Downloading https://get.helm.sh/helm-v3.21.0-linux-amd64.tar.gz
 Verifying checksum... Done.
 Preparing to install helm into /usr/local/bin
 helm installed into /usr/local/bin/helm
-[ec2-user@ip-172-31-36-54 ~]$ 
+[ec2-user@ip-172-31-31-136 ~]$ helm repo add stable https://charts.helm.sh/stable
+"stable" has been added to your repositories
+[ec2-user@ip-172-31-31-136 ~]$ helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+"prometheus-community" has been added to your repositories
+[ec2-user@ip-172-31-31-136 ~]$ kubectl create namespace prometheus
+-bash: kubectl: command not found
+[ec2-user@ip-172-31-31-136 ~]$ curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+
+chmod +x ./kubectl  
+sudo mv ./kubectl /usr/local/bin/kubectl
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 55060k 100 55060k   0     0 112.1M     0  --:--:-- --:--:-- --:--:-- 112.2M
+[ec2-user@ip-172-31-31-136 ~]$ kubectl create namespace prometheus
+The connection to the server localhost:8080 was refused - did you specify the right host or port?
+[ec2-user@ip-172-31-31-136 ~]$    curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+   sudo mv /tmp/eksctl /usr/local/bin
+   eksctl version
+0.227.0
+[ec2-user@ip-172-31-31-136 ~]$   eksctl create cluster --name test \
+      --region us-east-1 \
+   --node-type t2.medium \
+> 
+2026-05-30 18:18:08 [ℹ]  eksctl version 0.227.0
+2026-05-30 18:18:08 [ℹ]  using region us-east-1
+2026-05-30 18:18:09 [ℹ]  setting availability zones to [us-east-1a us-east-1c]
+2026-05-30 18:18:09 [ℹ]  subnets for us-east-1a - public:192.168.0.0/19 private:192.168.64.0/19
+2026-05-30 18:18:09 [ℹ]  subnets for us-east-1c - public:192.168.32.0/19 private:192.168.96.0/19
+2026-05-30 18:18:09 [ℹ]  nodegroup "ng-1977103e" will use "" [AmazonLinux2023/1.34]
+2026-05-30 18:18:09 [!]  Auto Mode will be enabled by default in an upcoming release of eksctl. This means managed node groups and managed networking add-ons will no longer be created by default. To maintain current behavior, explicitly set 'autoModeConfig.enabled: false' in your cluster configuration. Learn more: https://eksctl.io/usage/auto-mode/
+2026-05-30 18:18:09 [ℹ]  using Kubernetes version 1.34
+2026-05-30 18:18:09 [ℹ]  creating EKS cluster "test" in "us-east-1" region with managed nodes
+2026-05-30 18:18:09 [ℹ]  will create 2 separate CloudFormation stacks for cluster itself and the initial managed nodegroup
+2026-05-30 18:18:09 [ℹ]  if you encounter any issues, check CloudFormation console or try 'eksctl utils describe-stacks --region=us-east-1 --cluster=test'
+2026-05-30 18:18:09 [ℹ]  Kubernetes API endpoint access will use default of {publicAccess=true, privateAccess=false} for cluster "test" in "us-east-1"
+2026-05-30 18:18:09 [ℹ]  CloudWatch logging will not be enabled for cluster "test" in "us-east-1"
+2026-05-30 18:18:09 [ℹ]  you can enable it with 'eksctl utils update-cluster-logging --enable-types={SPECIFY-YOUR-LOG-TYPES-HERE (e.g. all)} --region=us-east-1 --cluster=test'
+2026-05-30 18:18:09 [ℹ]  default addons vpc-cni, kube-proxy, coredns, metrics-server were not specified, will install them as EKS addons
+2026-05-30 18:18:09 [ℹ]  
+2 sequential tasks: { create cluster control plane "test", 
+    2 sequential sub-tasks: { 
+        2 sequential sub-tasks: { 
+            1 task: { create addons },
+            wait for control plane to become ready,
+        },
+        create managed nodegroup "ng-1977103e",
+    } 
+}
+2026-05-30 18:18:09 [ℹ]  building cluster stack "eksctl-test-cluster"
+2026-05-30 18:18:09 [ℹ]  deploying stack "eksctl-test-cluster"
+2026-05-30 18:18:39 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-30 18:19:09 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-30 18:20:09 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-30 18:21:09 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-30 18:22:09 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-30 18:23:09 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-30 18:24:09 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-30 18:25:09 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-30 18:26:09 [ℹ]  waiting for CloudFormation stack "eksctl-test-cluster"
+2026-05-30 18:26:10 [!]  recommended policies were found for "vpc-cni" addon, but since OIDC is disabled on the cluster, eksctl cannot configure the requested permissions; the recommended way to provide IAM permissions for "vpc-cni" addon is via pod identity associations; after addon creation is completed, add all recommended policies to the config file, under `addon.PodIdentityAssociations`, and run `eksctl update addon`
+2026-05-30 18:26:10 [ℹ]  creating addon: vpc-cni
+2026-05-30 18:26:11 [ℹ]  successfully created addon: vpc-cni
+2026-05-30 18:26:11 [ℹ]  creating addon: kube-proxy
+2026-05-30 18:26:12 [ℹ]  successfully created addon: kube-proxy
+2026-05-30 18:26:12 [ℹ]  creating addon: coredns
+2026-05-30 18:26:12 [ℹ]  successfully created addon: coredns
+2026-05-30 18:28:12 [ℹ]  building managed nodegroup stack "eksctl-test-nodegroup-ng-1977103e"
+2026-05-30 18:28:13 [ℹ]  deploying stack "eksctl-test-nodegroup-ng-1977103e"
+2026-05-30 18:28:13 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-1977103e"
+2026-05-30 18:28:43 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-1977103e"
+2026-05-30 18:29:20 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-1977103e"
+2026-05-30 18:31:11 [ℹ]  waiting for CloudFormation stack "eksctl-test-nodegroup-ng-1977103e"
+2026-05-30 18:31:11 [ℹ]  waiting for the control plane to become ready
+2026-05-30 18:31:12 [✔]  saved kubeconfig as "/home/ec2-user/.kube/config"
+2026-05-30 18:31:12 [ℹ]  no tasks
+2026-05-30 18:31:12 [✔]  all EKS cluster resources for "test" have been created
+2026-05-30 18:31:12 [ℹ]  nodegroup "ng-1977103e" has 2 node(s)
+2026-05-30 18:31:12 [ℹ]  node "ip-192-168-27-99.ec2.internal" is ready
+2026-05-30 18:31:12 [ℹ]  node "ip-192-168-37-212.ec2.internal" is ready
+2026-05-30 18:31:12 [ℹ]  waiting for at least 2 node(s) to become ready in "ng-1977103e"
+2026-05-30 18:31:12 [ℹ]  nodegroup "ng-1977103e" has 2 node(s)
+2026-05-30 18:31:12 [ℹ]  node "ip-192-168-27-99.ec2.internal" is ready
+2026-05-30 18:31:12 [ℹ]  node "ip-192-168-37-212.ec2.internal" is ready
+2026-05-30 18:31:12 [✔]  created 1 managed nodegroup(s) in cluster "test"
+2026-05-30 18:31:12 [ℹ]  creating addon: metrics-server
+2026-05-30 18:31:13 [ℹ]  successfully created addon: metrics-server
+2026-05-30 18:31:13 [ℹ]  kubectl command should work with "/home/ec2-user/.kube/config", try 'kubectl get nodes'
+2026-05-30 18:31:13 [✔]  EKS cluster "test" in "us-east-1" region is ready
+[ec2-user@ip-172-31-31-136 ~]$ kubectl create namespace prometheus
+namespace/prometheus created
+[ec2-user@ip-172-31-31-136 ~]$ helm install stable prometheus-community/kube-prometheus-stack -n prometheus
+NAME: stable
+LAST DEPLOYED: Sat May 30 18:31:41 2026
+NAMESPACE: prometheus
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+kube-prometheus-stack has been installed. Check its status by running:
+  kubectl --namespace prometheus get pods -l "release=stable"
+
+Get Grafana 'admin' user password by running:
+
+  kubectl --namespace prometheus get secrets stable-grafana -o jsonpath="{.data.admin-password}" | base64 -d ; echo
+
+Access Grafana local instance:
+
+  export POD_NAME=$(kubectl --namespace prometheus get pod -l "app.kubernetes.io/name=grafana,app.kubernetes.io/instance=stable" -oname)
+  kubectl --namespace prometheus port-forward $POD_NAME 3000
+
+Get your grafana admin user password by running:
+
+  kubectl get secret --namespace prometheus -l app.kubernetes.io/component=admin-secret -o jsonpath="{.items[0].data.admin-password}" | base64 --decode ; echo
+
+
+Visit https://github.com/prometheus-operator/kube-prometheus for instructions on how to create & configure Alertmanager and Prometheus instances using the Operator.
+[ec2-user@ip-172-31-31-136 ~]$ kubectl get all
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.100.0.1   <none>        443/TCP   7m46s
+[ec2-user@ip-172-31-31-136 ~]$ kubectl get pods -A
+NAMESPACE     NAME                                                     READY   STATUS    RESTARTS   AGE
+kube-system   aws-node-c8v4b                                           2/2     Running   0          2m56s
+kube-system   aws-node-vr5rf                                           2/2     Running   0          2m58s
+kube-system   coredns-566b9b9d-5qmf8                                   1/1     Running   0          5m40s
+kube-system   coredns-566b9b9d-7f9cs                                   1/1     Running   0          5m40s
+kube-system   kube-proxy-7rv6f                                         1/1     Running   0          2m56s
+kube-system   kube-proxy-n8v6r                                         1/1     Running   0          2m58s
+kube-system   metrics-server-694dffc97b-f7gd6                          1/1     Running   0          59s
+kube-system   metrics-server-694dffc97b-lj6sq                          1/1     Running   0          59s
+prometheus    alertmanager-stable-kube-prometheus-sta-alertmanager-0   2/2     Running   0          25s
+prometheus    prometheus-stable-kube-prometheus-sta-prometheus-0       1/2     Running   0          24s
+prometheus    stable-grafana-5fc775944f-x49zs                          2/3     Running   0          30s
+prometheus    stable-kube-prometheus-sta-operator-855d788fbc-j9lrq     1/1     Running   0          30s
+prometheus    stable-kube-state-metrics-78f4bbcc95-k49hx               1/1     Running   0          30s
+prometheus    stable-prometheus-node-exporter-2m4d8                    1/1     Running   0          30s
+prometheus    stable-prometheus-node-exporter-jq5kb                    1/1     Running   0          30s
+[ec2-user@ip-172-31-31-136 ~]$ kubectl get svc -n promotheus
+No resources found in promotheus namespace.
+[ec2-user@ip-172-31-31-136 ~]$ kubectl get svc -n prometheus
+NAME                                      TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+alertmanager-operated                     ClusterIP   None             <none>        9093/TCP,9094/TCP,9094/UDP   77s
+prometheus-operated                       ClusterIP   None             <none>        9090/TCP                     76s
+stable-grafana                            ClusterIP   10.100.128.177   <none>        80/TCP                       82s
+stable-kube-prometheus-sta-alertmanager   ClusterIP   10.100.204.151   <none>        9093/TCP,8080/TCP            82s
+stable-kube-prometheus-sta-operator       ClusterIP   10.100.113.43    <none>        443/TCP                      82s
+stable-kube-prometheus-sta-prometheus     ClusterIP   10.100.91.54     <none>        9090/TCP,8080/TCP            82s
+stable-kube-state-metrics                 ClusterIP   10.100.11.112    <none>        8080/TCP                     82s
+stable-prometheus-node-exporter           ClusterIP   10.100.116.204   <none>        9100/TCP                     82s
+[ec2-user@ip-172-31-31-136 ~]$ ls -lrt
+total 12
+-rwx------. 1 ec2-user ec2-user 11929 May 30 18:12 get_helm.sh
+[ec2-user@ip-172-31-31-136 ~]$ kubcetl get svc stable-kube-prometheus-sta-prometheus -n prometheus
+-bash: kubcetl: command not found
+[ec2-user@ip-172-31-31-136 ~]$ kubectl get svc stable-kube-prometheus-sta-prometheus -n prometheus
+NAME                                    TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)             AGE
+stable-kube-prometheus-sta-prometheus   ClusterIP   10.100.91.54   <none>        9090/TCP,8080/TCP   2m48s
+[ec2-user@ip-172-31-31-136 ~]$ kubectl get deployment svc stable-kube-prometheus-sta-prometheus -n prometheus
+Error from server (NotFound): deployments.apps "svc" not found
+Error from server (NotFound): deployments.apps "stable-kube-prometheus-sta-prometheus" not found
+[ec2-user@ip-172-31-31-136 ~]$ kubcetl edit svc stable-kube-prometheus-sta-prometheus -n prometheus
+-bash: kubcetl: command not found
+[ec2-user@ip-172-31-31-136 ~]$ kubectl edit svc stable-kube-prometheus-sta-prometheus -n prometheus
+service/stable-kube-prometheus-sta-prometheus edited
+[ec2-user@ip-172-31-31-136 ~]$ 
+
+  type: ClusterIP
+to
+
+  type: NodePort
+
+
+C2
+Security Groups
+sg-0323499fdbc316b4d - eks-cluster-sg-test-3556498
+Edit inbound rules
+
+Security group rule ID
+Type
+Info
+Protocol
+Info
+Port range
+Info
+Source
+Info
+Description - optional
+Info
+sgr-04c999a1b08eab0a7
+
+All traffic
+All
+All
+
+Custom
+0.0.0.0/0
+
+Delete
+
+add this rule 
+
+
+
+Instance summary for i-0fa49e32f304c555f (test-ng-1977103e-Node) 
+Info -  public ip for above 18.209.51.96
+
+stable-kube-prometheus-sta-prometheus     NodePort    10.100.91.54     <none>        9090:32385/TCP,8080:30864/TCP   9m2s
+
+http://18.209.51.96:32385/query
+
+promotheus dashboard
+
+
+Prometheus
+
+
+Evaluation time
+No data queried yet
+
+
+
+Prometheus
+
+Selection deleted
+100 - (avg by(instance) (
+  rate(node_cpu_seconds_total{mode="idle"}[5m])
+) * 100)
+Evaluation time
+Load time: 461ms   Result series: 2
+
+{instance="192.168.37.212:9100"}	2.2722222222222257
+{instance="192.168.27.99:9100"}	3.7037037037037237
+
+
+stable-grafana                            NodePort    10.100.128.177   <none>        80:30385/TCP                    19m
+
+same changed clusterip to node port
+Grafana also loaded 
+
+http://18.209.51.96:30385/?orgId=1&from=now-6h&to=now&timezone=browser
+
+ec2-user@ip-172-31-31-136 ~]$ kubectl get svc -n prometheus
+NAME                                      TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                         AGE
+alertmanager-operated                     ClusterIP   None             <none>        9093/TCP,9094/TCP,9094/UDP      19m
+prometheus-operated                       ClusterIP   None             <none>        9090/TCP                        19m
+stable-grafana                            NodePort    10.100.128.177   <none>        80:30385/TCP                    19m
+stable-kube-prometheus-sta-alertmanager   ClusterIP   10.100.204.151   <none>        9093/TCP,8080/TCP               19m
+stable-kube-prometheus-sta-operator       ClusterIP   10.100.113.43    <none>        443/TCP                         19m
+stable-kube-prometheus-sta-prometheus     NodePort    10.100.91.54     <none>        9090:32385/TCP,8080:30864/TCP   19m
+stable-kube-state-metrics                 ClusterIP   10.100.11.112    <none>        8080/TCP                        19m
+stable-prometheus-node-exporter           ClusterIP   10.100.116.204   <none>        9100/TCP                        19m
+[ec2-user@ip-172-31-31-136 ~]$ kubectl get secret --namespace prometheus stable-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+T4L62p3UjodZT480HrG2fMy59iBSlI5j8KHyvZ5b
+
+grafana - dahsbord - improt dahsboard ->customized panel give 15760  refer medium blog 
+
+
+\http://18.209.51.96:30385/d/k8s_views_pods/kubernetes-views-pods?orgId=1&from=now-1h&to=now&timezone=browser&var-datasource=prometheus&var-cluster=&var-namespace=kube-system&var-pod=$__all&var-resolution=30s&var-job=kube-state-metrics&refresh=30s
+
+15757 also you can import dashboard
+
+http://18.209.51.96:30385/d/k8s_views_global/kubernetes-views-global?orgId=1&from=now-1h&to=now&timezone=browser&var-datasource=prometheus&var-cluster=&var-resolution=30s&var-job=node-exporter&refresh=30s
+
+below hdashboard loaded
+
+Dashboards
+Kubernetes / Views / Global
+
+Search...
+ctrl+k
+
+
+User avatar
+
+
+Last 15 minutes
+
+
+
+Refresh
+
+30s
+
+Share
+
+
+Edit
+datasource
+Prometheus
+cluster
+resolution
+30s
+job
+node-exporter
+
+terraform
+
+oncall
+
+
+Overview
+Global CPU Usage
+Real
+2.41%
+Real
+Requests
+17.5%
+Real
+Global RAM Usage
+Real
+27.59%
+Requests
+9.46%
+Limits
+14.58%
+Nodes
+2
+Kubernetes Resource Count
+Name	Min	Max	Mean
+Configmaps
+44	44	44
+Running Containers
+21	21	21
+Services
+18	18	18
+Running Pods
+15	15	15
+Secrets
+12	12	12
+Nodes
+2	2	2
+Namespaces
+5
+CPU Usage
+Real
+0.0963
+Real
+0
+Requests
+0.700
+Real
+0
+Real
+0
+Total
+4
+RAM Usage
+Real
+2.11 GiB
+Requests
+740 MiB
+Limits
+1.11 GiB
+Total
+7.64 GiB
+Running Pods
+15
+
+Resources
+Cluster CPU Utilization
+Cluster Memory Utilization
+CPU Utilization by namespace
+Name	Min	Max	Mean
+prometheus
+0.02	0.03	0.03
+kube-system
+0.01	0.01	0.01
+Memory Utilization by namespace
+Name	Min	Max	Mean
+prometheus
+624 MiB	894 MiB	713 MiB
+kube-system
+206 MiB	209 MiB	207 MiB
+CPU Utilization by instance
+Name	Min	Max	Mean
+192.168.27.99:9100
+2.31%	3.38%	2.63%
+192.168.37.212:9100
+1.72%	2.27%	1.85%
+Memory Utilization by instance
+Name	Min	Max	Mean
+192.168.27.99:9100
+1.19 GiB	1.45 GiB	1.28 GiB
+192.168.37.212:9100
+659 MiB	720 MiB	672 MiB
+CPU Throttled seconds by namespace
+No data
+CPU Core Throttled by instance
+No data
+
+Kubernetes
+Kubernetes Pods QoS classes
+Name	Min	Max	Mean
+Total pods
+15	15	15
+Burstable pods
+9	9	9
+BestEffort pods
+6	6	6
+Guaranteed pods
+0	0	0
+Kubernetes Pods Status Reason
+Name	Min	Max	Mean
+Evicted
+0	0	0
+NodeAffinity
+0	0	0
+NodeLost
+0	0	0
+PreemptionByScheduler
+0	0	0
+SchedulingGated
+0	0	0
+Shutdown
+0	0	0
+TerminationByKubelet
+0	0	0
+UnexpectedAdmissionError
+0	0	0
+OOM Events by namespace
+No data
+Container Restarts by namespace
+No data
+
+Network
+Global Network Utilization by device
+Network Saturation - Packets dropped
+Network Received by namespace
+Total Network Received (with all virtual devices) by instance
+Network Received (without loopback) by instance
+Network Received (loopback only) by instance
+
+
+we can also create new dashboard  --> configure  --> new visualtions ->select option code and run the query 
+
+ran queyr 
+
+sum(
+  rate(node_cpu_seconds_total{mode!="idle"}[5m])
+) by (instance)
+
+
+Save dashboard alos as CPU
+
+got to dashvoard under saved dahsboard you will have create new panel 
+
+sum(rate(container_cpu_usage_seconds_total{container!=""}[5m]))
+by (pod)
+
+save the same and 2 dashboard will be visible side bny side 
+
+
+
+http://18.209.51.96:30385/connections/datasources/grafana-pagerduty-datasource
+
+
+http://18.209.51.96:30385/alerting/notifications/receivers/new  like this we can integrated pager duty for alerting as per rules 
+
+2. Define query and alert condition
+Advanced options
+
+Define query and alert condition
+Need help?
+Prometheus logo
+Prometheus
+Options 
+10m to now
+Explain
+
+
+Run queries
+
+
+Metrics browser
+100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+
+Options
+Legend: Auto
+Format: Time series
+Step: auto
+Type: Instant
+Table
+{instance="192.168.27.99:9100"}
+4.06852
+{instance="192.168.37.212:9100"}
+2.46296
+Alert condition
+WHEN QUERY
+
+Is above
+50
+{instance="192.168.27.99:9100"}
+0
+Normal
+{instance="192.168.37.212:9100"}
+0
+Normal
+
+Preview alert rule condition
+
+3. Add folder and labels
+
+
+We can also create pod level cpu and memory related things in aletring rules and setup process with integration tea, 
+
+[ec2-user@ip-172-31-31-136 ~]$ vi pod.yaml
+[ec2-user@ip-172-31-31-136 ~]$ kubcetl apply -f pod.yaml 
+-bash: kubcetl: command not found
+[ec2-user@ip-172-31-31-136 ~]$ kubectl apply -f pod.yaml 
+pod/nginx-pod created
+[ec2-user@ip-172-31-31-136 ~]$ kubectl get pods -A
+NAMESPACE     NAME                                                     READY   STATUS    RESTARTS   AGE
+default       nginx-pod                                                1/1     Running   0          15s
+kube-system   aws-node-c8v4b                                           2/2     Running   0          54m
+kube-system   aws-node-vr5rf                                           2/2     Running   0          54m
+kube-system   coredns-566b9b9d-5qmf8                                   1/1     Running   0          56m
+kube-system   coredns-566b9b9d-7f9cs                                   1/1     Running   0          56m
+kube-system   kube-proxy-7rv6f                                         1/1     Running   0          54m
+kube-system   kube-proxy-n8v6r                                         1/1     Running   0          54m
+kube-system   metrics-server-694dffc97b-f7gd6                          1/1     Running   0          52m
+kube-system   metrics-server-694dffc97b-lj6sq                          1/1     Running   0          52m
+prometheus    alertmanager-stable-kube-prometheus-sta-alertmanager-0   2/2     Running   0          51m
+prometheus    prometheus-stable-kube-prometheus-sta-prometheus-0       2/2     Running   0          51m
+prometheus    stable-grafana-5fc775944f-x49zs                          3/3     Running   0          51m
+prometheus    stable-kube-prometheus-sta-operator-855d788fbc-j9lrq     1/1     Running   0          51m
+prometheus    stable-kube-state-metrics-78f4bbcc95-k49hx               1/1     Running   0          51m
+prometheus    stable-prometheus-node-exporter-2m4d8                    1/1     Running   0          51m
+prometheus    stable-prometheus-node-exporter-jq5kb                    1/1     Running   0          51m
+[ec2-user@ip-172-31-31-136 ~]$ 
+
+we can create rule for default pod also
+
+New alert rule
+
+1. Enter alert rule name
+Enter a name to identify your alert rule.
+Name
+New panel
+
+2. Define query and alert condition
+Advanced options
+
+Define query and alert condition
+Need help?
+Prometheus logo
+Prometheus
+
+Go queryless
+Options 
+5m to now, Min. Interval = 30s
+Explain
+
+
+Run queries
+
+
+Metrics browser
+sum(
+  rate(container_cpu_usage_seconds_total{
+    pod="nginx-pod",
+    container!="POD"
+  }[5m])
+)
+
+Options
+Legend: Auto
+Format: Time series
+Step:
+Type: Instant
+Table
+sum( rate(container_cpu_usage_seconds_total{ pod="nginx-pod", container!="POD" }[5m]) )
+0.00012452
+Alert condition
+WHEN QUERY
+
+Is above
+0
+Series 1
+1
+Firing
+
+Preview alert rule condition
+
