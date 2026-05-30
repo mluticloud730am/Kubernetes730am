@@ -1,0 +1,505 @@
+If we deploy an pod
+
+so pod will take hardaware from ec2 machine 
+
+so how we can say how much limits that pods can take hardware from ec2 machine
+
+so in realtime if we dont add any limits and more hardware may be taken because of any issue or bug so it is not best practise 
+
+So similar to ec2 we have limits of CPU and RAM 
+
+similar way pod should have some limits as to access hardware 
+
+Example 
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+  labels:
+    app: nginx
+spec:
+  containers:
+  - name: nginx
+    image: nginx:latest
+
+    ports:
+    - containerPort: 80
+
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+
+
+so request is when pod starts it can start with maximum of requests given details 
+so when running it can have limits mentioned maxmimum 
+
+
+
+----
+
+[ec2-user@ip-172-31-22-67 ~]$ kubectl describe pod nginx-pod | grep -A5 Limits
+
+kubectl describe pod nginx-pod | grep -A5 Requests
+    Limits:
+      cpu:     500m
+      memory:  512Mi
+    Requests:
+      cpu:        100m
+      memory:     128Mi
+    Requests:
+      cpu:        100m
+      memory:     128Mi
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-gxnjk (ro)
+[ec2-user@ip-172-31-22-67 ~]$ kubectl exec -it nginx-pod -- sh
+# apt update -y
+Get:1 http://deb.debian.org/debian trixie InRelease [140 kB]
+Get:2 http://deb.debian.org/debian trixie-updates InRelease [47.3 kB]
+Get:3 http://deb.debian.org/debian-security trixie-security InRelease [43.4 kB]
+Get:4 http://deb.debian.org/debian trixie/main amd64 Packages [9671 kB]
+Get:5 http://deb.debian.org/debian trixie-updates/main amd64 Packages [5412 B]
+Get:6 http://deb.debian.org/debian-security trixie-security/main amd64 Packages [176 kB]
+Fetched 10.1 MB in 2s (4229 kB/s)                    
+5 packages can be upgraded. Run 'apt list --upgradable' to see them.
+# apt install python
+Package python is not available, but is referred to by another package.
+This may mean that the package is missing, has been obsoleted, or
+is only available from another source
+However the following packages replace it:
+  python-is-python3
+
+
+Error: Package 'python' has no installation candidate
+# apt install python3
+Installing:                     
+  python3
+
+Installing dependencies:
+  libgpm2  libncursesw6  libpython3-stdlib  libpython3.13-minimal  libpython3.13-stdlib  libreadline8t64  media-types  netbase  python3-minimal  python3.13  python3.13-minimal  readline-common
+
+Suggested packages:
+  gpm  python3-doc  python3-tk  python3-venv  python3.13-venv  python3.13-doc  binutils  binfmt-support  readline-doc
+
+Summary:
+  Upgrading: 0, Installing: 13, Removing: 0, Not Upgrading: 5
+  Download size: 6289 kB
+  Space needed: 23.9 MB / 81.1 GB available
+
+Continue? [Y/n] Y
+Get:1 http://deb.debian.org/debian trixie/main amd64 libpython3.13-minimal amd64 3.13.5-2+deb13u2 [862 kB]
+Get:2 http://deb.debian.org/debian trixie/main amd64 python3.13-minimal amd64 3.13.5-2+deb13u2 [2217 kB]
+Get:3 http://deb.debian.org/debian trixie/main amd64 python3-minimal amd64 3.13.5-1 [27.2 kB]
+Get:4 http://deb.debian.org/debian trixie/main amd64 media-types all 13.0.0 [29.3 kB]
+Get:5 http://deb.debian.org/debian trixie/main amd64 netbase all 6.5 [12.4 kB]
+Get:6 http://deb.debian.org/debian trixie/main amd64 libncursesw6 amd64 6.5+20250216-2 [135 kB]
+Get:7 http://deb.debian.org/debian trixie/main amd64 readline-common all 8.2-6 [69.4 kB]
+Get:8 http://deb.debian.org/debian trixie/main amd64 libreadline8t64 amd64 8.2-6 [169 kB]
+Get:9 http://deb.debian.org/debian trixie/main amd64 libpython3.13-stdlib amd64 3.13.5-2+deb13u2 [1958 kB]
+Get:10 http://deb.debian.org/debian trixie/main amd64 python3.13 amd64 3.13.5-2+deb13u2 [757 kB]
+Get:11 http://deb.debian.org/debian trixie/main amd64 libpython3-stdlib amd64 3.13.5-1 [10.2 kB]
+Get:12 http://deb.debian.org/debian trixie/main amd64 python3 amd64 3.13.5-1 [28.2 kB]
+Get:13 http://deb.debian.org/debian trixie/main amd64 libgpm2 amd64 1.20.7-11+b2 [14.4 kB]
+Fetched 6289 kB in 0s (64.7 MB/s)
+debconf: unable to initialize frontend: Dialog
+debconf: (No usable dialog-like program is installed, so the dialog based frontend cannot be used. at /usr/share/perl5/Debconf/FrontEnd/Dialog.pm line 79, <STDIN> line 13.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.40.1 /usr/local/share/perl/5.40.1 /usr/lib/x86_64-linux-gnu/perl5/5.40 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.40 /usr/share/perl/5.40 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8, <STDIN> line 13.)
+debconf: falling back to frontend: Teletype
+Selecting previously unselected package libpython3.13-minimal:amd64.
+(Reading database ... 6706 files and directories currently installed.)
+Preparing to unpack .../libpython3.13-minimal_3.13.5-2+deb13u2_amd64.deb ...
+Unpacking libpython3.13-minimal:amd64 (3.13.5-2+deb13u2) ...
+Selecting previously unselected package python3.13-minimal.
+Preparing to unpack .../python3.13-minimal_3.13.5-2+deb13u2_amd64.deb ...
+Unpacking python3.13-minimal (3.13.5-2+deb13u2) ...
+Setting up libpython3.13-minimal:amd64 (3.13.5-2+deb13u2) ...
+Setting up python3.13-minimal (3.13.5-2+deb13u2) ...
+Selecting previously unselected package python3-minimal.
+(Reading database ... 7031 files and directories currently installed.)
+Preparing to unpack .../0-python3-minimal_3.13.5-1_amd64.deb ...
+Unpacking python3-minimal (3.13.5-1) ...
+Selecting previously unselected package media-types.
+Preparing to unpack .../1-media-types_13.0.0_all.deb ...
+Unpacking media-types (13.0.0) ...
+Selecting previously unselected package netbase.
+Preparing to unpack .../2-netbase_6.5_all.deb ...
+Unpacking netbase (6.5) ...
+Selecting previously unselected package libncursesw6:amd64.
+Preparing to unpack .../3-libncursesw6_6.5+20250216-2_amd64.deb ...
+Unpacking libncursesw6:amd64 (6.5+20250216-2) ...
+Selecting previously unselected package readline-common.
+Preparing to unpack .../4-readline-common_8.2-6_all.deb ...
+Unpacking readline-common (8.2-6) ...
+Selecting previously unselected package libreadline8t64:amd64.
+Preparing to unpack .../5-libreadline8t64_8.2-6_amd64.deb ...
+Adding 'diversion of /lib/x86_64-linux-gnu/libhistory.so.8 to /lib/x86_64-linux-gnu/libhistory.so.8.usr-is-merged by libreadline8t64'
+Adding 'diversion of /lib/x86_64-linux-gnu/libhistory.so.8.2 to /lib/x86_64-linux-gnu/libhistory.so.8.2.usr-is-merged by libreadline8t64'
+Adding 'diversion of /lib/x86_64-linux-gnu/libreadline.so.8 to /lib/x86_64-linux-gnu/libreadline.so.8.usr-is-merged by libreadline8t64'
+Adding 'diversion of /lib/x86_64-linux-gnu/libreadline.so.8.2 to /lib/x86_64-linux-gnu/libreadline.so.8.2.usr-is-merged by libreadline8t64'
+Unpacking libreadline8t64:amd64 (8.2-6) ...
+Selecting previously unselected package libpython3.13-stdlib:amd64.
+Preparing to unpack .../6-libpython3.13-stdlib_3.13.5-2+deb13u2_amd64.deb ...
+Unpacking libpython3.13-stdlib:amd64 (3.13.5-2+deb13u2) ...
+Selecting previously unselected package python3.13.
+Preparing to unpack .../7-python3.13_3.13.5-2+deb13u2_amd64.deb ...
+Unpacking python3.13 (3.13.5-2+deb13u2) ...
+Selecting previously unselected package libpython3-stdlib:amd64.
+Preparing to unpack .../8-libpython3-stdlib_3.13.5-1_amd64.deb ...
+Unpacking libpython3-stdlib:amd64 (3.13.5-1) ...
+Setting up python3-minimal (3.13.5-1) ...
+Selecting previously unselected package python3.
+(Reading database ... 7533 files and directories currently installed.)
+Preparing to unpack .../python3_3.13.5-1_amd64.deb ...
+Unpacking python3 (3.13.5-1) ...
+Selecting previously unselected package libgpm2:amd64.
+Preparing to unpack .../libgpm2_1.20.7-11+b2_amd64.deb ...
+Unpacking libgpm2:amd64 (1.20.7-11+b2) ...
+Setting up media-types (13.0.0) ...
+Setting up libgpm2:amd64 (1.20.7-11+b2) ...
+Setting up libncursesw6:amd64 (6.5+20250216-2) ...
+Setting up netbase (6.5) ...
+Setting up readline-common (8.2-6) ...
+Setting up libreadline8t64:amd64 (8.2-6) ...
+Setting up libpython3.13-stdlib:amd64 (3.13.5-2+deb13u2) ...
+Setting up libpython3-stdlib:amd64 (3.13.5-1) ...
+Setting up python3.13 (3.13.5-2+deb13u2) ...
+Setting up python3 (3.13.5-1) ...
+running python rtupdate hooks for python3.13...
+running python post-rtupdate hooks for python3.13...
+Processing triggers for libc-bin (2.41-12+deb13u3) ...
+# hostname
+nginx-pod
+# date
+Sat May 30 07:45:53 UTC 2026
+# exit
+[ec2-user@ip-172-31-22-67 ~]$ kubectl top pods
+NAME        CPU(cores)   MEMORY(bytes)   
+nginx-pod   236m         35Mi            
+[ec2-user@ip-172-31-22-67 ~]$ kubectl top pods
+NAME        CPU(cores)   MEMORY(bytes)   
+nginx-pod   1m           35Mi            
+[ec2-user@ip-172-31-22-67 ~]$ kubectl top pods
+NAME        CPU(cores)   MEMORY(bytes)   
+nginx-pod   1m           35Mi            
+[ec2-user@ip-172-31-22-67 ~]$ kubectl top pods
+\NAME        CPU(cores)   MEMORY(bytes)   
+nginx-pod   0m           35Mi            
+[ec2-user@ip-172-31-22-67 ~]$ kubectl top pods
+NAME        CPU(cores)   MEMORY(bytes)   
+nginx-pod   0m           35Mi            
+[ec2-user@ip-172-31-22-67 ~]$ 
+
+------------------------------------------------------------
+ec2-user@ip-172-31-22-67 ~]$ kubectl exec -it nginx-pod -- sh
+# for i in $(seq 1 8); do while true; do :; done & done
+# 
+
+[ec2-user@ip-172-31-22-67 ~]$ kubectl top pods
+NAME        CPU(cores)   MEMORY(bytes)   
+nginx-pod   0m           35Mi            
+[ec2-user@ip-172-31-22-67 ~]$ kubectl top pods
+NAME        CPU(cores)   MEMORY(bytes)   
+nginx-pod   183m         36Mi            
+[ec2-user@ip-172-31-22-67 ~]$ kubectl top pods
+NAME        CPU(cores)   MEMORY(bytes)   
+nginx-pod   183m         36Mi            
+[ec2-user@ip-172-31-22-67 ~]$ kubectl top pods
+NAME        CPU(cores)   MEMORY(bytes)   
+nginx-pod   183m         36Mi            
+[ec2-user@ip-172-31-22-67 ~]$ 
+
+
+================================
+
+
+Claude finished the responseYou said: want indepth undertsanding of this kuberneteswant indepth undertsanding of this kubernetes CPU = Speed of doing workMemory = Space to hold dataCPU full → Slow applicationMemory full → Application killed and restartedhow in real time cpu and memory actually differ from each other while pod runs how ir calculates and all pleas egive me realtime scanrio with industry standard explantion1:42 PMClaude responded: Now let me build a comprehensive interactive widget on this topic.Now let me build a comprehensive interactive widget on this topic.
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.25s;
+    animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+  }
+VvisualizeVvisualize show_widgetHere's the full conceptual breakdown alongside that interactive widget.
+
+The core distinction that matters in production
+CPU and memory are fundamentally different types of resources, and Kubernetes treats them completely differently at the kernel level.
+CPU is time-based. The Linux CFS (Completely Fair Scheduler) gives your container a quota window — for example, 50ms of CPU time every 100ms. If your app burns through that 50ms in 20ms, it gets forced to sleep for the remaining 80ms and wakes up on the next window. Nothing dies. The app just slows down. This is why CPU problems show up as latency spikes and increased response times, not crashes.
+Memory is space-based. The kernel tracks your container's RSS (Resident Set Size) against a hard ceiling set by cgroup's memory.limit_in_bytes. The moment you exceed it by even one byte, the OOM Killer fires a SIGKILL (exit code 137) — no warning, no grace period. The process dies instantly. This is why memory problems show up as OOMKilled in kubectl describe pod.
+
+The throttle trap — the most underdiagnosed problem
+The most common misunderstanding in production: a pod can be heavily throttled even when CPU usage looks "normal." If your limit is set too tight relative to your request, every request spike causes the kernel to throttle your process, but kubectl top pods might show 60% CPU and look fine. You must monitor container_cpu_cfs_throttled_seconds_total in Prometheus to see the real picture.
+
+For your Java/Spring Boot apps specifically
+JVM is memory-hungry at startup (class loading, JIT compilation). Always set your memory limit at least 1.3–1.5× your -Xmx value, because JVM off-heap (metaspace, native memory, GC overhead) sits outside the heap but inside the cgroup limit. A common production bug: -Xmx512m with a 512Mi Kubernetes limit → OOMKilled every time.
+Use the simulator to walk through each scenario — the OOM Kill and Memory Leak scenarios directly mirror what you'd see in a real Java or Node.js service in a production cluster.You said: ec2-user@ip-172-31-22-67 ~]$ kubectl describe pod nginx-pod | grep -A5 Limits[ec2-user@ip-172-31-22-67 ~]$ kubectl top pods
+NAME        CPU(cores)   MEMORY(bytes)   
+nginx-pod   0m           35Mi            
+[ec2-user@ip-172-31-22-67 ~]$ kubectl top pods
+NAME        CPU(cores)   MEMORY(bytes)   
+nginx-pod   0m           35Mi            
+[ec2-user@ip-172-31-22-67 ~]$ kupastedec2-user@ip-172-31-22-67 ~]$ kubectl describe pod nginx-pod | grep -A5 Limits
+kubectl describe pod nginx-pod | grep -A5 Requests
+    Limits:
+      cpu:     500m
+      memory:  512Mi
+    Requests:
+      cpu:        100m
+      memory:     128Mi
+    Requests:
+      cpu:        100m
+      memory:     128Mi
+    Environment:  <none>
+    Mounts:
+      /var/run/secShow more1:50 PMClaude responded: This is a goldmine of real lab data.This is a goldmine of real lab data. Let me map every single observation from your terminal to the theory — this is exactly how you build deep understanding.
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.25s;
+    animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+  }
+VvisualizeVvisualize show_widgetEvery phase of your lab is explained in that widget — click each phase header to expand/collapse it.
+Here are a few things worth highlighting that go beyond what's in the widget:
+Why CPU showed exactly ~500m, not 450m or 600m
+The CFS scheduler enforces the quota so precisely that your usage consistently reported 499–503m. That tiny fluctuation is just the metrics-server sampling window not perfectly aligning with the CFS period. You're seeing the ceiling enforced in real time — the kernel literally stops the process when it hits the quota, which is why you never see sustained 600m or 700m readings.
+Why memory jumped in large discrete steps (35 → 208 → 345 → 511)
+That's the stress tool's allocation strategy. It allocates memory in large chunks (typically 256MB blocks), not gradually. The kernel maps those pages lazily — they only show in RSS when actually touched (written to). So each jump in your kubectl top output corresponds to a new chunk being written. This is also why memory appears to "teleport" rather than creep up linearly.
+The most important thing your restartCount=0 tells you
+In a real incident, the first question you ask is: "did the pod restart?" If restartCount > 0, it's almost certainly a memory problem — OOMKill. If restartCount stays at 0 but users complain of slowness, it's a CPU throttle problem. Your entire lab session had restartCount=0 with CPU maxed — perfect demonstration of that diagnostic rule.
+The watch kubectl top pods command — since kubectl top doesn't support -w, the right command is exactly what you tried at the end: watch kubectl top pods (runs it every 2 seconds). This is standard practice in your CloudOps toolkit.
+
+
+
+=====================
+
+also waht is the major differnce of limits and requestes kubernetes
+
+1:59 PM
+Great question — this is one of the most important concepts to get crystal clear. Let me give you a precise, real-world explanation.
+
+
+
+Click through the four node scenarios in the widget — especially "Overcommitted" and "No limits set" to see how dangerous misconfiguration looks.
+
+The single most important mental model to lock in is this: request and limit are answered by two completely different systems at two completely different times.
+
+Request is answered by kube-scheduler — a Kubernetes component — at pod placement time. Once the pod lands on a node, the scheduler is done. It never looks at the pod again.
+
+Limit is answered by the Linux kernel — via cgroups — every millisecond the container runs. Kubernetes just translates your YAML number into a kernel cgroup setting when the pod starts. After that, Kubernetes steps back and the kernel takes over.
+
+This is why in your lab the pod could run at 500m CPU (the limit) for 15 minutes even though the request was only 100m. The scheduler used 100m when booking the node. The kernel enforced 500m as the ceiling while the pod was alive. Two separate concerns, two separate actors.
+
+The other thing worth burning into memory: never set limits lower than requests. Kubernetes will accept it but the pod will be throttled or OOMKilled immediately on startup, before it even serves its first request. Limits must always be ≥ requests.
+
+
+=====
+
+
+=================================
+
+
+Probes are 3 types 
+
+1.Startup probe  /app -- Pod restart immediatly after mutliple times pod enter in crashloop backoff error 
+
+
+[ec2-user@ip-172-31-22-67 ~]$ kubectl get pods
+NAME                 READY   STATUS    RESTARTS   AGE
+nginx-startup-only   0/1     Running   0          37s
+[ec2-user@ip-172-31-22-67 ~]$ kubectl get pods
+NAME                 READY   STATUS    RESTARTS   AGE
+nginx-startup-only   0/1     Running   0          43s
+[ec2-user@ip-172-31-22-67 ~]$ kubectl get pods
+NAME                 READY   STATUS    RESTARTS   AGE
+nginx-startup-only   0/1     Running   0          61s
+[ec2-user@ip-172-31-22-67 ~]$ kubectl describe pod nginx-startup-only
+Name:             nginx-startup-only
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             ip-192-168-57-72.ec2.internal/192.168.57.72
+Start Time:       Sat, 30 May 2026 08:39:12 +0000
+Labels:           <none>
+Annotations:      <none>
+Status:           Running
+IP:               192.168.62.225
+IPs:
+  IP:  192.168.62.225
+Containers:
+  nginx:
+    Container ID:  containerd://a4ad5aa36016a9cc234fff0a803aa8bdf8d4e0992ecd549f29a136fb01567221
+    Image:         nginx:latest
+    Image ID:      docker.io/library/nginx@sha256:5aca99593157f4ae539a5dec1092a0ad8762f8e2eb1789085a13a0f5622369f6
+    Port:          80/TCP
+    Host Port:     0/TCP
+    Command:
+      sh
+      -c
+      sleep 40 && nginx -g 'daemon off;'
+    State:          Running
+      Started:      Sat, 30 May 2026 08:39:13 +0000
+    Ready:          False
+    Restart Count:  0
+    Startup:        http-get http://:80/test delay=0s timeout=1s period=5s #success=1 #failure=12
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-q2v4g (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       False 
+  ContainersReady             False 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-q2v4g:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age                From               Message
+  ----     ------     ----               ----               -------
+  Normal   Scheduled  72s                default-scheduler  Successfully assigned default/nginx-startup-only to ip-192-168-57-72.ec2.internal
+  Normal   Pulling    71s                kubelet            Pulling image "nginx:latest"
+  Normal   Pulled     71s                kubelet            Successfully pulled image "nginx:latest" in 142ms (142ms including waiting). Image size: 63120520 bytes.
+  Normal   Created    71s                kubelet            Created container: nginx
+  Normal   Started    71s                kubelet            Started container nginx
+  Warning  Unhealthy  32s (x8 over 67s)  kubelet            Startup probe failed: Get "http://192.168.62.225:80/test": dial tcp 192.168.62.225:80: connect: connection refused
+  Warning  Unhealthy  12s (x4 over 27s)  kubelet            Startup probe failed: HTTP probe failed with statuscode: 404
+  Normal   Killing    12s                kubelet            Container nginx failed startup probe, will be restarted
+[ec2-user@ip-172-31-22-67 ~]$ cat pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-startup-only
+spec:
+  containers:
+  - name: nginx
+    image: nginx:latest
+    command: ["sh", "-c", "sleep 40 && nginx -g 'daemon off;'"]
+    ports:
+    - containerPort: 80
+    startupProbe:
+      httpGet:
+        path: /test
+        port: 80
+      failureThreshold: 12    # allow 12 failures
+      periodSeconds: 5        # check every 5s (10 x 5 = 50s total grace time)
+[ec2-user@ip-172-31-22-67 ~]$ 
+
+
+
+[ec2-user@ip-172-31-22-67 ~]$ kubectl get pods
+NAME                 READY   STATUS    RESTARTS      AGE
+nginx-startup-only   0/1     Running   1 (43s ago)   2m13s
+[ec2-user@ip-172-31-22-67 ~]$ 
+
+
+2. readines probe 
+
+
+if rediness probe failed service will be disconnected 
+
+you can check handson like no end points connected 
+
+you can verify in SVC 
+
+
+3. Liveliness probe
+
+works when pod is running 
+
+pod will restart for liveless probe issue also 
+
+so when pod is running when any db connections nto established and all
+
+
+ec2-user@ip-172-31-22-67 ~]$ kubectl describe pod nginx-startup-liveiness
+Name:             nginx-startup-liveiness
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             ip-192-168-32-48.ec2.internal/192.168.32.48
+Start Time:       Sat, 30 May 2026 09:01:26 +0000
+Labels:           app=nginx-startup-liveiness
+Annotations:      <none>
+Status:           Running
+IP:               192.168.49.238
+IPs:
+  IP:  192.168.49.238
+Containers:
+  nginx:
+    Container ID:  containerd://86bebd2243c4103245191fbdc477a3a8cd9d9d694d8828d8955a5af625113860
+    Image:         nginx:latest
+    Image ID:      docker.io/library/nginx@sha256:5aca99593157f4ae539a5dec1092a0ad8762f8e2eb1789085a13a0f5622369f6
+    Port:          80/TCP
+    Host Port:     0/TCP
+    Command:
+      sh
+      -c
+      nginx -g 'daemon off;'
+    State:          Running
+      Started:      Sat, 30 May 2026 09:01:30 +0000
+    Ready:          False
+    Restart Count:  0
+    Liveness:       http-get http://:80/ delay=10s timeout=1s period=10s #success=1 #failure=3
+    Readiness:      http-get http://:80/ delay=5s timeout=1s period=5s #success=1 #failure=3
+    Startup:        http-get http://:80/te delay=0s timeout=1s period=5s #success=1 #failure=12
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-k76hm (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       False 
+  ContainersReady             False 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-k76hm:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age                From               Message
+  ----     ------     ----               ----               -------
+  Normal   Scheduled  61s                default-scheduler  Successfully assigned default/nginx-startup-liveiness to ip-192-168-32-48.ec2.internal
+  Normal   Pulling    62s                kubelet            Pulling image "nginx:latest"
+  Normal   Pulled     58s                kubelet            Successfully pulled image "nginx:latest" in 3.508s (3.508s including waiting). Image size: 63120520 bytes.
+  Normal   Created    58s                kubelet            Created container: nginx
+  Normal   Started    58s                kubelet            Started container nginx
+  Warning  Unhealthy  2s (x12 over 57s)  kubelet            Startup probe failed: HTTP probe failed with statuscode: 404
+  Normal   Killing    2s                 kubelet            Container nginx failed startup probe, will be restarted
+[ec2-user@ip-172-31-22-67 ~]$ kubectl get pods
+NAME                      READY   STATUS             RESTARTS        AGE
+nginx-startup-liveiness   0/1     Running            0               77s
+nginx-startup-only        0/1     CrashLoopBackOff   9 (41s ago)     23m
+nginx-startup-readiness   0/1     Running            7 (3m49s ago)   14m
+[ec2-user@ip-172-31-22-67 ~]$ 
+
+Refer the notes 
+https://github.com/CloudTechDevOps/Kubernetes-0730/blob/main/Day-1-Intro-installations/Notes
+
+
+need to practise handson more on probes concept 
+
+
+
