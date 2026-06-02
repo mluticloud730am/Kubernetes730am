@@ -1,0 +1,1848 @@
+Go until 1035 line 
+
+This is executed -https://github.com/mluticloud730am/Kubernetes-07301/blob/main/Day-8-Terraform-EKS/main.tf
+
++ resource "aws_route_table" "private" {
+      + arn              = (known after apply)
+      + id               = (known after apply)
+      + owner_id         = (known after apply)
+      + propagating_vgws = (known after apply)
+      + route            = [
+          + {
+              + cidr_block                 = "0.0.0.0/0"
+              + nat_gateway_id             = (known after apply)
+                # (11 unchanged attributes hidden)
+            },
+        ]
+      + tags_all         = (known after apply)
+      + vpc_id           = (known after apply)
+    }
+
+  # aws_route_table.public will be created
+  + resource "aws_route_table" "public" {
+      + arn              = (known after apply)
+      + id               = (known after apply)
+      + owner_id         = (known after apply)
+      + propagating_vgws = (known after apply)
+      + route            = [
+          + {
+              + cidr_block                 = "0.0.0.0/0"
+              + gateway_id                 = (known after apply)
+                # (11 unchanged attributes hidden)
+            },
+        ]
+      + tags_all         = (known after apply)
+      + vpc_id           = (known after apply)
+    }
+
+  # aws_route_table_association.priv1 will be created
+  + resource "aws_route_table_association" "priv1" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # aws_route_table_association.priv2 will be created
+  + resource "aws_route_table_association" "priv2" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # aws_route_table_association.pub1 will be created
+  + resource "aws_route_table_association" "pub1" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # aws_route_table_association.pub2 will be created
+  + resource "aws_route_table_association" "pub2" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # aws_security_group.allow_all will be created
+  + resource "aws_security_group" "allow_all" {
+      + arn                    = (known after apply)
+      + description            = "Allow all inbound and outbound traffic"
+      + egress                 = [
+          + {
+              + cidr_blocks      = [
+                  + "0.0.0.0/0",
+                ]
+              + description      = "Allow all outbound"
+              + from_port        = 0
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "-1"
+              + security_groups  = []
+              + self             = false
+              + to_port          = 0
+            },
+        ]
+      + id                     = (known after apply)
+      + ingress                = [
+          + {
+              + cidr_blocks      = [
+                  + "0.0.0.0/0",
+                ]
+              + description      = "Allow all inbound"
+              + from_port        = 0
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "-1"
+              + security_groups  = []
+              + self             = false
+              + to_port          = 0
+            },
+        ]
+      + name                   = "allow-all-sg"
+      + name_prefix            = (known after apply)
+      + owner_id               = (known after apply)
+      + revoke_rules_on_delete = false
+      + tags                   = {
+          + "Name" = "allow-all-sg"
+        }
+      + tags_all               = {
+          + "Name" = "allow-all-sg"
+        }
+      + vpc_id                 = (known after apply)
+    }
+
+  # aws_subnet.private1 will be created
+  + resource "aws_subnet" "private1" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "us-east-1a"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.3.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = false
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags_all                                       = (known after apply)
+      + vpc_id                                         = (known after apply)
+    }
+
+  # aws_subnet.private2 will be created
+  + resource "aws_subnet" "private2" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "us-east-1b"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.4.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = false
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags_all                                       = (known after apply)
+      + vpc_id                                         = (known after apply)
+    }
+
+  # aws_subnet.public1 will be created
+  + resource "aws_subnet" "public1" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "us-east-1a"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.1.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = true
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags_all                                       = (known after apply)
+      + vpc_id                                         = (known after apply)
+    }
+
+  # aws_subnet.public2 will be created
+  + resource "aws_subnet" "public2" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "us-east-1b"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.2.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = true
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags_all                                       = (known after apply)
+      + vpc_id                                         = (known after apply)
+    }
+
+  # aws_vpc.eks_vpc will be created
+  + resource "aws_vpc" "eks_vpc" {
+      + arn                                  = (known after apply)
+      + cidr_block                           = "10.0.0.0/16"
+      + default_network_acl_id               = (known after apply)
+      + default_route_table_id               = (known after apply)
+      + default_security_group_id            = (known after apply)
+      + dhcp_options_id                      = (known after apply)
+      + enable_dns_hostnames                 = true
+      + enable_dns_support                   = true
+      + enable_network_address_usage_metrics = (known after apply)
+      + id                                   = (known after apply)
+      + instance_tenancy                     = "default"
+      + ipv6_association_id                  = (known after apply)
+      + ipv6_cidr_block                      = (known after apply)
+      + ipv6_cidr_block_network_border_group = (known after apply)
+      + main_route_table_id                  = (known after apply)
+      + owner_id                             = (known after apply)
+      + tags                                 = {
+          + "Name" = "eks-vpc"
+        }
+      + tags_all                             = {
+          + "Name" = "eks-vpc"
+        }
+    }
+
+Plan: 32 to add, 0 to change, 0 to destroy.
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+Note: You didn't use the -out option to save this plan, so Terraform can't guarantee to take exactly these actions if you run "terraform apply" now.
+
+Admin@DESKTOP-FGF7R1H MINGW64 ~/Kubernetes-07301/Day-8-Terraform-EKS (main)
+$ tearrform apply --auto-approve
+bash: tearrform: command not found
+
+Admin@DESKTOP-FGF7R1H MINGW64 ~/Kubernetes-07301/Day-8-Terraform-EKS (main)
+$ terraform apply --auto-approve
+
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # aws_eip.nat will be created
+  + resource "aws_eip" "nat" {
+      + allocation_id        = (known after apply)
+      + arn                  = (known after apply)
+      + association_id       = (known after apply)
+      + carrier_ip           = (known after apply)
+      + customer_owned_ip    = (known after apply)
+      + domain               = "vpc"
+      + id                   = (known after apply)
+      + instance             = (known after apply)
+      + ipam_pool_id         = (known after apply)
+      + network_border_group = (known after apply)
+      + network_interface    = (known after apply)
+      + private_dns          = (known after apply)
+      + private_ip           = (known after apply)
+      + ptr_record           = (known after apply)
+      + public_dns           = (known after apply)
+      + public_ip            = (known after apply)
+      + public_ipv4_pool     = (known after apply)
+      + tags_all             = (known after apply)
+      + vpc                  = (known after apply)
+    }
+
+  # aws_eks_addon.coredns will be created
+  + resource "aws_eks_addon" "coredns" {
+      + addon_name                  = "coredns"
+      + addon_version               = (known after apply)
+      + arn                         = (known after apply)
+      + cluster_name                = "naresh"
+      + configuration_values        = (known after apply)
+      + created_at                  = (known after apply)
+      + id                          = (known after apply)
+      + modified_at                 = (known after apply)
+      + resolve_conflicts_on_update = "OVERWRITE"
+      + tags_all                    = (known after apply)
+    }
+
+  # aws_eks_addon.ebs_csi will be created
+  + resource "aws_eks_addon" "ebs_csi" {
+      + addon_name                  = "aws-ebs-csi-driver"
+      + addon_version               = (known after apply)
+      + arn                         = (known after apply)
+      + cluster_name                = "naresh"
+      + configuration_values        = (known after apply)
+      + created_at                  = (known after apply)
+      + id                          = (known after apply)
+      + modified_at                 = (known after apply)
+      + resolve_conflicts_on_update = "OVERWRITE"
+      + tags_all                    = (known after apply)
+    }
+
+  # aws_eks_addon.kube_proxy will be created
+  + resource "aws_eks_addon" "kube_proxy" {
+      + addon_name                  = "kube-proxy"
+      + addon_version               = (known after apply)
+      + arn                         = (known after apply)
+      + cluster_name                = "naresh"
+      + configuration_values        = (known after apply)
+      + created_at                  = (known after apply)
+      + id                          = (known after apply)
+      + modified_at                 = (known after apply)
+      + resolve_conflicts_on_update = "OVERWRITE"
+      + tags_all                    = (known after apply)
+    }
+
+  # aws_eks_addon.pod_identity will be created
+  + resource "aws_eks_addon" "pod_identity" {
+      + addon_name                  = "eks-pod-identity-agent"
+      + addon_version               = (known after apply)
+      + arn                         = (known after apply)
+      + cluster_name                = "naresh"
+      + configuration_values        = (known after apply)
+      + created_at                  = (known after apply)
+      + id                          = (known after apply)
+      + modified_at                 = (known after apply)
+      + resolve_conflicts_on_update = "OVERWRITE"
+      + tags_all                    = (known after apply)
+    }
+
+  # aws_eks_addon.vpc_cni will be created
+  + resource "aws_eks_addon" "vpc_cni" {
+      + addon_name                  = "vpc-cni"
+      + addon_version               = (known after apply)
+      + arn                         = (known after apply)
+      + cluster_name                = "naresh"
+      + configuration_values        = (known after apply)
+      + created_at                  = (known after apply)
+      + id                          = (known after apply)
+      + modified_at                 = (known after apply)
+      + resolve_conflicts_on_update = "OVERWRITE"
+      + tags_all                    = (known after apply)
+    }
+
+  # aws_eks_cluster.eks will be created
+  + resource "aws_eks_cluster" "eks" {
+      + arn                           = (known after apply)
+      + bootstrap_self_managed_addons = true
+      + certificate_authority         = (known after apply)
+      + cluster_id                    = (known after apply)
+      + created_at                    = (known after apply)
+      + endpoint                      = (known after apply)
+      + id                            = (known after apply)
+      + identity                      = (known after apply)
+      + name                          = "naresh"
+      + platform_version              = (known after apply)
+      + role_arn                      = (known after apply)
+      + status                        = (known after apply)
+      + tags_all                      = (known after apply)
+      + version                       = "1.35"
+
+      + access_config (known after apply)
+
+      + kubernetes_network_config (known after apply)
+
+      + upgrade_policy (known after apply)
+
+      + vpc_config {
+          + cluster_security_group_id = (known after apply)
+          + endpoint_private_access   = false
+          + endpoint_public_access    = true
+          + public_access_cidrs       = (known after apply)
+          + subnet_ids                = (known after apply)
+          + vpc_id                    = (known after apply)
+        }
+    }
+
+  # aws_eks_node_group.node_group will be created
+  + resource "aws_eks_node_group" "node_group" {
+      + ami_type               = (known after apply)
+      + arn                    = (known after apply)
+      + capacity_type          = (known after apply)
+      + cluster_name           = "naresh"
+      + disk_size              = (known after apply)
+      + id                     = (known after apply)
+      + instance_types         = [
+          + "t2.medium",
+        ]
+      + node_group_name        = "eks-node-group"
+      + node_group_name_prefix = (known after apply)
+      + node_role_arn          = (known after apply)
+      + release_version        = (known after apply)
+      + resources              = (known after apply)
+      + status                 = (known after apply)
+      + subnet_ids             = (known after apply)
+      + tags                   = {
+          + "Environment" = "dev"
+          + "Name"        = "eks-node"
+          + "Owner"       = "veeraops"
+          + "Project"     = "eks-project"
+        }
+      + tags_all               = {
+          + "Environment" = "dev"
+          + "Name"        = "eks-node"
+          + "Owner"       = "veeraops"
+          + "Project"     = "eks-project"
+        }
+      + version                = "1.35"
+
+      + node_repair_config (known after apply)
+
+      + scaling_config {
+          + desired_size = 6
+          + max_size     = 8
+          + min_size     = 4
+        }
+
+      + update_config (known after apply)
+    }
+
+  # aws_eks_pod_identity_association.ebs_csi will be created
+  + resource "aws_eks_pod_identity_association" "ebs_csi" {
+      + association_arn = (known after apply)
+      + association_id  = (known after apply)
+      + cluster_name    = "naresh"
+      + id              = (known after apply)
+      + namespace       = "kube-system"
+      + role_arn        = (known after apply)
+      + service_account = "ebs-csi-controller-sa"
+      + tags_all        = {}
+    }
+
+  # aws_iam_role.cluster_role will be created
+  + resource "aws_iam_role" "cluster_role" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "eks.amazonaws.com"
+                        }
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "eks-cluster-role"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags_all              = (known after apply)
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # aws_iam_role.ebs_csi_role will be created
+  + resource "aws_iam_role" "ebs_csi_role" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = [
+                          + "sts:AssumeRole",
+                          + "sts:TagSession",
+                        ]
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "pods.eks.amazonaws.com"
+                        }
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "AmazonEKS_EBS_CSI_DriverRole"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags_all              = (known after apply)
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # aws_iam_role.worker_role will be created
+  + resource "aws_iam_role" "worker_role" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "ec2.amazonaws.com"
+                        }
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "eks-worker-role"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags_all              = (known after apply)
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # aws_iam_role_policy_attachment.cluster_policy will be created
+  + resource "aws_iam_role_policy_attachment" "cluster_policy" {
+      + id         = (known after apply)
+      + policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+      + role       = "eks-cluster-role"
+    }
+
+  # aws_iam_role_policy_attachment.cni will be created
+  + resource "aws_iam_role_policy_attachment" "cni" {
+      + id         = (known after apply)
+      + policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+      + role       = "eks-worker-role"
+    }
+
+  # aws_iam_role_policy_attachment.ebs_csi_policy will be created
+  + resource "aws_iam_role_policy_attachment" "ebs_csi_policy" {
+      + id         = (known after apply)
+      + policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+      + role       = "AmazonEKS_EBS_CSI_DriverRole"
+    }
+
+  # aws_iam_role_policy_attachment.ecr will be created
+  + resource "aws_iam_role_policy_attachment" "ecr" {
+      + id         = (known after apply)
+      + policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+      + role       = "eks-worker-role"
+    }
+
+  # aws_iam_role_policy_attachment.worker_node will be created
+  + resource "aws_iam_role_policy_attachment" "worker_node" {
+      + id         = (known after apply)
+      + policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+      + role       = "eks-worker-role"
+    }
+
+  # aws_instance.eks will be created
+  + resource "aws_instance" "eks" {
+      + ami                                  = "ami-02dfbd4ff395f2a1b"
+      + arn                                  = (known after apply)
+      + associate_public_ip_address          = (known after apply)
+      + availability_zone                    = (known after apply)
+      + cpu_core_count                       = (known after apply)
+      + cpu_threads_per_core                 = (known after apply)
+      + disable_api_stop                     = (known after apply)
+      + disable_api_termination              = (known after apply)
+      + ebs_optimized                        = (known after apply)
+      + enable_primary_ipv6                  = (known after apply)
+      + get_password_data                    = false
+      + host_id                              = (known after apply)
+      + host_resource_group_arn              = (known after apply)
+      + iam_instance_profile                 = (known after apply)
+      + id                                   = (known after apply)
+      + instance_initiated_shutdown_behavior = (known after apply)
+      + instance_lifecycle                   = (known after apply)
+      + instance_state                       = (known after apply)
+      + instance_type                        = "t2.medium"
+      + ipv6_address_count                   = (known after apply)
+      + ipv6_addresses                       = (known after apply)
+      + key_name                             = (known after apply)
+      + monitoring                           = (known after apply)
+      + outpost_arn                          = (known after apply)
+      + password_data                        = (known after apply)
+      + placement_group                      = (known after apply)
+      + placement_partition_number           = (known after apply)
+      + primary_network_interface_id         = (known after apply)
+      + private_dns                          = (known after apply)
+      + private_ip                           = (known after apply)
+      + public_dns                           = (known after apply)
+      + public_ip                            = (known after apply)
+      + secondary_private_ips                = (known after apply)
+      + security_groups                      = (known after apply)
+      + source_dest_check                    = true
+      + spot_instance_request_id             = (known after apply)
+      + subnet_id                            = (known after apply)
+      + tags                                 = {
+          + "Name" = "eks"
+        }
+      + tags_all                             = {
+          + "Name" = "eks"
+        }
+      + tenancy                              = (known after apply)
+      + user_data                            = "77b92c6a25c92a0ee84848a9983dde968d786d9e"
+      + user_data_base64                     = (known after apply)
+      + user_data_replace_on_change          = false
+      + vpc_security_group_ids               = (known after apply)
+
+      + capacity_reservation_specification (known after apply)
+
+      + cpu_options (known after apply)
+
+      + ebs_block_device (known after apply)
+
+      + enclave_options (known after apply)
+
+      + ephemeral_block_device (known after apply)
+
+      + instance_market_options (known after apply)
+
+      + maintenance_options (known after apply)
+
+      + metadata_options (known after apply)
+
+      + network_interface (known after apply)
+
+      + private_dns_name_options (known after apply)
+
+      + root_block_device {
+          + delete_on_termination = true
+          + device_name           = (known after apply)
+          + encrypted             = (known after apply)
+          + iops                  = (known after apply)
+          + kms_key_id            = (known after apply)
+          + tags_all              = (known after apply)
+          + throughput            = (known after apply)
+          + volume_id             = (known after apply)
+          + volume_size           = 30
+          + volume_type           = (known after apply)
+        }
+    }
+
+  # aws_internet_gateway.igw will be created
+  + resource "aws_internet_gateway" "igw" {
+      + arn      = (known after apply)
+      + id       = (known after apply)
+      + owner_id = (known after apply)
+      + tags_all = (known after apply)
+      + vpc_id   = (known after apply)
+    }
+
+  # aws_nat_gateway.nat will be created
+  + resource "aws_nat_gateway" "nat" {
+      + allocation_id                      = (known after apply)
+      + association_id                     = (known after apply)
+      + connectivity_type                  = "public"
+      + id                                 = (known after apply)
+      + network_interface_id               = (known after apply)
+      + private_ip                         = (known after apply)
+      + public_ip                          = (known after apply)
+      + secondary_private_ip_address_count = (known after apply)
+      + secondary_private_ip_addresses     = (known after apply)
+      + subnet_id                          = (known after apply)
+      + tags_all                           = (known after apply)
+    }
+
+  # aws_route_table.private will be created
+  + resource "aws_route_table" "private" {
+      + arn              = (known after apply)
+      + id               = (known after apply)
+      + owner_id         = (known after apply)
+      + propagating_vgws = (known after apply)
+      + route            = [
+          + {
+              + cidr_block                 = "0.0.0.0/0"
+              + nat_gateway_id             = (known after apply)
+                # (11 unchanged attributes hidden)
+            },
+        ]
+      + tags_all         = (known after apply)
+      + vpc_id           = (known after apply)
+    }
+
+  # aws_route_table.public will be created
+  + resource "aws_route_table" "public" {
+      + arn              = (known after apply)
+      + id               = (known after apply)
+      + owner_id         = (known after apply)
+      + propagating_vgws = (known after apply)
+      + route            = [
+          + {
+              + cidr_block                 = "0.0.0.0/0"
+              + gateway_id                 = (known after apply)
+                # (11 unchanged attributes hidden)
+            },
+        ]
+      + tags_all         = (known after apply)
+      + vpc_id           = (known after apply)
+    }
+
+  # aws_route_table_association.priv1 will be created
+  + resource "aws_route_table_association" "priv1" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # aws_route_table_association.priv2 will be created
+  + resource "aws_route_table_association" "priv2" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # aws_route_table_association.pub1 will be created
+  + resource "aws_route_table_association" "pub1" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # aws_route_table_association.pub2 will be created
+  + resource "aws_route_table_association" "pub2" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # aws_security_group.allow_all will be created
+  + resource "aws_security_group" "allow_all" {
+      + arn                    = (known after apply)
+      + description            = "Allow all inbound and outbound traffic"
+      + egress                 = [
+          + {
+              + cidr_blocks      = [
+                  + "0.0.0.0/0",
+                ]
+              + description      = "Allow all outbound"
+              + from_port        = 0
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "-1"
+              + security_groups  = []
+              + self             = false
+              + to_port          = 0
+            },
+        ]
+      + id                     = (known after apply)
+      + ingress                = [
+          + {
+              + cidr_blocks      = [
+                  + "0.0.0.0/0",
+                ]
+              + description      = "Allow all inbound"
+              + from_port        = 0
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "-1"
+              + security_groups  = []
+              + self             = false
+              + to_port          = 0
+            },
+        ]
+      + name                   = "allow-all-sg"
+      + name_prefix            = (known after apply)
+      + owner_id               = (known after apply)
+      + revoke_rules_on_delete = false
+      + tags                   = {
+          + "Name" = "allow-all-sg"
+        }
+      + tags_all               = {
+          + "Name" = "allow-all-sg"
+        }
+      + vpc_id                 = (known after apply)
+    }
+
+  # aws_subnet.private1 will be created
+  + resource "aws_subnet" "private1" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "us-east-1a"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.3.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = false
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags_all                                       = (known after apply)
+      + vpc_id                                         = (known after apply)
+    }
+
+  # aws_subnet.private2 will be created
+  + resource "aws_subnet" "private2" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "us-east-1b"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.4.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = false
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags_all                                       = (known after apply)
+      + vpc_id                                         = (known after apply)
+    }
+
+  # aws_subnet.public1 will be created
+  + resource "aws_subnet" "public1" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "us-east-1a"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.1.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = true
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags_all                                       = (known after apply)
+      + vpc_id                                         = (known after apply)
+    }
+
+  # aws_subnet.public2 will be created
+  + resource "aws_subnet" "public2" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "us-east-1b"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.2.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = true
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags_all                                       = (known after apply)
+      + vpc_id                                         = (known after apply)
+    }
+
+  # aws_vpc.eks_vpc will be created
+  + resource "aws_vpc" "eks_vpc" {
+      + arn                                  = (known after apply)
+      + cidr_block                           = "10.0.0.0/16"
+      + default_network_acl_id               = (known after apply)
+      + default_route_table_id               = (known after apply)
+      + default_security_group_id            = (known after apply)
+      + dhcp_options_id                      = (known after apply)
+      + enable_dns_hostnames                 = true
+      + enable_dns_support                   = true
+      + enable_network_address_usage_metrics = (known after apply)
+      + id                                   = (known after apply)
+      + instance_tenancy                     = "default"
+      + ipv6_association_id                  = (known after apply)
+      + ipv6_cidr_block                      = (known after apply)
+      + ipv6_cidr_block_network_border_group = (known after apply)
+      + main_route_table_id                  = (known after apply)
+      + owner_id                             = (known after apply)
+      + tags                                 = {
+          + "Name" = "eks-vpc"
+        }
+      + tags_all                             = {
+          + "Name" = "eks-vpc"
+        }
+    }
+
+Plan: 32 to add, 0 to change, 0 to destroy.
+aws_eip.nat: Creating...
+aws_iam_role.ebs_csi_role: Creating...
+aws_iam_role.cluster_role: Creating...
+aws_vpc.eks_vpc: Creating...
+aws_iam_role.worker_role: Creating...
+aws_iam_role.worker_role: Creation complete after 2s [id=eks-worker-role]
+aws_iam_role.cluster_role: Creation complete after 2s [id=eks-cluster-role]
+aws_iam_role.ebs_csi_role: Creation complete after 2s [id=AmazonEKS_EBS_CSI_DriverRole]
+aws_iam_role_policy_attachment.cni: Creating...
+aws_iam_role_policy_attachment.cluster_policy: Creating...
+aws_iam_role_policy_attachment.worker_node: Creating...
+aws_iam_role_policy_attachment.ecr: Creating...
+aws_iam_role_policy_attachment.ebs_csi_policy: Creating...
+aws_iam_role_policy_attachment.cluster_policy: Creation complete after 0s [id=eks-cluster-role-20260602104259092800000001]
+aws_iam_role_policy_attachment.worker_node: Creation complete after 1s [id=eks-worker-role-20260602104259093800000002]
+aws_iam_role_policy_attachment.cni: Creation complete after 1s [id=eks-worker-role-20260602104259138800000003]
+aws_iam_role_policy_attachment.ebs_csi_policy: Creation complete after 1s [id=AmazonEKS_EBS_CSI_DriverRole-20260602104259422800000004]
+aws_iam_role_policy_attachment.ecr: Creation complete after 1s [id=eks-worker-role-20260602104259427000000005]
+aws_eip.nat: Creation complete after 3s [id=eipalloc-0c3c427b5c7b1da77]
+aws_vpc.eks_vpc: Still creating... [00m10s elapsed]
+aws_vpc.eks_vpc: Creation complete after 15s [id=vpc-0905eb11fda15ccf9]
+aws_internet_gateway.igw: Creating...
+aws_subnet.public1: Creating...
+aws_security_group.allow_all: Creating...
+aws_subnet.private1: Creating...
+aws_subnet.public2: Creating...
+aws_subnet.private2: Creating...
+aws_subnet.private1: Creation complete after 2s [id=subnet-096f31d5b41b9d016]
+aws_internet_gateway.igw: Creation complete after 2s [id=igw-0087fa1004f34d29a]
+aws_route_table.public: Creating...
+aws_subnet.private2: Creation complete after 3s [id=subnet-0ce1b817477176f4e]
+aws_eks_cluster.eks: Creating...
+aws_route_table.public: Creation complete after 3s [id=rtb-0adc74c0e2b1ec117]
+aws_security_group.allow_all: Creation complete after 6s [id=sg-090cb892f5d42981c]
+aws_subnet.public1: Still creating... [00m10s elapsed]
+aws_subnet.public2: Still creating... [00m10s elapsed]
+aws_eks_cluster.eks: Still creating... [00m10s elapsed]
+aws_subnet.public2: Creation complete after 13s [id=subnet-0086861fedb5d8b0e]
+aws_subnet.public1: Creation complete after 13s [id=subnet-0bb362b1ea4027e40]
+aws_route_table_association.pub2: Creating...
+aws_route_table_association.pub1: Creating...
+aws_nat_gateway.nat: Creating...
+aws_instance.eks: Creating...
+aws_route_table_association.pub1: Creation complete after 1s [id=rtbassoc-0a3d50ff711aa594f]
+aws_route_table_association.pub2: Creation complete after 1s [id=rtbassoc-0a249d9dde51348be]
+aws_eks_cluster.eks: Still creating... [00m20s elapsed]
+aws_nat_gateway.nat: Still creating... [00m10s elapsed]
+aws_instance.eks: Still creating... [00m10s elapsed]
+aws_eks_cluster.eks: Still creating... [00m30s elapsed]
+aws_nat_gateway.nat: Still creating... [00m20s elapsed]
+aws_instance.eks: Still creating... [00m20s elapsed]
+aws_eks_cluster.eks: Still creating... [00m40s elapsed]
+aws_nat_gateway.nat: Still creating... [00m30s elapsed]
+aws_instance.eks: Still creating... [00m30s elapsed]
+aws_instance.eks: Creation complete after 36s [id=i-01cdf0b54c477739a]
+aws_eks_cluster.eks: Still creating... [00m50s elapsed]
+aws_nat_gateway.nat: Still creating... [00m40s elapsed]
+aws_eks_cluster.eks: Still creating... [01m00s elapsed]
+aws_nat_gateway.nat: Still creating... [00m50s elapsed]
+aws_eks_cluster.eks: Still creating... [01m10s elapsed]
+aws_nat_gateway.nat: Still creating... [01m00s elapsed]
+aws_eks_cluster.eks: Still creating... [01m20s elapsed]
+aws_nat_gateway.nat: Still creating... [01m10s elapsed]
+aws_eks_cluster.eks: Still creating... [01m30s elapsed]
+aws_nat_gateway.nat: Still creating... [01m20s elapsed]
+aws_eks_cluster.eks: Still creating... [01m40s elapsed]
+aws_nat_gateway.nat: Still creating... [01m30s elapsed]
+aws_eks_cluster.eks: Still creating... [01m50s elapsed]
+aws_nat_gateway.nat: Still creating... [01m40s elapsed]
+aws_eks_cluster.eks: Still creating... [02m00s elapsed]
+aws_nat_gateway.nat: Still creating... [01m50s elapsed]
+aws_nat_gateway.nat: Creation complete after 1m58s [id=nat-0c85907811b502b88]
+aws_route_table.private: Creating...
+aws_eks_cluster.eks: Still creating... [02m10s elapsed]
+aws_route_table.private: Creation complete after 3s [id=rtb-01d4a8c9a49271a23]
+aws_route_table_association.priv1: Creating...
+aws_route_table_association.priv2: Creating...
+aws_route_table_association.priv1: Creation complete after 1s [id=rtbassoc-02bf55fdd92921077]
+aws_route_table_association.priv2: Creation complete after 2s [id=rtbassoc-07e50b814eab29e33]
+aws_eks_cluster.eks: Still creating... [02m20s elapsed]
+aws_eks_cluster.eks: Still creating... [02m30s elapsed]
+aws_eks_cluster.eks: Still creating... [02m40s elapsed]
+aws_eks_cluster.eks: Still creating... [02m50s elapsed]
+aws_eks_cluster.eks: Still creating... [03m00s elapsed]
+aws_eks_cluster.eks: Still creating... [03m10s elapsed]
+aws_eks_cluster.eks: Still creating... [03m20s elapsed]
+aws_eks_cluster.eks: Still creating... [03m30s elapsed]
+aws_eks_cluster.eks: Still creating... [03m40s elapsed]
+aws_eks_cluster.eks: Still creating... [03m50s elapsed]
+aws_eks_cluster.eks: Still creating... [04m00s elapsed]
+aws_eks_cluster.eks: Still creating... [04m10s elapsed]
+aws_eks_cluster.eks: Still creating... [04m20s elapsed]
+aws_eks_cluster.eks: Still creating... [04m30s elapsed]
+aws_eks_cluster.eks: Still creating... [04m40s elapsed]
+aws_eks_cluster.eks: Still creating... [04m50s elapsed]
+aws_eks_cluster.eks: Still creating... [05m00s elapsed]
+aws_eks_cluster.eks: Still creating... [05m10s elapsed]
+aws_eks_cluster.eks: Still creating... [05m20s elapsed]
+aws_eks_cluster.eks: Still creating... [05m30s elapsed]
+aws_eks_cluster.eks: Still creating... [05m40s elapsed]
+aws_eks_cluster.eks: Still creating... [05m50s elapsed]
+aws_eks_cluster.eks: Still creating... [06m00s elapsed]
+aws_eks_cluster.eks: Still creating... [06m10s elapsed]
+aws_eks_cluster.eks: Still creating... [06m20s elapsed]
+aws_eks_cluster.eks: Still creating... [06m30s elapsed]
+aws_eks_cluster.eks: Still creating... [06m40s elapsed]
+aws_eks_cluster.eks: Still creating... [06m50s elapsed]
+aws_eks_cluster.eks: Still creating... [07m00s elapsed]
+aws_eks_cluster.eks: Creation complete after 7m2s [id=naresh]
+aws_eks_node_group.node_group: Creating...
+aws_eks_pod_identity_association.ebs_csi: Creating...
+aws_eks_pod_identity_association.ebs_csi: Creation complete after 0s [id=a-ijdeb5yjdniynnbhj]
+aws_eks_node_group.node_group: Still creating... [00m10s elapsed]
+aws_eks_node_group.node_group: Still creating... [00m20s elapsed]
+aws_eks_node_group.node_group: Still creating... [00m30s elapsed]
+aws_eks_node_group.node_group: Still creating... [00m40s elapsed]
+aws_eks_node_group.node_group: Still creating... [00m50s elapsed]
+aws_eks_node_group.node_group: Still creating... [01m00s elapsed]
+aws_eks_node_group.node_group: Still creating... [01m10s elapsed]
+aws_eks_node_group.node_group: Still creating... [01m20s elapsed]
+aws_eks_node_group.node_group: Still creating... [01m30s elapsed]
+aws_eks_node_group.node_group: Still creating... [01m40s elapsed]
+aws_eks_node_group.node_group: Still creating... [01m50s elapsed]
+aws_eks_node_group.node_group: Still creating... [02m00s elapsed]
+aws_eks_node_group.node_group: Still creating... [02m10s elapsed]
+aws_eks_node_group.node_group: Still creating... [02m20s elapsed]
+aws_eks_node_group.node_group: Still creating... [02m30s elapsed]
+aws_eks_node_group.node_group: Still creating... [02m40s elapsed]
+aws_eks_node_group.node_group: Still creating... [02m50s elapsed]
+aws_eks_node_group.node_group: Still creating... [03m00s elapsed]
+aws_eks_node_group.node_group: Still creating... [03m10s elapsed]
+aws_eks_node_group.node_group: Creation complete after 3m12s [id=naresh:eks-node-group]
+aws_eks_addon.coredns: Creating...
+aws_eks_addon.ebs_csi: Creating...
+aws_eks_addon.vpc_cni: Creating...
+aws_eks_addon.pod_identity: Creating...
+aws_eks_addon.kube_proxy: Creating...
+aws_eks_addon.kube_proxy: Creation complete after 10s [id=naresh:kube-proxy]
+aws_eks_addon.coredns: Still creating... [00m10s elapsed]
+aws_eks_addon.vpc_cni: Still creating... [00m10s elapsed]
+aws_eks_addon.ebs_csi: Still creating... [00m10s elapsed]
+aws_eks_addon.pod_identity: Still creating... [00m10s elapsed]
+aws_eks_addon.coredns: Creation complete after 16s [id=naresh:coredns]
+aws_eks_addon.vpc_cni: Still creating... [00m20s elapsed]
+aws_eks_addon.ebs_csi: Still creating... [00m20s elapsed]
+aws_eks_addon.pod_identity: Still creating... [00m20s elapsed]
+aws_eks_addon.pod_identity: Creation complete after 27s [id=naresh:eks-pod-identity-agent]
+aws_eks_addon.ebs_csi: Still creating... [00m30s elapsed]
+aws_eks_addon.vpc_cni: Still creating... [00m30s elapsed]
+aws_eks_addon.vpc_cni: Still creating... [00m40s elapsed]
+aws_eks_addon.ebs_csi: Still creating... [00m40s elapsed]
+aws_eks_addon.ebs_csi: Creation complete after 47s [id=naresh:aws-ebs-csi-driver]
+aws_eks_addon.vpc_cni: Still creating... [00m50s elapsed]
+aws_eks_addon.vpc_cni: Still creating... [01m00s elapsed]
+aws_eks_addon.vpc_cni: Still creating... [01m10s elapsed]
+aws_eks_addon.vpc_cni: Still creating... [01m20s elapsed]
+aws_eks_addon.vpc_cni: Creation complete after 1m29s [id=naresh:vpc-cni]
+
+Apply complete! Resources: 32 added, 0 changed, 0 destroyed.
+
+Admin@DESKTOP-FGF7R1H MINGW64 ~/Kubernetes-07301/Day-8-Terraform-EKS (main)
+$ 
+
+
+Cluster where we able to access who ever created they can able to access cluster easily 
+
+
+
+Now cluster is created with IAM role 
+so far we have created cluster through ec2 with iam role and ec2 will be having admin access 
+
+======================
+
+$ ^C
+
+
+Admin@DESKTOP-FGF7R1H MINGW64 ~/Kubernetes-07301/Day-8-Terraform-EKS (main)
+$ kubectl get nodes
+E0602 16:35:53.134345    2772 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"https://25F2CCC0D9A5CC2F3932BC1FFD6161A5.gr7.us-east-1.eks.amazonaws.com/api?timeout=32s\": dial tcp: lookup 25F2CCC0D9A5CC2F3932BC1FFD6161A5.gr7.us-east-1.eks.amazonaws.com: no such host"
+E0602 16:35:53.135387    2772 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"https://25F2CCC0D9A5CC2F3932BC1FFD6161A5.gr7.us-east-1.eks.amazonaws.com/api?timeout=32s\": dial tcp: lookup 25F2CCC0D9A5CC2F3932BC1FFD6161A5.gr7.us-east-1.eks.amazonaws.com: no such host"
+E0602 16:35:53.135908    2772 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"https://25F2CCC0D9A5CC2F3932BC1FFD6161A5.gr7.us-east-1.eks.amazonaws.com/api?timeout=32s\": dial tcp: lookup 25F2CCC0D9A5CC2F3932BC1FFD6161A5.gr7.us-east-1.eks.amazonaws.com: no such host"
+E0602 16:35:53.137439    2772 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"https://25F2CCC0D9A5CC2F3932BC1FFD6161A5.gr7.us-east-1.eks.amazonaws.com/api?timeout=32s\": dial tcp: lookup 25F2CCC0D9A5CC2F3932BC1FFD6161A5.gr7.us-east-1.eks.amazonaws.com: no such host"
+E0602 16:35:53.139447    2772 memcache.go:265] "Unhandled Error" err="couldn't get current server API group list: Get \"https://25F2CCC0D9A5CC2F3932BC1FFD6161A5.gr7.us-east-1.eks.amazonaws.com/api?timeout=32s\": dial tcp: lookup 25F2CCC0D9A5CC2F3932BC1FFD6161A5.gr7.us-east-1.eks.amazonaws.com: no such host"
+Unable to connect to the server: dial tcp: lookup 25F2CCC0D9A5CC2F3932BC1FFD6161A5.gr7.us-east-1.eks.amazonaws.com: no such host
+
+Admin@DESKTOP-FGF7R1H MINGW64 ~/Kubernetes-07301/Day-8-Terraform-EKS (main)
+$ aws eks update-kubeconfig --region us-east-1 --name naresh
+Added new context arn:aws:eks:us-east-1:424592695689:cluster/naresh to C:\Users\Admin\.kube\config
+
+Admin@DESKTOP-FGF7R1H MINGW64 ~/Kubernetes-07301/Day-8-Terraform-EKS (main)
+$ kubcetl get nodes
+bash: kubcetl: command not found
+
+Admin@DESKTOP-FGF7R1H MINGW64 ~/Kubernetes-07301/Day-8-Terraform-EKS (main)
+$ kubectl get nodes
+NAME                         STATUS   ROLES    AGE   VERSION
+ip-10-0-3-164.ec2.internal   Ready    <none>   13m   v1.35.5-eks-3385e9b
+ip-10-0-3-167.ec2.internal   Ready    <none>   13m   v1.35.5-eks-3385e9b
+ip-10-0-3-6.ec2.internal     Ready    <none>   13m   v1.35.5-eks-3385e9b
+ip-10-0-4-248.ec2.internal   Ready    <none>   13m   v1.35.5-eks-3385e9b
+ip-10-0-4-252.ec2.internal   Ready    <none>   14m   v1.35.5-eks-3385e9b
+ip-10-0-4-9.ec2.internal     Ready    <none>   13m   v1.35.5-eks-3385e9b
+
+Admin@DESKTOP-FGF7R1H MINGW64 ~/Kubernetes-07301/Day-8-Terraform-EKS (main)
+
+
+======================
+
+login to eks created ec2
+[ec2-user@ip-10-0-1-212 ~]$ sudo su -
+[root@ip-10-0-1-212 ~]# kubectl get nodes
+The connection to the server localhost:8080 was refused - did you specify the right host or port?
+[root@ip-10-0-1-212 ~]# 
+
+Role ec2-admin created. from IAM 
+
+login in ec2 
+
+
+was getting this error unauthorised from ec2
+
+[root@ip-10-0-1-212 ec2-user]# curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+ <head>
+  <title>401 - Unauthorized</title>
+ </head>
+ <body>
+  <h1>401 - Unauthorized</h1>
+ </body>
+</html>
+[root@ip-10-0-1-212 ec2-user]# aws sts get-caller-identity
+{
+    "UserId": "AROAWFW5SMGESCWFI3LRD:i-01cdf0b54c477739a",
+    "Account": "424592695689",
+    "Arn": "arn:aws:sts::424592695689:assumed-role/ec2-admin/i-01cdf0b54c477739a"
+}
+[root@ip-10-0-1-212 ec2-user]# aws eks list-access-entries \
+--cluster-name naresh \
+--region us-east-1
+
+An error occurred (InvalidRequestException) when calling the ListAccessEntries operation: The cluster's authentication mode must be set to one of [API, API_AND_CONFIG_MAP] to perform this operation.
+[root@ip-10-0-1-212 ec2-user]# aws eks describe-cluster \
+  --name naresh \
+  --region us-east-1 \
+  --query "cluster.accessConfig"
+{
+    "authenticationMode": "CONFIG_MAP"
+}
+[root@ip-10-0-1-212 ec2-user]# kubectl get nodes
+error: You must be logged in to the server (Unauthorized)
+[root@ip-10-0-1-212 ec2-user]#  aws eks update-kubeconfig --region us-east-1 --name naresh
+Updated context arn:aws:eks:us-east-1:424592695689:cluster/naresh in /root/.kube/config
+
+
+now followed below steps from gitbash and updated role as well 
+
+Sure. Follow these exact steps from your Windows laptop (where kubectl is already working).
+
+Step 1: Create a file
+
+Open Git Bash and create a file:
+
+vi aws-auth.yaml
+Step 2: Paste the below content
+
+Delete everything and paste:
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-auth
+  namespace: kube-system
+
+data:
+  mapRoles: |
+    - rolearn: arn:aws:iam::424592695689:role/eks-worker-role
+      groups:
+      - system:bootstrappers
+      - system:nodes
+      username: system:node:{{EC2PrivateDNSName}}
+
+    - rolearn: arn:aws:iam::424592695689:role/ec2-admin
+      username: ec2-admin
+      groups:
+      - system:masters
+Step 3: Save the file
+
+Press:
+
+Esc
+
+Then:
+
+:wq
+
+Press Enter.
+
+Step 4: Apply the config
+
+Run:
+
+kubectl apply -f aws-auth.yaml
+
+Expected output:
+
+configmap/aws-auth configured
+Step 5: Verify
+
+Run:
+
+kubectl get configmap aws-auth -n kube-system -o yaml
+
+You should see:
+
+- rolearn: arn:aws:iam::424592695689:role/eks-worker-role
+
+- rolearn: arn:aws:iam::424592695689:role/ec2-admin
+
+Both roles must be present.
+
+Step 6: Go to your EC2 machine
+
+SSH into:
+
+13.218.194.130
+Step 7: Refresh kubeconfig
+
+Run:
+
+aws eks update-kubeconfig \
+--region us-east-1 \
+--name naresh
+
+Expected:
+
+Updated context arn:aws:eks:us-east-1:424592695689:cluster/naresh
+Step 8: Test access
+
+Run:
+
+kubectl get nodes
+
+
+[root@ip-10-0-1-212 ec2-user]# aws eks update-kubeconfig \
+--region us-east-1 \
+--name naresh
+Updated context arn:aws:eks:us-east-1:424592695689:cluster/naresh in /root/.kube/config
+[root@ip-10-0-1-212 ec2-user]# kubectl get nodes
+NAME                         STATUS   ROLES    AGE   VERSION
+ip-10-0-3-167.ec2.internal   Ready    <none>   37m   v1.35.5-eks-3385e9b
+ip-10-0-3-231.ec2.internal   Ready    <none>   11m   v1.35.5-eks-3385e9b
+ip-10-0-3-31.ec2.internal    Ready    <none>   10m   v1.35.5-eks-3385e9b
+ip-10-0-4-248.ec2.internal   Ready    <none>   37m   v1.35.5-eks-3385e9b
+ip-10-0-4-252.ec2.internal   Ready    <none>   37m   v1.35.5-eks-3385e9b
+ip-10-0-4-9.ec2.internal     Ready    <none>   37m   v1.
+
+===
+
+or you can just aws configure also will work again in ec2
+
+
+
+
+
+
+All above until just terrafrom project 
+
+
+
+
+
+
+
+
+========================================================================================
+
+INGRESS :
+
+Very Popular service 
+
+
+For exxample for below architecture 
+
+https://github.com/mluticloud730am/Pathbased-routing/blob/main/index.html
+
+  <div class="container">
+    <div class="card aws">
+      <h2>Amazon Web Services (AWS)</h2>
+      <p>Test routing to the AWS backend using ALB.</p>
+      <a href="http://ALB-739091676.us-east-1.elb.amazonaws.com/aws/">Go to AWS</a>
+    </div>
+
+    <div class="card azure">
+      <h2>Microsoft Azure</h2>
+      <p>Test routing to the Azure backend using ALB.</p>
+      <a href="http://ALB-739091676.us-east-1.elb.amazonaws.com/azure/">Go to Azure</a>
+    </div>
+
+    <div class="card gcp">
+      <h2>Google Cloud Platform (GCP)</h2>
+      <p>Test routing to the GCP backend using ALB.</p>
+      <a href="http://multicloud-lb-1376115289.us-east-1.elb.amazonaws.com/gcp/">Go to GCP</a>
+    </div>
+  </div>
+
+
+So for kubernetes by dafault path based routing will not be supported by load balancer 
+
+
+KUbernetes INGRESS : 
+By Default Kubernetes created loadbalancer run on layer-4 so which is not support path base routings 
+so if we want to deploy multiple application to route to common loadn balancer we have ti use ingress controller to support
+path based routing 
+
+
+🚦 Kubernetes Service vs Ingress (Correct Concept)
+1. Default Kubernetes Service (LoadBalancer / NodePort)
+
+When you expose an app using:
+
+NodePort
+LoadBalancer
+
+It works at Layer 4 (TCP/UDP)
+
+What Layer 4 means:
+Works on IP + Port
+❌ Does NOT understand HTTP paths like /app1, /app2
+❌ Cannot do host-based routing like app1.example.com
+
+Example:
+
+http://LB-IP:30001 → App A
+http://LB-IP:30002 → App B
+
+So yes:
+✔ It cannot do path-based routing
+✔ It is not application-aware (HTTP unaware)
+
+2. Kubernetes Ingress (Solution)
+
+Ingress works at Layer 7 (HTTP/HTTPS)
+
+It allows:
+
+✔ Path-based routing
+/app1 → service-a
+/app2 → service-b
+✔ Host-based routing
+app1.example.com → service-a
+app2.example.com → service-b
+3. Important Correction in your statement
+
+You said:
+
+“Kubernetes created loadbalancer run on layer-4 so which is not support path base routings”
+
+✔ Correct idea
+❗ But more precise wording:
+
+Kubernetes Service LoadBalancer is a Layer 4 abstraction provided by cloud provider, and it does not provide HTTP routing capabilities.
+
+4. Why Ingress Controller is needed
+
+Ingress is NOT a load balancer by itself.
+
+You must install an Ingress Controller, such as:
+
+NGINX Ingress Controller
+AWS ALB Ingress Controller
+Traefik
+HAProxy
+Flow:
+Internet
+   ↓
+AWS Load Balancer (L4 or L7 depending setup)
+   ↓
+Ingress Controller (NGINX/ALB)
+   ↓
+Kubernetes Services
+   ↓
+Pods
+5. Real-world example
+Without Ingress:
+
+You need multiple LoadBalancers:
+
+LB1 → App1
+LB2 → App2
+LB3 → App3
+
+💸 Expensive + messy
+
+With Ingress:
+Single LB
+   ├── /app1 → App1
+   ├── /app2 → App2
+   └── /app3 → App3
+
+✔ Cheaper
+✔ Clean routing
+✔ Industry standard
+
+6. Final corrected version of your statement
+
+You can write it like this:
+
+By default, Kubernetes Services like LoadBalancer operate at Layer 4 (TCP/UDP) and do not support application-level routing 
+such as path-based or host-based routing. To enable advanced HTTP routing for multiple applications using a single load balancer,
+we use an Ingress Controller, which operates at Layer 7 and routes traffic based on URL paths or hostnames\
+
+
+Suppose for sample project 
+you have 3 deployment yamls which will deploy 
+
+3 elctronics pods
+3 mobile pods
+3 furiniture pods 
+
+and you have 3 cluster ip 
+elec
+mob
+furn
+
+so user are connected to this cluster ip only from ingress alone 
+
+so ingress concepts comes here 
+
+
+2. Types of Ingress ControllersThe Ingress resource does nothing by itself; it is just a set of rules. You need an Ingress Controller running in the cluster to actually read those rules and route the traffic.Ingress Controllers generally fall into three main categories based on their underlying technology:TypeExamplesDescriptionReverse Proxy / Software-BasedNGINX, HAProxy, Traefik, Apache APISIXTraditional software reverse proxies packed into a Kubernetes controller. They run as pods inside your cluster and are highly configurable and performant.Cloud Provider / ManagedAWS ALB Ingress Controller, GCP GLBC, Azure Application GatewayThese controllers provision and manage the cloud provider's native load balancing infrastructure (like an AWS Application Load Balancer) directly from Kubernetes.Service Mesh / Gateway APIIstio (Ingress Gateway), Kong, Envoy GatewayOften used for complex routing, advanced traffic splitting (canary deployments), and zero-trust security. They leverage the Gateway API (the modern successor to the traditional Ingress API).
+
+
+
+
+INgress controller : path base supported loadbalance layer 7 
+
+Refer tjhis https://github.com/Saidulu-DevOps-With-Multi-Cloud/kubernetes-veeraops-ecommerce-microservices-app/blob/main/frontend/main/ingress.yml
+
+
+          - path: /electronics
+            pathType: Prefix
+            backend:
+              service:
+                name: electronics-service
+                port:
+                  number: 80
+
+
+
+          - path: /furniture
+            pathType: Prefix
+            backend:
+              service:
+                name: furniture-service
+                port:
+                  number: 80
+
+
+          - path: /mobiles
+            pathType: Prefix
+            backend:
+              service:
+                name: mobiles-service
+                port:
+                  number: 80
+
+
+So End user --> ingress controller --> ingress yaml config --> clusterip --> required pods as per link 
+
+
+
+ 29  yum install docker -y
+   30  git clone https://github.com/Meghana-Gopu/kubernetes-ingress-deployment.git
+   31  systemctl start docker
+   32  systemctl status docker
+   33  ls 
+   34  cd kubernetes-ingress-deployment/
+   35  ls
+   36  ll
+   37  docker --version
+   38  cd aws
+   39  ll
+   40  cd ../
+   41  docker build -t .
+   42  docker build -t main .
+   43  docker imahes
+   44  docker images
+
+
+Also attach ec2 admin role to  eks ec2
+
+also create ecr repos for main ,aws,azure,gcp
+
+go for each 
+
+https://us-east-1.console.aws.amazon.com/ecr/repositories/private/424592695689/main/_/image/sha256:c9db908de01a0c1cc058d44785bb02eeef90964611dfbe267a4841c336aa28c6/details?region=us-east-1
+and update image to github 
+
+https://github.com/mluticloud730am/kubernetes-ingress-deployment/blob/main/k8s-files/main.yml
+
+for all above 4 
+
+INgress yaml 
+
+#kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.2.1/deploy/static/provider/cloud/deploy.yaml #-install ingress contr
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: k8s-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/rewrite-target: /   # strip prefix so backend serves "/"
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: main-service
+                port:
+                  number: 80
+          - path: /aws
+            pathType: Prefix
+            backend:
+              service:
+                name: aws-service
+                port:
+                  number: 80
+          - path: /azure
+            pathType: Prefix
+            backend:
+              service:
+                name: azure-service
+                port:
+                  number: 80
+          - path: /gcp
+            pathType: Prefix
+            backend:
+              service:
+                name: gcp-service
+                port:
+                  number: 80
+
+
+sample main  yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: main-deployment
+  labels: { app: main }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: main }
+  template:
+    metadata:
+      labels: { app: main }
+    spec:
+      containers:
+        - name: main
+          image: 424592695689.dkr.ecr.us-east-1.amazonaws.com/main:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: main-service
+spec:
+  selector: { app: main }
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+
+
+=====
+
+[root@ip-10-0-1-212 kubernetes-ingress-deployment]# aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 424592695689.dkr.ecr.us-east-1.amazonaws.com
+WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+Login Succeeded
+[root@ip-10-0-1-212 kubernetes-ingress-deployment]# docker tag main:latest 424592695689.dkr.ecr.us-east-1.amazonaws.com/main:latest
+[root@ip-10-0-1-212 kubernetes-ingress-deployment]# docker push 424592695689.dkr.ecr.us-east-1.amazonaws.com/main:latest
+The push refers to repository [424592695689.dkr.ecr.us-east-1.amazonaws.com/main]
+183f87313b85: Pushed 
+f76f397f2ce6: Pushed 
+53c769b49ca0: Pushed 
+42608b42cb5e: Pushed 
+a3446cc6c821: Pushed 
+9e707aa6db47: Pushed 
+47a53288c3ef: Pushed 
+a2738b08d711: Pushed 
+989e799e6349: Pushed 
+latest: digest: sha256:c9db908de01a0c1cc058d44785bb02eeef90964611dfbe267a4841c336aa28c6 size: 2197
+[root@ip-10-0-1-212 kubernetes-ingress-deployment]# cd aws
+[root@ip-10-0-1-212 aws]# ll
+total 20
+-rw-r--r--. 1 root root    96 Jun  2 12:07 Dockerfile
+-rw-r--r--. 1 root root 12762 Jun  2 12:07 index.html
+[root@ip-10-0-1-212 aws]# docker build -t .
+ERROR: "docker buildx build" requires exactly 1 argument.
+See 'docker buildx build --help'.
+
+Usage:  docker buildx build [OPTIONS] PATH | URL | -
+
+Start a build
+[root@ip-10-0-1-212 aws]# docker build -t aws
+ERROR: "docker buildx build" requires exactly 1 argument.
+See 'docker buildx build --help'.
+
+Usage:  docker buildx build [OPTIONS] PATH | URL | -
+
+Start a build
+[root@ip-10-0-1-212 aws]# ll
+total 20
+-rw-r--r--. 1 root root    96 Jun  2 12:07 Dockerfile
+-rw-r--r--. 1 root root 12762 Jun  2 12:07 index.html
+[root@ip-10-0-1-212 aws]# docker build -t ^C
+[root@ip-10-0-1-212 aws]# docker build -t aws .
+[+] Building 0.4s (7/7) FINISHED                                                                                                                                                                    docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                                          0.0s
+ => => transferring dockerfile: 192B                                                                                                                                                                          0.0s
+ => [internal] load metadata for docker.io/library/nginx:1.28-alpine                                                                                                                                          0.2s
+ => [internal] load .dockerignore                                                                                                                                                                             0.0s
+ => => transferring context: 2B                                                                                                                                                                               0.0s
+ => [internal] load build context                                                                                                                                                                             0.0s
+ => => transferring context: 12.86kB                                                                                                                                                                          0.0s
+ => CACHED [1/2] FROM docker.io/library/nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236                                                                             0.0s
+ => [2/2] COPY index.html /usr/share/nginx/html/index.html                                                                                                                                                    0.0s
+ => exporting to image                                                                                                                                                                                        0.0s
+ => => exporting layers                                                                                                                                                                                       0.0s
+ => => writing image sha256:f197d9b9169842d6da71731cf7dd6377e66b9a305b94f95c32efd64453cc6242                                                                                                                  0.0s
+ => => naming to docker.io/library/aws                                                                                                                                                                        0.0s
+[root@ip-10-0-1-212 aws]# docker tag aws:latest 424592695689.dkr.ecr.us-east-1.amazonaws.com/aws:latest
+[root@ip-10-0-1-212 aws]# docker push 424592695689.dkr.ecr.us-east-1.amazonaws.com/aws:latest
+The push refers to repository [424592695689.dkr.ecr.us-east-1.amazonaws.com/aws]
+ee1b137474b0: Pushed 
+f76f397f2ce6: Pushed 
+53c769b49ca0: Pushed 
+42608b42cb5e: Pushed 
+a3446cc6c821: Pushed 
+9e707aa6db47: Pushed 
+47a53288c3ef: Pushed 
+a2738b08d711: Pushed 
+989e799e6349: Pushed 
+latest: digest: sha256:cf65a3a297a85a5ecd9826a59a75b5b187814a0f6466c1ace09be16dd5a8af21 size: 2197
+[root@ip-10-0-1-212 aws]# pwd 
+/home/ec2-user/kubernetes-ingress-deployment/aws
+[root@ip-10-0-1-212 aws]# cd ../azure
+[root@ip-10-0-1-212 azure]# docker build -t azure .
+[+] Building 0.4s (7/7) FINISHED                                                                                                                                                                    docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                                          0.0s
+ => => transferring dockerfile: 192B                                                                                                                                                                          0.0s
+ => [internal] load metadata for docker.io/library/nginx:1.28-alpine                                                                                                                                          0.2s
+ => [internal] load .dockerignore                                                                                                                                                                             0.0s
+ => => transferring context: 2B                                                                                                                                                                               0.0s
+ => [internal] load build context                                                                                                                                                                             0.0s
+ => => transferring context: 12.16kB                                                                                                                                                                          0.0s
+ => CACHED [1/2] FROM docker.io/library/nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236                                                                             0.0s
+ => [2/2] COPY index.html /usr/share/nginx/html/index.html                                                                                                                                                    0.0s
+ => exporting to image                                                                                                                                                                                        0.0s
+ => => exporting layers                                                                                                                                                                                       0.0s
+ => => writing image sha256:9c9f1514c9d2c803af85a476db6a43928a816c65044e5f9a07c2c163a92547ea                                                                                                                  0.0s
+ => => naming to docker.io/library/azure                                                                                                                                                                      0.0s
+[root@ip-10-0-1-212 azure]# docker tag azure:latest 424592695689.dkr.ecr.us-east-1.amazonaws.com/azure:latest
+[root@ip-10-0-1-212 azure]# docker push 424592695689.dkr.ecr.us-east-1.amazonaws.com/azure:latest
+The push refers to repository [424592695689.dkr.ecr.us-east-1.amazonaws.com/azure]
+2c5144edf970: Pushed 
+f76f397f2ce6: Pushed 
+53c769b49ca0: Pushed 
+42608b42cb5e: Pushed 
+a3446cc6c821: Pushed 
+9e707aa6db47: Pushed 
+47a53288c3ef: Pushed 
+a2738b08d711: Pushed 
+989e799e6349: Pushed 
+latest: digest: sha256:61aea917622fe0b80d7d5918d859a8c545a88a05855f6a8d0ac87c712917082a size: 2197
+[root@ip-10-0-1-212 azure]# cd ../gcp
+[root@ip-10-0-1-212 gcp]# docker build -t gcp .
+[+] Building 0.3s (7/7) FINISHED                                                                                                                                                                    docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                                          0.0s
+ => => transferring dockerfile: 192B                                                                                                                                                                          0.0s
+ => [internal] load metadata for docker.io/library/nginx:1.28-alpine                                                                                                                                          0.1s
+ => [internal] load .dockerignore                                                                                                                                                                             0.0s
+ => => transferring context: 2B                                                                                                                                                                               0.0s
+ => [internal] load build context                                                                                                                                                                             0.0s
+ => => transferring context: 12.31kB                                                                                                                                                                          0.0s
+ => CACHED [1/2] FROM docker.io/library/nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236                                                                             0.0s
+ => [2/2] COPY index.html /usr/share/nginx/html/index.html                                                                                                                                                    0.0s
+ => exporting to image                                                                                                                                                                                        0.0s
+ => => exporting layers                                                                                                                                                                                       0.0s
+ => => writing image sha256:439c6b433e17c97cd91ea3d06704dbc6dc92a8c9ab5b9b975684d49876724d5a                                                                                                                  0.0s
+ => => naming to docker.io/library/gcp                                                                                                                                                                        0.0s
+[root@ip-10-0-1-212 gcp]# docker tag gcp:latest 424592695689.dkr.ecr.us-east-1.amazonaws.com/gcp:latest
+[root@ip-10-0-1-212 gcp]# docker push 424592695689.dkr.ecr.us-east-1.amazonaws.com/gcp:latest
+The push refers to repository [424592695689.dkr.ecr.us-east-1.amazonaws.com/gcp]
+a8a68690ae5b: Pushed 
+f76f397f2ce6: Pushed 
+53c769b49ca0: Pushed 
+42608b42cb5e: Pushed 
+a3446cc6c821: Pushed 
+9e707aa6db47: Pushed 
+47a53288c3ef: Pushed 
+a2738b08d711: Pushed 
+989e799e6349: Pushed 
+latest: digest: sha256:8f544a1512823e574de678b9a45e13f163683239ebc7d2f12945e7e694512725 size: 2197
+[root@ip-10-0-1-212 gcp]# 
+
+
+[root@ip-10-0-1-212 ec2-user]# mkdir kube
+[root@ip-10-0-1-212 ec2-user]# cd kube
+[root@ip-10-0-1-212 kube]# git pull https://github.com/mluticloud730am/kubernetes-ingress-deployment.git
+fatal: not a git repository (or any of the parent directories): .git
+[root@ip-10-0-1-212 kube]# git clone https://github.com/mluticloud730am/kubernetes-ingress-deployment.git
+Cloning into 'kubernetes-ingress-deployment'...
+remote: Enumerating objects: 87, done.
+remote: Counting objects: 100% (87/87), done.
+remote: Compressing objects: 100% (57/57), done.
+remote: Total 87 (delta 51), reused 53 (delta 29), pack-reused 0 (from 0)
+Receiving objects: 100% (87/87), 29.13 KiB | 14.57 MiB/s, done.
+Resolving deltas: 100% (51/51), done.
+[root@ip-10-0-1-212 kube]# cd kubernetes-ingress-deployment/
+[root@ip-10-0-1-212 kubernetes-ingress-deployment]# kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.2.1/deploy/static/provider/cloud/deploy.yaml
+namespace/ingress-nginx created
+serviceaccount/ingress-nginx created
+serviceaccount/ingress-nginx-admission created
+role.rbac.authorization.k8s.io/ingress-nginx created
+role.rbac.authorization.k8s.io/ingress-nginx-admission created
+clusterrole.rbac.authorization.k8s.io/ingress-nginx created
+clusterrole.rbac.authorization.k8s.io/ingress-nginx-admission created
+rolebinding.rbac.authorization.k8s.io/ingress-nginx created
+rolebinding.rbac.authorization.k8s.io/ingress-nginx-admission created
+clusterrolebinding.rbac.authorization.k8s.io/ingress-nginx created
+clusterrolebinding.rbac.authorization.k8s.io/ingress-nginx-admission created
+configmap/ingress-nginx-controller created
+service/ingress-nginx-controller created
+service/ingress-nginx-controller-admission created
+deployment.apps/ingress-nginx-controller created
+job.batch/ingress-nginx-admission-create created
+job.batch/ingress-nginx-admission-patch created
+ingressclass.networking.k8s.io/nginx created
+validatingwebhookconfiguration.admissionregistration.k8s.io/ingress-nginx-admission created
+[root@ip-10-0-1-212 kubernetes-ingress-deployment]# ll
+total 8
+-rw-r--r--. 1 root root   82 Jun  2 12:27 Dockerfile
+drwxr-xr-x. 2 root root   24 Jun  2 12:27 Monolithic
+drwxr-xr-x. 2 root root   42 Jun  2 12:27 aws
+drwxr-xr-x. 2 root root   42 Jun  2 12:27 azure
+drwxr-xr-x. 2 root root   42 Jun  2 12:27 gcp
+-rw-r--r--. 1 root root 2027 Jun  2 12:27 index.html
+drwxr-xr-x. 2 root root   88 Jun  2 12:27 k8s-files
+[root@ip-10-0-1-212 kubernetes-ingress-deployment]# cd k8s-files/
+[root@ip-10-0-1-212 k8s-files]# ll
+total 20
+-rw-r--r--. 1 root root  585 Jun  2 12:27 aws.yml
+-rw-r--r--. 1 root root  586 Jun  2 12:27 azure.yml
+-rw-r--r--. 1 root root  570 Jun  2 12:27 gcp.yml
+-rw-r--r--. 1 root root 1190 Jun  2 12:27 ingress.yml
+-rw-r--r--. 1 root root  577 Jun  2 12:27 main.yml
+[root@ip-10-0-1-212 k8s-files]# kubectl apply -f main.yml
+deployment.apps/main-deployment created
+service/main-service created
+[root@ip-10-0-1-212 k8s-files]# kubectl get pods
+NAME                              READY   STATUS    RESTARTS   AGE
+main-deployment-6fd6d7c77-7wk6d   1/1     Running   0          6s
+main-deployment-6fd6d7c77-vb6sr   1/1     Running   0          6s
+[root@ip-10-0-1-212 k8s-files]# kubectl apply -f aws.yml
+deployment.apps/aws-deployment created
+service/aws-service created
+[root@ip-10-0-1-212 k8s-files]# kubectl apply -f azure.yml
+deployment.apps/azure-deployment created
+service/azure-service created
+[root@ip-10-0-1-212 k8s-files]# kubectl apply -f gcp.yml
+deployment.apps/gcp-deployment created
+service/gcp-service created
+[root@ip-10-0-1-212 k8s-files]# kubectl get pods
+NAME                                READY   STATUS    RESTARTS   AGE
+aws-deployment-66f67dbf8c-6vrq9     1/1     Running   0          18s
+aws-deployment-66f67dbf8c-6zlwd     1/1     Running   0          18s
+azure-deployment-576cb9847c-6j94n   1/1     Running   0          12s
+azure-deployment-576cb9847c-grbjj   1/1     Running   0          12s
+gcp-deployment-cf696d7bb-rlgfz      1/1     Running   0          6s
+gcp-deployment-cf696d7bb-wm4zw      1/1     Running   0          6s
+main-deployment-6fd6d7c77-7wk6d     1/1     Running   0          32s
+main-deployment-6fd6d7c77-vb6sr     1/1     Running   0          32s
+[root@ip-10-0-1-212 k8s-files]# date
+Tue Jun  2 12:28:58 UTC 2026
+[root@ip-10-0-1-212 k8s-files]# kubectl get all
+NAME                                    READY   STATUS    RESTARTS   AGE
+pod/aws-deployment-66f67dbf8c-6vrq9     1/1     Running   0          46s
+pod/aws-deployment-66f67dbf8c-6zlwd     1/1     Running   0          46s
+pod/azure-deployment-576cb9847c-6j94n   1/1     Running   0          40s
+pod/azure-deployment-576cb9847c-grbjj   1/1     Running   0          40s
+pod/gcp-deployment-cf696d7bb-rlgfz      1/1     Running   0          34s
+pod/gcp-deployment-cf696d7bb-wm4zw      1/1     Running   0          34s
+pod/main-deployment-6fd6d7c77-7wk6d     1/1     Running   0          60s
+pod/main-deployment-6fd6d7c77-vb6sr     1/1     Running   0          60s
+
+NAME                    TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+service/aws-service     ClusterIP   172.20.38.89     <none>        80/TCP    46s
+service/azure-service   ClusterIP   172.20.166.210   <none>        80/TCP    40s
+service/gcp-service     ClusterIP   172.20.114.179   <none>        80/TCP    34s
+service/kubernetes      ClusterIP   172.20.0.1       <none>        443/TCP   100m
+service/main-service    ClusterIP   172.20.224.39    <none>        80/TCP    60s
+
+NAME                               READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/aws-deployment     2/2     2            2           46s
+deployment.apps/azure-deployment   2/2     2            2           40s
+deployment.apps/gcp-deployment     2/2     2            2           34s
+deployment.apps/main-deployment    2/2     2            2           60s
+
+NAME                                          DESIRED   CURRENT   READY   AGE
+replicaset.apps/aws-deployment-66f67dbf8c     2         2         2       46s
+replicaset.apps/azure-deployment-576cb9847c   2         2         2       40s
+replicaset.apps/gcp-deployment-cf696d7bb      2         2         2       34s
+replicaset.apps/main-deployment-6fd6d7c77     2         2         2       60s
+[root@ip-10-0-1-212 k8s-files]# 
+
+
+
+[root@ip-10-0-1-212 k8s-files]# kubectl get ingress
+NAME          CLASS   HOSTS   ADDRESS                                                                   PORTS   AGE
+k8s-ingress   nginx   *       a0b8a72fa53e84e86a826f9034df82ff-1573806291.us-east-1.elb.amazonaws.com   80      30s
+[root@ip-10-0-1-212 k8s-files]# 
+
+[root@ip-10-0-1-212 k8s-files]# kubectl apply -f ingress.yml 
+ingress.networking.k8s.io/k8s-ingress created
+
+
+http://a0b8a72fa53e84e86a826f9034df82ff-1573806291.us-east-1.elb.amazonaws.com/
+
+page is laod for aws azure and gcp wotout any issues 
+
+
+if we add below code in ingress yaml 
+
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: example.com # Replace this with your desired domain name
+    http:
+      paths:
+
+then it will be access through route 53 only not with loadbalancer 
+
+
+UI looks as belpw for load balancer setup
+Multicloud DevOps — Path-based Routing
+Click a platform to verify routing through the same Ingress
+Amazon Web Services (AWS)
+Routes to the AWS backend Service.
+
+Go to AWS
+Microsoft Azure
+Routes to the Azure backend Service.
+
+Go to Azure
+Google Cloud Platform (GCP)
+Routes to the GCP backend Service.
+
+Go to GCP
+© 2025 Multicloud Demo | NGINX Ingress | Path routing
